@@ -96,6 +96,12 @@ func main() {
 				Action:          runTool("desktop"),
 				SkipFlagParsing: true,
 			},
+			{
+				Name:            "howto",
+				Usage:           "View user guides for your HPC environment.",
+				Action:          runTool("howto"),
+				SkipFlagParsing: true,
+			},
 		},
 	}
 
