@@ -1,23 +1,42 @@
 export FLIGHT_ORIG_ENV_PS1="${PS1}"
 
 if [ "$PS1" = "\\s-\\v\\\$ " ]; then
-  # prompt hasn't been set yet, give it a default
-  PS1="[\u@\h\$(__flight_ps1) \W]\\$ "
+  # Prompt hasn't been set yet, give it a default
+  PS1="[\u@\h \W]\\$ "
+fi
+
+PS1="$(
+    "${FLIGHT_ROOT}"/libexec/flight-starter/augment-bash-prompt \
+        "$PS1" \
+        '$(__flight_ps1)' \
+        '1;32;40'
+    )"
+
+# Add activation hint to prompt terminator
+if [[ "$TERM" =~ 256color ]]; then
+    PS1="$(echo "$PS1" | sed 's/\\\$/\\[\\e[38;2;174;225;249m\\]\\$\\[\\e[0m\\]/')"
+else
+    PS1="$(echo "$PS1" | sed 's/\\\$/\\[\\e[1;34m\\]\\$\\[\\e[0m\\]/')"
 fi
 
 __flight_ps1() {
-    local exit=$?
-    local printf_format=' (%s)'
+    local printf_format='(%s)'
     case "$#" in
         0|1)	printf_format="${1:-$printf_format}"
             ;;
-        *)	return $exit
+        *)	return 0
             ;;
     esac
 
-    local cluster_name
-    cluster_name="your cluster"
-    local flight_string="${cluster_name}"
+    source "${FLIGHT_ROOT}"/etc/flight-starter.config
+    local cluster_name flight_string
+    cluster_name="${FLIGHT_STARTER_CLUSTER_NAME:-your cluster}"
+    if [ "${cluster_name}" != "your cluster" ] ; then
+        flight_string="${cluster_name}"
+    fi
 
-    printf -- "$printf_format" "$flight_string"
+    if [ "${flight_string}" != "" ]; then
+        printf -- "$printf_format" "$flight_string"
+    fi
+    unset $(declare | grep ^FLIGHT_STARTER | cut -f1 -d= | xargs)
 }

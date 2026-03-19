@@ -4,9 +4,9 @@ if [ "$1" == "start" ]; then
     FLIGHT_ADDED_PATHS=()
     export FLIGHT_DEFINED_SYMBOLS FLIGHT_ADDED_PATHS FLIGHT_ON_EXIT
 
-    _shell_is_interactive=1
+    _shell_is_interactive=false
     if [ "${-#*i}" != "$-" ]; then
-        _shell_is_interactive=0
+        _shell_is_interactive=true
     fi
 
     # Source profile scripts.
@@ -19,7 +19,7 @@ if [ "$1" == "start" ]; then
             if [ -r "$i" ]; then
                 # Ensure flight profile can't cause errexit
                 set +e
-                if $_shell_is_interactive ; then
+                if [ "$_shell_is_interactive" == true ] ; then
                     . "$i"
                 else
                     . "$i" >/dev/null 2>&1
@@ -49,16 +49,15 @@ if [ "$1" == "start" ]; then
     fi
     unset -f flight-start
 
-    if $_shell_is_interactive ; then
+    if [ "$_shell_is_interactive" == true ] ; then
         echo "Flight environment is now active." 1>&2
     fi
     unset _shell_is_interactive
 
 elif [ "$1" == "stop" ]; then
+    _shell_is_interactive=false
     if [ "${-#*i}" != "$-" ]; then
-        _shell_is_interactive=0
-    else
-        _shell_is_interactive=1
+        _shell_is_interactive=true
     fi
 
     # Call any registered exit hooks.
@@ -103,7 +102,7 @@ elif [ "$1" == "stop" ]; then
     fi
     unset -f flight-stop
 
-    if $_shell_is_interactive; then
+    if [ "$_shell_is_interactive" == true ] ; then
         echo "Flight environment is now inactive." 1>&2
     fi
     unset _shell_is_interactive
