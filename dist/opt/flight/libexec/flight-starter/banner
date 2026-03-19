@@ -1,0 +1,90 @@
+#!/bin/bash
+
+cluster=$1
+version=$2
+distro=$3
+
+reset_attributes() {
+    # Reset all attributes to prevent colours from bleeding into prompt.
+    echo -e '\e[0m'
+}
+trap reset_attributes EXIT
+
+coloured_version="[1;37;40m${version}[0m"
+plain_version="${version}"
+if [ "$distro" ]; then
+  coloured_distro="[1;37;40mBased on $distro[0m"
+  plain_distro="Based on $distro"
+fi
+if [ -z "${cluster}" -o "${cluster}" == "Unconfigured" ]; then
+  cluster="OpenFlight"
+fi
+plain_welcome="$(printf %-33.33s "Welcome to $cluster")"
+
+frame() {
+  col=$((159-$1))
+  if [ "$col" -lt 154 ]; then
+      esc="1;32"
+  else
+    esc="1;38;5;$col"
+  fi
+  welcome="$(printf %-$((46+${#esc})).$((46+${#esc}))s "[1;37;40mWelcome to [${esc}m${cluster}")"
+  c1="[38;2;0;151;223m"
+  c2="[38;2;174;225;249m"
+  c3="[38;2;204;221;238m"
+  
+  cat | sed -e "s#%WELCOME%#$welcome[0m#g" \
+            -e "s#%VERSION%#$coloured_version#g" \
+            -e "s#%DISTRO%#$coloured_distro#g" \
+            -e "s#%1%#${c1}#g" \
+            -e "s#%2%#${c2}#g" \
+            -e "s#%3%#${c3}#g"
+}
+
+plain_static_frame() {
+    sed -e "s#%WELCOME%#$plain_welcome#g" \
+        -e "s#%VERSION%#$plain_version#g" \
+        -e "s#%DISTRO%#$plain_distro#g" <<'EOF'
+                                   __ _ _       _     _  ==>
+   ==>                            / _| (_)     | |   | |  ==>
+  ==>   ___   _ __    ___  _ __  | |_| |_  __ _| |__ | |_  ==>
+ ==>   / _ \ | '_ \  / _ \| '_ \ |  _| | |/ _` | '_ \| __|  ==>
+==>   | (_) || |_) ||  __/| | | || | | | | (_| | | | | |_    ==>
+ ==>   \___/ | .__/  \___||_| |_||_| |_|_|\__, |_| |_|\__|  ==>
+  ==>        |_|                           __/ |           ==>
+   ==>  %WELCOME% |___/           ==>
+    ==>  %VERSION%
+     ==>  %DISTRO%
+EOF
+}
+
+static_frame() {
+  if [[ ! ( "$TERM" == "xterm"* || "$TERM" == "screen"* ) ]]; then
+    plain_static_frame
+    exit
+  fi
+  frame 6 <<'EOF'
+      %1%                             %2%__ _ _       _     _  %3%==>
+   %3%==>%1%                           %2% / _| (_)     | |   | |  %3%==>
+  %3%==>%1%   ___   _ __    ___  _ __  %2%| |_| |_  __ _| |__ | |_  %3%==>
+ %3%==>%1%   / _ \ | '_ \  / _ \| '_ \ %2%|  _| | |/ _` | '_ \| __|  %3%==>
+%3%==>%1%   | (_) || |_) ||  __/| | | |%2%| | | | | (_| | | | | |_    %3%==>
+ %3%==>%1%   \___/ | .__/  \___||_| |_|%2%|_| |_|_|\__, |_| |_|\__|  %3%==>
+  %3%==>%1%        |_|                 %2%          __/ |           %3%==>
+   %3%==>  %WELCOME%%2% |___/           %3%==>
+    %3%==>  %VERSION%
+     %3%==>  %DISTRO%
+EOF
+}
+
+cleanup() {
+  stty "$oldstty"
+  if [ "$1" == "force" ]; then
+    final_frame
+    reset_attributes
+    exit
+  fi
+  reset_attributes
+}
+
+static_frame
