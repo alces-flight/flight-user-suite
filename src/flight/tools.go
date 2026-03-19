@@ -18,6 +18,10 @@ func toolPath(tool string) string {
 	return filepath.Join(flightRoot, "usr", "lib", "flight-core", fmt.Sprintf("flight-%s", tool))
 }
 
+func howTosDir(tool string) string {
+	return filepath.Join(flightRoot, "usr", "share", "doc", fmt.Sprintf("flight-%s", tool))
+}
+
 func transformToolError(tool string, err error) error {
 	if pathError, ok := errors.AsType[*fs.PathError](err); ok {
 		if pathError.Err.Error() == "no such file or directory" {
@@ -36,24 +40,72 @@ func enableTool(ctx context.Context, cmd *cli.Command) error {
 	tool := cmd.StringArg("tool")
 	tp := toolPath(tool)
 	log.Debug("Enabling", "tool", tool, "path", tp)
-	err := os.Chmod(tp, 0555)
-	if err == nil {
-		log.Printf("Enabled flight %s tool", tool)
-		return nil
+	if err := os.Chmod(tp, 0555); err != nil {
+		return transformToolError(tool, err)
 	}
-	return transformToolError(tool, err)
+	createHowtoSymlinks(tool)
+	log.Printf("Enabled flight %s tool", tool)
+	return nil
 }
 
 func disableTool(ctx context.Context, cmd *cli.Command) error {
 	tool := cmd.StringArg("tool")
 	tp := toolPath(tool)
 	log.Debug("Disabling", "tool", tool, "path", tp)
-	err := os.Chmod(tp, 0444)
-	if err == nil {
-		log.Printf("Disabled flight %s tool", tool)
-		return nil
+	if err := os.Chmod(tp, 0444); err != nil {
+		return transformToolError(tool, err)
 	}
-	return transformToolError(tool, err)
+	if err := removeHowtoSymlinks(tool); err != nil {
+		return fmt.Errorf("removing howto symlinks: %w", err)
+	}
+	log.Printf("Disabled flight %s tool", tool)
+	return nil
+}
+
+func createHowtoSymlinks(tool string) error {
+	tgtDir := filepath.Join(flightRoot, "usr", "share", "doc", "howtos-enabled")
+	srcDir := howTosDir(tool)
+	matches, err := fs.Glob(os.DirFS(srcDir), "*.md")
+	if err != nil {
+		return fmt.Errorf("globbing howtos: %w", err)
+	}
+	for _, oldname := range matches {
+		oldpath := filepath.Join(srcDir, oldname)
+		newpath := filepath.Join(tgtDir, oldname)
+		log.Debug("Creating howto symlink", "target", oldpath, "link_name", newpath)
+		if err = os.Symlink(oldpath, newpath); err != nil {
+			return fmt.Errorf("creating howto symlink: %w", err)
+		}
+	}
+	return nil
+}
+
+func removeHowtoSymlinks(tool string) error {
+	symDir := filepath.Join(flightRoot, "usr", "share", "doc", "howtos-enabled")
+	symFs := os.DirFS(symDir)
+	srcDir := howTosDir(tool)
+
+	entries, err := fs.ReadDir(symFs, ".")
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		if entry.Type()&os.ModeSymlink != 0 {
+			symTgt, err := fs.ReadLink(symFs, entry.Name())
+			if err != nil {
+				return err
+			}
+			if !filepath.IsAbs(symTgt) {
+				symTgt = filepath.Join(symDir, symTgt)
+			}
+			symTgtDir := filepath.Dir(filepath.Clean(symTgt))
+			if symTgtDir == srcDir {
+				log.Debug("Removing howto symlink", "target", symTgt, "link_name", filepath.Join(symDir, entry.Name()))
+				os.Remove(filepath.Join(symDir, entry.Name()))
+			}
+		}
+	}
+	return nil
 }
 
 func runTool(tool string) func(ctx context.Context, cmd *cli.Command) error {
