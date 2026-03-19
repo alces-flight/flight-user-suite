@@ -1,0 +1,48 @@
+#!/bin/bash
+set -euo pipefail
+
+main() {
+    parse_arguments "$@"
+}
+
+usage() {
+	cat <<EOF
+Usage: $(basename $0) [--help] [launch <desktop type>]
+
+Launch and manage virtual desktop sessions.
+
+    --help		Show this help message
+EOF
+}
+
+parse_arguments() {
+    while [[ $# > 0 ]] ; do
+        key="$1"
+
+        case $key in
+            --help)
+                usage
+                exit 0
+                ;;
+
+            --*)
+                echo "$(basename $0): unrecognized option ${key}"
+                usage
+                exit 1
+                ;;
+
+            launch*)
+                echo "Pretending to launch a desktop session"
+                exit 0
+                ;;
+
+            *)
+                echo "$(basename $0): unrecognized command ${key}"
+                exit 2
+                shift
+                ;;
+        esac
+    done
+}
+
+main "$@"
