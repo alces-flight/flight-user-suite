@@ -10,7 +10,9 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/log"
+	"github.com/muesli/reflow/wordwrap"
 	"github.com/urfave/cli/v3"
+	"golang.org/x/term"
 )
 
 var (
@@ -35,6 +37,12 @@ func init() {
 }
 
 func main() {
+	termWidth, _, err := term.GetSize(int(os.Stdout.Fd()))
+	if err != nil {
+		termWidth = 80
+	}
+	maxTextWidth := min(termWidth, 80)
+
 	cli.VersionPrinter = func(cmd *cli.Command) {
 		fmt.Printf("version=%s revision=%s date=%s\n", version, commit, date)
 	}
@@ -45,6 +53,21 @@ func main() {
 		Suggest:                true,
 		Copyright:              "(c) 2026 Stephen F Norledge & Concertim Ltd.",
 		UseShortOptionHandling: true,
+		HideHelpCommand:        true,
+		Description: wordwrap.String(
+			fmt.Sprintf(
+				"'%s' provides access to the Flight User Suite.  Any enabled tools can be accessed as '%s <tool>' and a list of enabled tools can be found with '%s tools list --enabled'.",
+				progName, progName, progName,
+			),
+			maxTextWidth,
+		),
+		CommandNotFound: func(ctx context.Context, cmd *cli.Command, command string) {
+			fmt.Fprintf(
+				cmd.Root().Writer,
+				"%s: '%s' is not a %s command.  See '%s --help'.\n",
+				progName, command, progName, progName,
+			)
+		},
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "log-level",
@@ -69,13 +92,23 @@ func main() {
 		},
 		Commands: []*cli.Command{
 			{
-				Name:     "tools",
-				Usage:    "Manage Flight User Suite tools",
+				Name:      "tools",
+				Usage:     "Manage Flight User Suite tools",
+				UsageText: fmt.Sprintf("%s tools command [command options]", progName),
+				Description: wordwrap.String(
+					fmt.Sprintf(
+						"Manage the availability of the Flight User Suite tools.\n\nWhen a tool is enabled, it is available as '%s <tool>' and any howto guides it provides are made available through '%s howto'.",
+						progName, progName,
+					),
+					maxTextWidth,
+				),
 				Category: "Tool management",
 				Commands: []*cli.Command{
 					{
-						Name:  "list",
-						Usage: "List Flight User Suite tools",
+						Name:        "list",
+						Usage:       "List Flight User Suite tools",
+						UsageText:   fmt.Sprintf("%s tools list [--enabled]", progName),
+						Description: wordwrap.String("List all Flight User Suite tools.  If the --enabled flag is set, only list those tools that are currently enabled.", maxTextWidth),
 						Flags: []cli.Flag{
 							&cli.BoolFlag{
 								Name:  "enabled",
@@ -85,24 +118,38 @@ func main() {
 						Action: listTools,
 					},
 					{
-						Name:  "enable",
-						Usage: "Enable a Flight User Suite tool",
+						Name:      "enable",
+						Usage:     "Enable a Flight User Suite tool",
+						UsageText: fmt.Sprintf("%s tools enable <tool>", progName),
+						Description: wordwrap.String(
+							fmt.Sprintf(
+								"Enable the specified tool. When a tool is enabled, it is available as '%s <tool>' and any howto guides it provides are made available through '%s howto'.\n\nA list of available tools can be found with '%s tools list'.",
+								progName, progName, progName,
+							),
+							maxTextWidth,
+						),
 						Arguments: []cli.Argument{
 							&cli.StringArg{Name: "tool"},
 						},
-						ArgsUsage: "<tool>",
-						Before:    assertArgPresent("tool"),
-						Action:    enableTool,
+						Before: assertArgPresent("tool"),
+						Action: enableTool,
 					},
 					{
-						Name:  "disable",
-						Usage: "Disable a Flight User Suite tool",
+						Name:      "disable",
+						Usage:     "Disable a Flight User Suite tool",
+						UsageText: fmt.Sprintf("%s tools disable <tool>", progName),
+						Description: wordwrap.String(
+							fmt.Sprintf(
+								"When a tool is disabled, it is no longer available as '%s <tool>' and any howto guides it provides are no longer available through '%s howto'.\n\nA list of currently enabled tools can be found with '%s tools list --enabled'.",
+								progName, progName, progName,
+							),
+							maxTextWidth,
+						),
 						Arguments: []cli.Argument{
 							&cli.StringArg{Name: "tool"},
 						},
-						ArgsUsage: "<tool>",
-						Before:    assertArgPresent("tool"),
-						Action:    disableTool,
+						Before: assertArgPresent("tool"),
+						Action: disableTool,
 					},
 				},
 			},
