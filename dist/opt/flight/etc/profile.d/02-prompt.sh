@@ -67,3 +67,6 @@ __flight_ps1_active() {
         printf -- "$printf_format" "$flight_string"
     fi
 }
+
+FLIGHT_DEFINED_SYMBOLS+=(__flight_ps1_active __flight_ps1_clustername)
+unset FLIGHT_PS1
