@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 	"os"
@@ -26,7 +27,7 @@ var (
 func init() {
 	log.SetReportTimestamp(false)
 	log.SetReportCaller(false)
-	log.SetLevel(log.FatalLevel)
+	log.SetLevel(log.WarnLevel)
 	if root, ok := os.LookupEnv("FLIGHT_ROOT"); ok {
 		flightRoot = root
 	}
@@ -47,7 +48,7 @@ func main() {
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "log-level",
-				Usage: "set the log `LEVEL` (debug, info, warn, error, fatal). Default: fatal",
+				Usage: "set the log `LEVEL` (debug, info, warn, error, fatal). Default: warn",
 				Validator: func(val string) error {
 					switch strings.ToLower(val) {
 					case "debug", "info", "warn", "error", "fatal":
@@ -105,22 +106,9 @@ func main() {
 					},
 				},
 			},
-			{
-				Name:            "desktop",
-				Usage:           "Launch and manage virtual desktop sessions.",
-				Action:          runTool("desktop"),
-				SkipFlagParsing: true,
-				Category:        "Available tools",
-			},
-			{
-				Name:            "howto",
-				Usage:           "View user guides for your HPC environment.",
-				Action:          runTool("howto"),
-				SkipFlagParsing: true,
-				Category:        "Available tools",
-			},
 		},
 	}
+	addToolProxyCommands(cmd)
 
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
 		// A bunch of checks to avoid reporting the usage errors twice.
@@ -144,6 +132,35 @@ func main() {
 			log.Printf("%s\n", err)
 			os.Exit(1)
 		}
+	}
+}
+
+//go:embed tool_synopsis.txt
+var toolSynopsisString string
+
+func addToolProxyCommands(cmd *cli.Command) {
+	synopsisMap := make(map[string]string)
+	for line := range strings.Lines(toolSynopsisString) {
+		parts := strings.SplitN(line, ":", 2)
+		synopsisMap[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
+	}
+
+	tools, err := getTools(true)
+	if err != nil {
+		log.Warn("Unable to add tool proxy commands", "err", err)
+		return
+	}
+	for _, tool := range tools {
+		proxy := cli.Command{
+			Name:            tool,
+			Action:          runTool(tool),
+			SkipFlagParsing: true,
+			Category:        "Available tools",
+		}
+		if synopsis, found := synopsisMap[tool]; found {
+			proxy.Usage = synopsis
+		}
+		cmd.Commands = append(cmd.Commands, &proxy)
 	}
 }
 
