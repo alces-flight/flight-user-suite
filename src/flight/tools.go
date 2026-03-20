@@ -9,13 +9,14 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/charmbracelet/log"
 	"github.com/urfave/cli/v3"
 )
 
 func toolPath(tool string) string {
-	return filepath.Join(flightRoot, "usr", "lib", "flight-core", fmt.Sprintf("flight-%s", tool))
+	return filepath.Join(toolDir, fmt.Sprintf("flight-%s", tool))
 }
 
 func howTosDir(tool string) string {
@@ -34,6 +35,43 @@ func transformToolError(tool string, err error) error {
 		return SilentExitError{ExitCode: exitError.ExitCode(), exitError: exitError}
 	}
 	return err
+}
+
+func listTools(ctx context.Context, cmd *cli.Command) error {
+	onlyEnabled := cmd.Bool("enabled")
+	tools, err := getTools(onlyEnabled)
+	if err != nil {
+		return err
+	}
+	for _, tool := range tools {
+		fmt.Println(tool)
+	}
+	return nil
+}
+
+func getTools(onlyEnabled bool) ([]string, error) {
+	log.Debug("getting tools", "dir", toolDir, "onlyEnabled", onlyEnabled)
+	entries, err := fs.ReadDir(os.DirFS(toolDir), ".")
+	if err != nil {
+		return nil, fmt.Errorf("listing tools: %w", err)
+	}
+	tools := make([]string, 0)
+	for _, entry := range entries {
+		if tool, hasPrefix := strings.CutPrefix(entry.Name(), "flight-"); hasPrefix {
+			if onlyEnabled {
+				info, err := entry.Info()
+				if err != nil {
+					return nil, fmt.Errorf("reading tool info: %w", err)
+				}
+				if info.Mode()&0111 != 0 {
+					tools = append(tools, tool)
+				}
+			} else {
+				tools = append(tools, tool)
+			}
+		}
+	}
+	return tools, nil
 }
 
 func enableTool(ctx context.Context, cmd *cli.Command) error {

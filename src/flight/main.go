@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/charmbracelet/log"
@@ -19,6 +20,7 @@ var (
 
 	progName   string = "flight"
 	flightRoot string = "/opt/flight"
+	toolDir    string
 )
 
 func init() {
@@ -28,6 +30,7 @@ func init() {
 	if root, ok := os.LookupEnv("FLIGHT_ROOT"); ok {
 		flightRoot = root
 	}
+	toolDir = filepath.Join(flightRoot, "usr", "lib", "flight-core")
 }
 
 func main() {
@@ -65,9 +68,21 @@ func main() {
 		},
 		Commands: []*cli.Command{
 			{
-				Name:  "tools",
-				Usage: "Manage Flight User Suite tools",
+				Name:     "tools",
+				Usage:    "Manage Flight User Suite tools",
+				Category: "Tool management",
 				Commands: []*cli.Command{
+					{
+						Name:  "list",
+						Usage: "List Flight User Suite tools",
+						Flags: []cli.Flag{
+							&cli.BoolFlag{
+								Name:  "enabled",
+								Usage: "list only enabled tools",
+							},
+						},
+						Action: listTools,
+					},
 					{
 						Name:  "enable",
 						Usage: "Enable a Flight User Suite tool",
@@ -95,12 +110,14 @@ func main() {
 				Usage:           "Launch and manage virtual desktop sessions.",
 				Action:          runTool("desktop"),
 				SkipFlagParsing: true,
+				Category:        "Available tools",
 			},
 			{
 				Name:            "howto",
 				Usage:           "View user guides for your HPC environment.",
 				Action:          runTool("howto"),
 				SkipFlagParsing: true,
+				Category:        "Available tools",
 			},
 		},
 	}
