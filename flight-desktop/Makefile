@@ -6,7 +6,7 @@ ASSET_DIRS := opt
 all: assets
 
 assets:
-	rsync -rlptgo $(ASSET_DIRS) $(DIST)/
+	rsync -rlptgo --exclude .gitkeep $(ASSET_DIRS) $(DIST)/
 
 clean:
 

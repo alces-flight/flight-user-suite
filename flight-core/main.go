@@ -29,6 +29,7 @@ var (
 	progName   string = "flight"
 	flightRoot string = "/opt/flight"
 	toolDir    string
+	hookDir    string
 )
 
 func init() {
@@ -39,6 +40,7 @@ func init() {
 		flightRoot = root
 	}
 	toolDir = filepath.Join(flightRoot, "usr", "lib", "flight-core")
+	hookDir = filepath.Join(flightRoot, "usr", "lib", "hooks")
 }
 
 func main() {
@@ -61,8 +63,8 @@ func main() {
 		HideHelpCommand:        true,
 		Description: wordwrap.String(
 			fmt.Sprintf(
-				"'%s' provides access to the Flight User Suite.  Any enabled tools can be accessed as '%s <tool>' and a list of enabled tools can be found with '%s tools list --enabled'.",
-				progName, progName, progName,
+				"Manage the Flight User Suite tools and hooks and access enabled tools.\n\nTools can be managed with the '%s tools' command and any enabled tools can be accessed as '%s <tool>'. A list of enabled tools can be found with '%s tools list --enabled'.\n\nHooks can be managed with the '%s hooks' command and are executed when the flight environment is activated.",
+				progName, progName, progName, progName,
 			),
 			maxTextWidth,
 		),
@@ -155,6 +157,65 @@ func main() {
 						},
 						Before: assertArgPresent("tool"),
 						Action: disableTool,
+					},
+				},
+			},
+			{
+				Name:      "hooks",
+				Usage:     "Manage Flight User Suite hooks",
+				UsageText: fmt.Sprintf("%s hooks command [command options]", progName),
+				Description: wordwrap.String(
+					"Manage the Flight User Suite hooks.\n\nWhen a hook is enabled, it is executed when the flight environment is activated.",
+					maxTextWidth,
+				),
+				Category: "Hook management",
+				Commands: []*cli.Command{
+					{
+						Name:        "list",
+						Usage:       "List Flight User Suite hooks",
+						UsageText:   fmt.Sprintf("%s hooks list [--enabled]", progName),
+						Description: wordwrap.String("List all Flight User Suite hooks.  If the --enabled flag is set, only list those hooks that are currently enabled.", maxTextWidth),
+						Flags: []cli.Flag{
+							&cli.BoolFlag{
+								Name:  "enabled",
+								Usage: "list only enabled hooks",
+							},
+						},
+						Action: listHooks,
+					},
+					{
+						Name:      "enable",
+						Usage:     "Enable a Flight User Suite hook",
+						UsageText: fmt.Sprintf("%s hooks enable <hook>", progName),
+						Description: wordwrap.String(
+							fmt.Sprintf(
+								"Enable the specified hook. When a hook is enabled, it is executed when the flight environment is activated.\n\nA list of available hooks can be found with '%s hooks list'.",
+								progName,
+							),
+							maxTextWidth,
+						),
+						Arguments: []cli.Argument{
+							&cli.StringArg{Name: "hook"},
+						},
+						Before: assertArgPresent("hook"),
+						Action: enableHook,
+					},
+					{
+						Name:      "disable",
+						Usage:     "Disable a Flight User Suite hook",
+						UsageText: fmt.Sprintf("%s hooks disable <hook>", progName),
+						Description: wordwrap.String(
+							fmt.Sprintf(
+								"When a hook is disabled, it is no longer executed when the flight environment is activated.\n\nA list of currently enabled hooks can be found with '%s hooks list --enabled'.",
+								progName,
+							),
+							maxTextWidth,
+						),
+						Arguments: []cli.Argument{
+							&cli.StringArg{Name: "hook"},
+						},
+						Before: assertArgPresent("hook"),
+						Action: disableHook,
 					},
 				},
 			},
