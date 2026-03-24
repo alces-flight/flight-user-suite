@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/charmbracelet/log"
@@ -26,10 +27,12 @@ var (
 	commit  string = "unknown"
 	date    string = "unknown"
 
-	progName   string = "flight"
-	flightRoot string = "/opt/flight"
-	toolDir    string
-	hookDir    string
+	progName        string = "flight"
+	flightRoot      string = "/opt/flight"
+	toolDir         string
+	hookDir         string
+	validEvents            = []string{"login", "activation"}
+	validEventNames string = strings.Join(validEvents, ", ")
 )
 
 func init() {
@@ -63,8 +66,8 @@ func main() {
 		HideHelpCommand:        true,
 		Description: wordwrap.String(
 			fmt.Sprintf(
-				"Manage the Flight User Suite tools and hooks and access enabled tools.\n\nTools can be managed with the '%s tools' command and any enabled tools can be accessed as '%s <tool>'. A list of enabled tools can be found with '%s tools list --enabled'.\n\nHooks can be managed with the '%s hooks' command and are executed when the flight environment is activated.",
-				progName, progName, progName, progName,
+				"Manage the Flight User Suite tools and hooks and access enabled tools.\n\nTools can be managed with the '%s tools' command and any enabled tools can be accessed as '%s <tool>'. A list of enabled tools can be found with '%s tools list --enabled'.\n\nHooks can be managed with the '%s hooks' command. Enabled hooks are executed either when a login shell is started or the Flight environment is activated.  See '%s hooks --help' for more details.",
+				progName, progName, progName, progName, progName,
 			),
 			maxTextWidth,
 		),
@@ -125,9 +128,8 @@ func main() {
 						Action: listTools,
 					},
 					{
-						Name:      "enable",
-						Usage:     "Enable a Flight User Suite tool",
-						UsageText: fmt.Sprintf("%s tools enable <tool>", progName),
+						Name:  "enable",
+						Usage: "Enable a Flight User Suite tool",
 						Description: wordwrap.String(
 							fmt.Sprintf(
 								"Enable the specified tool. When a tool is enabled, it is available as '%s <tool>' and any howto guides it provides are made available through '%s howto'.\n\nA list of available tools can be found with '%s tools list'.",
@@ -136,15 +138,14 @@ func main() {
 							maxTextWidth,
 						),
 						Arguments: []cli.Argument{
-							&cli.StringArg{Name: "tool"},
+							&cli.StringArg{Name: "tool", UsageText: "<tool>"},
 						},
 						Before: assertArgPresent("tool"),
 						Action: enableTool,
 					},
 					{
-						Name:      "disable",
-						Usage:     "Disable a Flight User Suite tool",
-						UsageText: fmt.Sprintf("%s tools disable <tool>", progName),
+						Name:  "disable",
+						Usage: "Disable a Flight User Suite tool",
 						Description: wordwrap.String(
 							fmt.Sprintf(
 								"When a tool is disabled, it is no longer available as '%s <tool>' and any howto guides it provides are no longer available through '%s howto'.\n\nA list of currently enabled tools can be found with '%s tools list --enabled'.",
@@ -153,7 +154,7 @@ func main() {
 							maxTextWidth,
 						),
 						Arguments: []cli.Argument{
-							&cli.StringArg{Name: "tool"},
+							&cli.StringArg{Name: "tool", UsageText: "<tool>"},
 						},
 						Before: assertArgPresent("tool"),
 						Action: disableTool,
@@ -165,56 +166,65 @@ func main() {
 				Usage:     "Manage Flight User Suite hooks",
 				UsageText: fmt.Sprintf("%s hooks command [command options]", progName),
 				Description: wordwrap.String(
-					"Manage the Flight User Suite hooks.\n\nWhen a hook is enabled, it is executed when the flight environment is activated.",
+					"Manage the Flight User Suite hooks.\n\nThere are two types of hooks: 'login' hooks and 'activation' hooks.  Enabled 'login' hooks are exectued when a login shell is started. Enabled 'activation' hooks are executed with the Flight environment is activated.",
 					maxTextWidth,
 				),
 				Category: "Hook management",
 				Commands: []*cli.Command{
 					{
-						Name:        "list",
-						Usage:       "List Flight User Suite hooks",
-						UsageText:   fmt.Sprintf("%s hooks list [--enabled]", progName),
-						Description: wordwrap.String("List all Flight User Suite hooks.  If the --enabled flag is set, only list those hooks that are currently enabled.", maxTextWidth),
+						Name:  "list",
+						Usage: "List Flight User Suite hooks",
+						Description: wordwrap.String(
+							fmt.Sprintf(
+								"List all Flight User Suite hooks for the given event.  If the --enabled flag is set, only list those hooks that are currently enabled.\n\nValid events are %s.",
+								validEventNames,
+							),
+							maxTextWidth,
+						),
+						Arguments: []cli.Argument{
+							&cli.StringArg{Name: "event", UsageText: "<event>"},
+						},
 						Flags: []cli.Flag{
 							&cli.BoolFlag{
 								Name:  "enabled",
 								Usage: "list only enabled hooks",
 							},
 						},
+						Before: composeBeforeFuncs(assertArgPresent("event"), assertEventValid("event", 0)),
 						Action: listHooks,
 					},
 					{
-						Name:      "enable",
-						Usage:     "Enable a Flight User Suite hook",
-						UsageText: fmt.Sprintf("%s hooks enable <hook>", progName),
+						Name:  "enable",
+						Usage: "Enable a Flight User Suite hook",
 						Description: wordwrap.String(
 							fmt.Sprintf(
-								"Enable the specified hook. When a hook is enabled, it is executed when the flight environment is activated.\n\nA list of available hooks can be found with '%s hooks list'.",
-								progName,
+								"Enable the specified <event> hook.  Valid events are %s.\n\nEnabled 'login' hooks are executed when a login shell is started.  Enabled 'activation' hooks are executed when the Flight environment is activated.\n\nA list of available hooks can be found with '%s hooks list <event>'.",
+								validEventNames, progName,
 							),
 							maxTextWidth,
 						),
 						Arguments: []cli.Argument{
-							&cli.StringArg{Name: "hook"},
+							&cli.StringArg{Name: "event", UsageText: "<event>"},
+							&cli.StringArg{Name: "hook", UsageText: "<hook>"},
 						},
-						Before: assertArgPresent("hook"),
+						Before: composeBeforeFuncs(assertArgPresent("event", "hook"), assertEventValid("event", 0)),
 						Action: enableHook,
 					},
 					{
-						Name:      "disable",
-						Usage:     "Disable a Flight User Suite hook",
-						UsageText: fmt.Sprintf("%s hooks disable <hook>", progName),
+						Name:  "disable",
+						Usage: "Disable a Flight User Suite hook",
 						Description: wordwrap.String(
 							fmt.Sprintf(
-								"When a hook is disabled, it is no longer executed when the flight environment is activated.\n\nA list of currently enabled hooks can be found with '%s hooks list --enabled'.",
-								progName,
+								"Disable the specified <event> hook.  Valid events are %s.\n\nDisabled hooks are not executed when <event> occurs.\n\nA list of currently enabled hooks can be found with '%s hooks list --enabled <event>'.",
+								validEventNames, progName,
 							),
 							maxTextWidth,
 						),
 						Arguments: []cli.Argument{
-							&cli.StringArg{Name: "hook"},
+							&cli.StringArg{Name: "event", UsageText: "<event>"},
+							&cli.StringArg{Name: "hook", UsageText: "<hook>"},
 						},
-						Before: assertArgPresent("hook"),
+						Before: composeBeforeFuncs(assertArgPresent("event", "hook"), assertEventValid("event", 0)),
 						Action: disableHook,
 					},
 				},
@@ -295,11 +305,40 @@ func addToolProxyCommands(cmd *cli.Command) {
 	}
 }
 
-// Assert that the named argument is present.
-func assertArgPresent(argName string) cli.BeforeFunc {
+func composeBeforeFuncs(fns ...cli.BeforeFunc) cli.BeforeFunc {
 	return func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
-		if cmd.NArg() == 0 {
-			return ctx, MissingArguments{Args: []string{argName}}
+		var err error
+		for _, fn := range fns {
+			ctx, err = fn(ctx, cmd)
+			if err != nil {
+				return ctx, err
+			}
+		}
+		return ctx, nil
+	}
+}
+
+// Assert that the named argument is present.
+func assertArgPresent(argNames ...string) cli.BeforeFunc {
+	return func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
+		if cmd.NArg() < len(argNames) {
+			missing := argNames[cmd.NArg():]
+			return ctx, MissingArguments{Args: missing}
+		}
+		return ctx, nil
+	}
+}
+
+func assertEventValid(argName string, argIndex int) cli.BeforeFunc {
+	return func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
+		event := cmd.Args().Get(argIndex)
+		if !slices.Contains(validEvents, event) {
+			return ctx, fmt.Errorf(
+				"Incorrect Usage: unknown %s '%s'. Valid values are %s.",
+				argName,
+				event,
+				validEventNames,
+			)
 		}
 		return ctx, nil
 	}
@@ -313,6 +352,6 @@ func (ma MissingArguments) Error() string {
 	if len(ma.Args) == 1 {
 		return fmt.Sprintf("Incorrect Usage: missing argument %s", ma.Args[0])
 	} else {
-		return fmt.Sprintf("Incorrect Usage: missing arguments %+v", ma.Args)
+		return fmt.Sprintf("Incorrect Usage: missing arguments %s", strings.Join(ma.Args, ", "))
 	}
 }
