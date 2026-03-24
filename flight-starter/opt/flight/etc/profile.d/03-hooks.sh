@@ -1,7 +1,7 @@
-# Run any enabled hooks when the Flight environment is activated.
-if [ -d "${FLIGHT_ROOT}"/usr/lib/hooks ]; then
+# Run any enabled activation hooks when the Flight environment is activated.
+if [ -d "${FLIGHT_ROOT}"/usr/lib/hooks/activation ]; then
   shopt -s nullglob
-  for hook in "${FLIGHT_ROOT}"/usr/lib/hooks/*; do
+  for hook in "${FLIGHT_ROOT}"/usr/lib/hooks/activation/*; do
       if [ -x "${hook}" ] ; then
           "${hook}"
       fi

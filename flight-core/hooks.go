@@ -13,14 +13,14 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-func hookPath(hook string) string {
-	return filepath.Join(hookDir, hook)
+func hookPath(event, hook string) string {
+	return filepath.Join(hookDir, event, hook)
 }
 
-func transformHookError(hook string, err error) error {
+func transformHookError(event, hook string, err error) error {
 	if pathError, ok := errors.AsType[*fs.PathError](err); ok {
 		if pathError.Err.Error() == "no such file or directory" {
-			return UnknownHook{Hook: hook}
+			return UnknownHook{Event: event, Hook: hook}
 		}
 	}
 	return err
@@ -28,7 +28,8 @@ func transformHookError(hook string, err error) error {
 
 func listHooks(_ context.Context, cmd *cli.Command) error {
 	onlyEnabled := cmd.Bool("enabled")
-	hooks, err := getHooks(onlyEnabled)
+	event := cmd.StringArg("event")
+	hooks, err := getHooks(event, onlyEnabled)
 	if err != nil {
 		return err
 	}
@@ -38,7 +39,10 @@ func listHooks(_ context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func getHooks(onlyEnabled bool) ([]string, error) {
+func getHooks(event string, onlyEnabled bool) ([]string, error) {
+	if event != "" {
+		hookDir = filepath.Join(hookDir, event)
+	}
 	log.Debug("getting hooks", "dir", hookDir, "onlyEnabled", onlyEnabled)
 	entries, err := os.ReadDir(hookDir)
 	if err != nil {
@@ -65,37 +69,40 @@ func getHooks(onlyEnabled bool) ([]string, error) {
 }
 
 func enableHook(ctx context.Context, cmd *cli.Command) error {
+	event := cmd.StringArg("event")
 	hook := cmd.StringArg("hook")
-	hp := hookPath(hook)
+	hp := hookPath(event, hook)
 	log.Debug("Enabling", "hook", hook, "path", hp)
 	if strings.HasPrefix(hook, ".") {
-		return UnknownHook{Hook: hook}
+		return UnknownHook{Event: event, Hook: hook}
 	}
 	if err := os.Chmod(hp, 0755); err != nil {
-		return transformHookError(hook, err)
+		return transformHookError(event, hook, err)
 	}
 	log.Printf("Enabled %s hook", hook)
 	return nil
 }
 
 func disableHook(ctx context.Context, cmd *cli.Command) error {
+	event := cmd.StringArg("event")
 	hook := cmd.StringArg("hook")
-	hp := hookPath(hook)
+	hp := hookPath(event, hook)
 	log.Debug("Disabling", "hook", hook, "path", hp)
 	if strings.HasPrefix(hook, ".") {
-		return UnknownHook{Hook: hook}
+		return UnknownHook{Event: event, Hook: hook}
 	}
 	if err := os.Chmod(hp, 0444); err != nil {
-		return transformHookError(hook, err)
+		return transformHookError(event, hook, err)
 	}
 	log.Printf("Disabled flight %s hook", hook)
 	return nil
 }
 
 type UnknownHook struct {
-	Hook string
+	Event string
+	Hook  string
 }
 
 func (ut UnknownHook) Error() string {
-	return fmt.Sprintf("Unknown hook: %s", ut.Hook)
+	return fmt.Sprintf("Unknown %s hook: %s", ut.Event, ut.Hook)
 }
