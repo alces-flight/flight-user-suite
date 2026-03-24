@@ -15,7 +15,7 @@ $(EXE):
 	go build -v $(LD_FLAGS) -o $(EXE)
 
 assets:
-	rsync -rlptgo $(ASSET_DIRS) $(DIST)/
+	rsync -rlptgo --exclude .gitkeep $(ASSET_DIRS) $(DIST)/
 
 clean:
 	rm -f $(EXE)

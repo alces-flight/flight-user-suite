@@ -1,0 +1,100 @@
+#!/bin/bash
+
+is_target_user() {
+    if [ ${FLIGHT_SSH_LOWEST_UID} -gt ${UID} ]; then
+        return 1
+    fi
+    for u in ${FLIGHT_SSH_SKIP_USERS}; do
+        if [ "$(id -un)" ==  "${u}" ]; then
+            return 1
+        fi
+    done
+}
+
+has_existing_key() {
+    if ! [ -f "${FLIGHT_SSH_DIR}"/"${FLIGHT_SSH_KEYNAME}.pub" -a -f "${FLIGHT_SSH_DIR}"/"${FLIGHT_SSH_KEYNAME}" ]; then
+        return 1
+    fi
+}
+
+create_key() {
+    echo "GENERATING SSH KEYPAIR - $(date)"
+    /usr/bin/ssh-keygen -q -t rsa \
+        -f "${FLIGHT_SSH_DIR}"/"${FLIGHT_SSH_KEYNAME}" \
+        -C "Flight HPC Cluster Key" \
+        -N '' < /dev/null
+}
+
+enable_key() {
+    echo "AUTHORIZING KEYS - $(date)"
+    cat "${FLIGHT_SSH_DIR}"/"${FLIGHT_SSH_KEYNAME}".pub >> "${FLIGHT_SSH_DIR}"/authorized_keys
+    chmod 600 "${FLIGHT_SSH_DIR}"/authorized_keys
+}
+
+new_config() {
+    local updating_config
+    if [ -f "${FLIGHT_SSH_DIR}/config" ]; then
+        echo "UPDATING CONFIG"
+        updating_config=true
+    else
+        echo "CREATING CONFIG"
+        updating_config=false
+    fi
+    # Add the new configuration to the top of the file (if it exists).  The
+    # standard unix tools make that a pain to accomplish without resorting to
+    # temp files or partially writting out the config.  So we use `ex`.  It's
+    # part of the posix standard.
+    ex "${FLIGHT_SSH_DIR}/config" <<EOF
+1 insert
+Host *
+  IdentityFile ${FLIGHT_SSH_DIR}/${FLIGHT_SSH_KEYNAME}
+  StrictHostKeyChecking  no
+.
+xit
+EOF
+    chmod 600 "${FLIGHT_SSH_DIR}"/config
+    if [ "${updating_config}" == true ] ; then
+        cat <<WARN >&2
+Your SSH config has been modified to use the generated identity file.
+Please review the config if you experience issues with SSH.
+SSH Config:    ${FLIGHT_SSH_DIR}/config
+Identity File: ${FLIGHT_SSH_DIR}/${FLIGHT_SSH_KEYNAME}
+
+WARN
+    fi
+}
+
+main() {
+    if is_target_user && ! has_existing_key; then
+        mkdir -p "$(dirname "${FLIGHT_SSH_LOG}")"
+        echo -n "Generating SSH keypair: "
+        if create_key >> "${FLIGHT_SSH_LOG}"; then
+            echo 'OK'
+            echo -n "Authorizing key: "
+            if enable_key >> "${FLIGHT_SSH_LOG}"; then
+                echo 'OK'
+                echo
+                new_config >> "${FLIGHT_SSH_LOG}"
+            else
+                echo 'FAIL'
+                echo
+            fi
+        else
+            echo 'FAIL'
+        fi
+    fi
+}
+
+FLIGHT_ROOT=${FLIGHT_ROOT:-/opt/flight}
+
+if [ -f "${FLIGHT_ROOT}"/etc/ssh-keypair-generation.config ]; then
+    . "${FLIGHT_ROOT}"/etc/ssh-keypair-generation.config
+fi
+
+FLIGHT_SSH_LOWEST_UID=${FLIGHT_SSH_LOWEST_UID:-500}
+FLIGHT_SSH_SKIP_USERS="${FLIGHT_SSH_SKIP_USERS:-root}"
+FLIGHT_SSH_KEYNAME="${FLIGHT_SSH_KEYNAME:-id_flightcluster}"
+FLIGHT_SSH_DIR="${FLIGHT_SSH_DIR:-$HOME/.ssh}"
+FLIGHT_SSH_LOG="${FLIGHT_SSH_LOG:-$HOME/.cache/flight/ssh-keypair-generation.log}"
+
+main
