@@ -1,0 +1,46 @@
+#!/bin/bash
+
+IFS=: read -a xdg_config <<< "${XDG_CONFIG_HOME:-$HOME/.config}:${XDG_CONFIG_DIRS:-/etc/xdg}"
+for a in "${xdg_config[@]}"; do
+  if [ -e "${a}"/flight.config ]; then
+    source "${a}"/flight.config
+    break
+  fi
+done
+FLIGHT_ROOT="${FLIGHT_ROOT:-/opt/flight}"
+
+if [ -f "${FLIGHT_ROOT}"/etc/flight-starter.config ]; then
+  . "${FLIGHT_ROOT}"/etc/flight-starter.config
+fi
+
+cluster="${FLIGHT_STARTER_CLUSTER_NAME:-your cluster}"
+bold="$(tput bold)"
+green="$(tput setaf 2)"
+clr="$(tput sgr0)"
+bgblack="$(tput setab 0)"
+if [[ $TERM =~ "256color" ]]; then
+  white="$(tput setaf 7)"
+  bgblue="$(tput setab 68)"
+  blue="$(tput setaf 68)"
+  grey="$(tput setaf 249)"
+  bwhite="$(tput setaf 15)"
+fi
+if [ -f /etc/redhat-release ]; then
+  release="$(cut -f1,2,4 -d' ' /etc/redhat-release)"
+  reltext=", based on ${bold}${release}${clr}"
+elif [ -f /etc/lsb-release ]; then
+  . /etc/lsb-release
+  release="${DISTRIB_DESCRIPTION:-${DISTRIB_ID} ${DISTRIB_RELEASE}}"
+  reltext=", based on ${bold}${release}${clr}"
+fi
+cat <<EOF
+${bgblack} ${blue}-[${clr}${bgblack} ${bwhite}Flight${clr}${bgblack} ${blue}]- ${clr}
+Welcome to ${bold}${bgblack}${green}${cluster}${clr}${reltext}.
+
+EOF
+  cat <<EOF
+This cluster provides ${FLIGHT_STARTER_DESC}.
+
+${bold}${white}'${bgblue}flight-start${clr}${bold}${white}'${clr} - activate ${FLIGHT_STARTER_PRODUCT} now
+
+EOF
