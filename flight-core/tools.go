@@ -51,7 +51,7 @@ func listTools(ctx context.Context, cmd *cli.Command) error {
 
 func getTools(onlyEnabled bool) ([]string, error) {
 	log.Debug("getting tools", "dir", toolDir, "onlyEnabled", onlyEnabled)
-	entries, err := fs.ReadDir(os.DirFS(toolDir), ".")
+	entries, err := os.ReadDir(toolDir)
 	if err != nil {
 		return nil, fmt.Errorf("listing tools: %w", err)
 	}
@@ -103,13 +103,12 @@ func disableTool(ctx context.Context, cmd *cli.Command) error {
 func createHowtoSymlinks(tool string) error {
 	tgtDir := filepath.Join(flightRoot, "usr", "share", "doc", "howtos-enabled")
 	srcDir := howTosDir(tool)
-	matches, err := fs.Glob(os.DirFS(srcDir), "*.md")
+	matches, err := filepath.Glob(filepath.Join(srcDir, "*.md"))
 	if err != nil {
 		return fmt.Errorf("globbing howtos: %w", err)
 	}
-	for _, oldname := range matches {
-		oldpath := filepath.Join(srcDir, oldname)
-		newpath := filepath.Join(tgtDir, oldname)
+	for _, oldpath := range matches {
+		newpath := filepath.Join(tgtDir, filepath.Base(oldpath))
 		log.Debug("Creating howto symlink", "target", oldpath, "link_name", newpath)
 		if err = os.Symlink(oldpath, newpath); err != nil {
 			return fmt.Errorf("creating howto symlink: %w", err)
@@ -120,16 +119,15 @@ func createHowtoSymlinks(tool string) error {
 
 func removeHowtoSymlinks(tool string) error {
 	symDir := filepath.Join(flightRoot, "usr", "share", "doc", "howtos-enabled")
-	symFs := os.DirFS(symDir)
 	srcDir := howTosDir(tool)
 
-	entries, err := fs.ReadDir(symFs, ".")
+	entries, err := os.ReadDir(symDir)
 	if err != nil {
 		return err
 	}
 	for _, entry := range entries {
 		if entry.Type()&os.ModeSymlink != 0 {
-			symTgt, err := fs.ReadLink(symFs, entry.Name())
+			symTgt, err := os.Readlink(filepath.Join(symDir, entry.Name()))
 			if err != nil {
 				return err
 			}
