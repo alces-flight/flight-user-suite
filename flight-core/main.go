@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/user"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -52,6 +53,10 @@ func main() {
 		termWidth = 80
 	}
 	maxTextWidth := min(termWidth, 80)
+	user, err := user.Current()
+	if err != nil {
+		log.Warn("Unable to determine user: not adding admin commands", "err", err)
+	}
 
 	cli.VersionPrinter = func(cmd *cli.Command) {
 		fmt.Printf("version=%s revision=%s date=%s\n", version, commit, date)
@@ -64,13 +69,7 @@ func main() {
 		Copyright:              "(c) 2026 Stephen F Norledge & Concertim Ltd.",
 		UseShortOptionHandling: true,
 		HideHelpCommand:        true,
-		Description: wordwrap.String(
-			fmt.Sprintf(
-				"Manage the Flight User Suite tools and hooks and access enabled tools.\n\nTools can be managed with the '%s tools' command and any enabled tools can be accessed as '%s <tool>'. A list of enabled tools can be found with '%s tools list --enabled'.\n\nHooks can be managed with the '%s hooks' command. Enabled hooks are executed either when a login shell is started or the Flight environment is activated.  See '%s hooks --help' for more details.",
-				progName, progName, progName, progName, progName,
-			),
-			maxTextWidth,
-		),
+		Description:            rootDescription(user, maxTextWidth),
 		CommandNotFound: func(ctx context.Context, cmd *cli.Command, command string) {
 			fmt.Fprintf(
 				cmd.Root().Writer,
@@ -100,136 +99,9 @@ func main() {
 				},
 			},
 		},
-		Commands: []*cli.Command{
-			{
-				Name:      "tools",
-				Usage:     "Manage Flight User Suite tools",
-				UsageText: fmt.Sprintf("%s tools command [command options]", progName),
-				Description: wordwrap.String(
-					fmt.Sprintf(
-						"Manage the availability of the Flight User Suite tools.\n\nWhen a tool is enabled, it is available as '%s <tool>' and any howto guides it provides are made available through '%s howto'.",
-						progName, progName,
-					),
-					maxTextWidth,
-				),
-				Category: "Tool management",
-				Commands: []*cli.Command{
-					{
-						Name:        "list",
-						Usage:       "List Flight User Suite tools",
-						UsageText:   fmt.Sprintf("%s tools list [--enabled]", progName),
-						Description: wordwrap.String("List all Flight User Suite tools.  If the --enabled flag is set, only list those tools that are currently enabled.", maxTextWidth),
-						Flags: []cli.Flag{
-							&cli.BoolFlag{
-								Name:  "enabled",
-								Usage: "list only enabled tools",
-							},
-						},
-						Action: listTools,
-					},
-					{
-						Name:  "enable",
-						Usage: "Enable a Flight User Suite tool",
-						Description: wordwrap.String(
-							fmt.Sprintf(
-								"Enable the specified tool. When a tool is enabled, it is available as '%s <tool>' and any howto guides it provides are made available through '%s howto'.\n\nA list of available tools can be found with '%s tools list'.",
-								progName, progName, progName,
-							),
-							maxTextWidth,
-						),
-						Arguments: []cli.Argument{
-							&cli.StringArg{Name: "tool", UsageText: "<tool>"},
-						},
-						Before: assertArgPresent("tool"),
-						Action: enableTool,
-					},
-					{
-						Name:  "disable",
-						Usage: "Disable a Flight User Suite tool",
-						Description: wordwrap.String(
-							fmt.Sprintf(
-								"When a tool is disabled, it is no longer available as '%s <tool>' and any howto guides it provides are no longer available through '%s howto'.\n\nA list of currently enabled tools can be found with '%s tools list --enabled'.",
-								progName, progName, progName,
-							),
-							maxTextWidth,
-						),
-						Arguments: []cli.Argument{
-							&cli.StringArg{Name: "tool", UsageText: "<tool>"},
-						},
-						Before: assertArgPresent("tool"),
-						Action: disableTool,
-					},
-				},
-			},
-			{
-				Name:      "hooks",
-				Usage:     "Manage Flight User Suite hooks",
-				UsageText: fmt.Sprintf("%s hooks command [command options]", progName),
-				Description: wordwrap.String(
-					"Manage the Flight User Suite hooks.\n\nThere are two types of hooks: 'login' hooks and 'activation' hooks.  Enabled 'login' hooks are exectued when a login shell is started. Enabled 'activation' hooks are executed with the Flight environment is activated.",
-					maxTextWidth,
-				),
-				Category: "Hook management",
-				Commands: []*cli.Command{
-					{
-						Name:  "list",
-						Usage: "List Flight User Suite hooks",
-						Description: wordwrap.String(
-							fmt.Sprintf(
-								"List all Flight User Suite hooks for the given event.  If the --enabled flag is set, only list those hooks that are currently enabled.\n\nValid events are %s.",
-								validEventNames,
-							),
-							maxTextWidth,
-						),
-						Arguments: []cli.Argument{
-							&cli.StringArg{Name: "event", UsageText: "<event>"},
-						},
-						Flags: []cli.Flag{
-							&cli.BoolFlag{
-								Name:  "enabled",
-								Usage: "list only enabled hooks",
-							},
-						},
-						Before: composeBeforeFuncs(assertArgPresent("event"), assertEventValid("event", 0)),
-						Action: listHooks,
-					},
-					{
-						Name:  "enable",
-						Usage: "Enable a Flight User Suite hook",
-						Description: wordwrap.String(
-							fmt.Sprintf(
-								"Enable the specified <event> hook.  Valid events are %s.\n\nEnabled 'login' hooks are executed when a login shell is started.  Enabled 'activation' hooks are executed when the Flight environment is activated.\n\nA list of available hooks can be found with '%s hooks list <event>'.",
-								validEventNames, progName,
-							),
-							maxTextWidth,
-						),
-						Arguments: []cli.Argument{
-							&cli.StringArg{Name: "event", UsageText: "<event>"},
-							&cli.StringArg{Name: "hook", UsageText: "<hook>"},
-						},
-						Before: composeBeforeFuncs(assertArgPresent("event", "hook"), assertEventValid("event", 0)),
-						Action: enableHook,
-					},
-					{
-						Name:  "disable",
-						Usage: "Disable a Flight User Suite hook",
-						Description: wordwrap.String(
-							fmt.Sprintf(
-								"Disable the specified <event> hook.  Valid events are %s.\n\nDisabled hooks are not executed when <event> occurs.\n\nA list of currently enabled hooks can be found with '%s hooks list --enabled <event>'.",
-								validEventNames, progName,
-							),
-							maxTextWidth,
-						),
-						Arguments: []cli.Argument{
-							&cli.StringArg{Name: "event", UsageText: "<event>"},
-							&cli.StringArg{Name: "hook", UsageText: "<hook>"},
-						},
-						Before: composeBeforeFuncs(assertArgPresent("event", "hook"), assertEventValid("event", 0)),
-						Action: disableHook,
-					},
-				},
-			},
-		},
+	}
+	if user != nil && user.Uid == "0" {
+		addAdminCommands(cmd, maxTextWidth)
 	}
 	addToolProxyCommands(cmd)
 
@@ -274,6 +146,153 @@ func main() {
 			os.Exit(1)
 		}
 	}
+}
+
+func rootDescription(user *user.User, maxTextWidth int) string {
+	var desc string
+	if user != nil && user.Uid == "0" {
+		desc = fmt.Sprintf(
+			"Manage the Flight User Suite tools and hooks and access enabled tools.\n\nTools can be managed with the '%s tools' command and any enabled tools can be accessed as '%s <tool>'. A list of enabled tools can be found with '%s tools list --enabled'.\n\nHooks can be managed with the '%s hooks' command. Enabled hooks are executed either when a login shell is started or the Flight environment is activated.  See '%s hooks --help' for more details.",
+			progName, progName, progName, progName, progName,
+		)
+	} else {
+		desc = "Access Flight User Suite tools"
+	}
+	return wordwrap.String(desc, maxTextWidth)
+}
+
+func addAdminCommands(cmd *cli.Command, maxTextWidth int) {
+	cmds := []*cli.Command{
+		{
+			Name:      "tools",
+			Usage:     "Manage Flight User Suite tools",
+			UsageText: fmt.Sprintf("%s tools command [command options]", progName),
+			Description: wordwrap.String(
+				fmt.Sprintf(
+					"Manage the availability of the Flight User Suite tools.\n\nWhen a tool is enabled, it is available as '%s <tool>' and any howto guides it provides are made available through '%s howto'.",
+					progName, progName,
+				),
+				maxTextWidth,
+			),
+			Category: "Tool management",
+			Commands: []*cli.Command{
+				{
+					Name:        "list",
+					Usage:       "List Flight User Suite tools",
+					UsageText:   fmt.Sprintf("%s tools list [--enabled]", progName),
+					Description: wordwrap.String("List all Flight User Suite tools.  If the --enabled flag is set, only list those tools that are currently enabled.", maxTextWidth),
+					Flags: []cli.Flag{
+						&cli.BoolFlag{
+							Name:  "enabled",
+							Usage: "list only enabled tools",
+						},
+					},
+					Action: listTools,
+				},
+				{
+					Name:  "enable",
+					Usage: "Enable a Flight User Suite tool",
+					Description: wordwrap.String(
+						fmt.Sprintf(
+							"Enable the specified tool. When a tool is enabled, it is available as '%s <tool>' and any howto guides it provides are made available through '%s howto'.\n\nA list of available tools can be found with '%s tools list'.",
+							progName, progName, progName,
+						),
+						maxTextWidth,
+					),
+					Arguments: []cli.Argument{
+						&cli.StringArg{Name: "tool", UsageText: "<tool>"},
+					},
+					Before: assertArgPresent("tool"),
+					Action: enableTool,
+				},
+				{
+					Name:  "disable",
+					Usage: "Disable a Flight User Suite tool",
+					Description: wordwrap.String(
+						fmt.Sprintf(
+							"When a tool is disabled, it is no longer available as '%s <tool>' and any howto guides it provides are no longer available through '%s howto'.\n\nA list of currently enabled tools can be found with '%s tools list --enabled'.",
+							progName, progName, progName,
+						),
+						maxTextWidth,
+					),
+					Arguments: []cli.Argument{
+						&cli.StringArg{Name: "tool", UsageText: "<tool>"},
+					},
+					Before: assertArgPresent("tool"),
+					Action: disableTool,
+				},
+			},
+		},
+		{
+			Name:      "hooks",
+			Usage:     "Manage Flight User Suite hooks",
+			UsageText: fmt.Sprintf("%s hooks command [command options]", progName),
+			Description: wordwrap.String(
+				"Manage the Flight User Suite hooks.\n\nThere are two types of hooks: 'login' hooks and 'activation' hooks.  Enabled 'login' hooks are exectued when a login shell is started. Enabled 'activation' hooks are executed with the Flight environment is activated.",
+				maxTextWidth,
+			),
+			Category: "Hook management",
+			Commands: []*cli.Command{
+				{
+					Name:  "list",
+					Usage: "List Flight User Suite hooks",
+					Description: wordwrap.String(
+						fmt.Sprintf(
+							"List all Flight User Suite hooks for the given event.  If the --enabled flag is set, only list those hooks that are currently enabled.\n\nValid events are %s.",
+							validEventNames,
+						),
+						maxTextWidth,
+					),
+					Arguments: []cli.Argument{
+						&cli.StringArg{Name: "event", UsageText: "<event>"},
+					},
+					Flags: []cli.Flag{
+						&cli.BoolFlag{
+							Name:  "enabled",
+							Usage: "list only enabled hooks",
+						},
+					},
+					Before: composeBeforeFuncs(assertArgPresent("event"), assertEventValid("event", 0)),
+					Action: listHooks,
+				},
+				{
+					Name:  "enable",
+					Usage: "Enable a Flight User Suite hook",
+					Description: wordwrap.String(
+						fmt.Sprintf(
+							"Enable the specified <event> hook.  Valid events are %s.\n\nEnabled 'login' hooks are executed when a login shell is started.  Enabled 'activation' hooks are executed when the Flight environment is activated.\n\nA list of available hooks can be found with '%s hooks list <event>'.",
+							validEventNames, progName,
+						),
+						maxTextWidth,
+					),
+					Arguments: []cli.Argument{
+						&cli.StringArg{Name: "event", UsageText: "<event>"},
+						&cli.StringArg{Name: "hook", UsageText: "<hook>"},
+					},
+					Before: composeBeforeFuncs(assertArgPresent("event", "hook"), assertEventValid("event", 0)),
+					Action: enableHook,
+				},
+				{
+					Name:  "disable",
+					Usage: "Disable a Flight User Suite hook",
+					Description: wordwrap.String(
+						fmt.Sprintf(
+							"Disable the specified <event> hook.  Valid events are %s.\n\nDisabled hooks are not executed when <event> occurs.\n\nA list of currently enabled hooks can be found with '%s hooks list --enabled <event>'.",
+							validEventNames, progName,
+						),
+						maxTextWidth,
+					),
+					Arguments: []cli.Argument{
+						&cli.StringArg{Name: "event", UsageText: "<event>"},
+						&cli.StringArg{Name: "hook", UsageText: "<hook>"},
+					},
+					Before: composeBeforeFuncs(assertArgPresent("event", "hook"), assertEventValid("event", 0)),
+					Action: disableHook,
+				},
+			},
+		},
+	}
+	cmd.Commands = append(cmd.Commands, cmds...)
 }
 
 //go:embed tool_synopsis.txt
