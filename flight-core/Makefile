@@ -12,7 +12,7 @@ LD_FLAGS := -ldflags="-X 'main.version=$(VERSION)' -X 'main.commit=$(COMMIT)' -X
 all: assets $(EXE)
 
 $(EXE):
-	go build -v $(LD_FLAGS) -o $(EXE)
+	CGO_ENABLED=0 go build -v $(LD_FLAGS) -o $(EXE)
 
 assets:
 	rsync -rlptgo --exclude .gitkeep $(ASSET_DIRS) $(DIST)/

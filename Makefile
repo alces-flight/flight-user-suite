@@ -3,7 +3,7 @@ MODULES := flight-starter flight-core flight-desktop flight-howto ssh-keypair-ge
 VERSION := $(shell git describe --tags --dirty --always)
 KERNEL := $(shell uname -s)
 ARCH := $(shell uname -p)
-TARFILE := flight-user-suite-$(VERSION)-$(KERNEL)-$(ARCH).tar.gz
+TARFILE := flight-user-suite_$(VERSION)_$(KERNEL)_$(ARCH).tar.gz
 
 .PHONY: all clean distclean $(MODULES) $(DIST)
 
@@ -16,7 +16,7 @@ $(DIST): $(MODULES)
 	rsync -rlptgo $(foreach module,$(MODULES),$(module)/dist/) $(DIST)/
 
 $(TARFILE): $(DIST)
-	tar czf $@ -C $(DIST) .
+	tar czf $@ --owner=root:0 --group=root:0 -C $(DIST) .
 
 clean:
 	rm -f flight-user-suite-*.tar.gz
