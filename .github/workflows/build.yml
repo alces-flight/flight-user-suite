@@ -54,7 +54,7 @@ jobs:
         if: ${{ github.ref_type == 'tag' }}
         with:
           files: |
-            flight-user-suite-*.tar.gz
+            flight-user-suite*.tar.gz
           draft: true
           prerelease: true
           generate_release_notes: true
