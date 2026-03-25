@@ -19,7 +19,7 @@ $(TARFILE): $(DIST)
 	tar czf $@ --owner=root:0 --group=root:0 -C $(DIST) .
 
 clean:
-	rm -f flight-user-suite-*.tar.gz
+	rm -f flight-user-suite*.tar.gz
 	for m in $(MODULES) ; do \
 		$(MAKE) -C $$m clean ; \
 	done;
