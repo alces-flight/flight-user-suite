@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/urfave/cli/v3"
@@ -20,6 +21,18 @@ type SilentExitError struct {
 
 func (ee SilentExitError) Error() string {
 	return ee.exitError.Error()
+}
+
+var (
+	flightRoot string = "/opt/flight"
+	howtoDir   string
+)
+
+func init() {
+	if root, ok := os.LookupEnv("FLIGHT_ROOT"); ok {
+		flightRoot = root
+	}
+	howtoDir = filepath.Join(flightRoot, "usr", "share", "doc", "howtos-enabled")
 }
 
 func main() {
@@ -68,11 +81,43 @@ func main() {
 }
 
 func list(ctx context.Context, cmd *cli.Command) error {
-	fmt.Println("TODO Implement me")
-	return nil
+	return _print_dir_contents(howtoDir)
 }
 
 func show(ctx context.Context, cmd *cli.Command) error {
 	fmt.Println("TODO Implement me")
+	return nil
+}
+
+func _print_dir_contents(dir_path string) error {
+	file, err := os.Open(dir_path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	names, _ := file.Readdirnames(0)
+	for _, name := range names {
+		filePath := fmt.Sprintf("%v/%v", dir_path, name)
+		file, err := os.Open(filePath)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		fileInfo, err := file.Stat()
+		if err != nil {
+			return err
+		}
+		relPath, err := filepath.Rel(howtoDir, filePath)
+		if err != nil {
+			return err
+		}
+		ext := filepath.Ext(relPath)
+		if ext == ".md" {
+			fmt.Println(relPath)
+		}
+		if fileInfo.IsDir() {
+			_print_dir_contents(filePath)
+		}
+	}
 	return nil
 }
