@@ -23,7 +23,7 @@ if [ "$(type -t flight-start)" != "function" ]; then
   export -f flight-start
 fi
 
-# Run any enabled login hooks when the Flight environment is activated.
+# Run any enabled login hooks when a login shell is created.
 if [ -d "${FLIGHT_ROOT}"/usr/lib/hooks/login ]; then
   shopt -s nullglob
   for hook in "${FLIGHT_ROOT}"/usr/lib/hooks/login/*; do
