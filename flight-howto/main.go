@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"charm.land/glamour/v2"
 	"github.com/urfave/cli/v3"
 )
 
@@ -90,7 +91,13 @@ func show(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(markdown))
+
+	rendered, err := glamour.Render(string(markdown), "dark")
+	if err != nil {
+		return err
+	}
+
+	fmt.Print(rendered)
 	return nil
 }
 
