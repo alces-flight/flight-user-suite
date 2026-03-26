@@ -85,7 +85,12 @@ func list(ctx context.Context, cmd *cli.Command) error {
 }
 
 func show(ctx context.Context, cmd *cli.Command) error {
-	fmt.Println("TODO Implement me")
+	fullPath := filepath.Join(howtoDir, cmd.Args().First())
+	markdown, err := os.ReadFile(fullPath)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(markdown))
 	return nil
 }
 
