@@ -42,6 +42,7 @@ func main() {
 				Usage:     "show a howto",
 				ArgsUsage: "<howto>",
 				Action:    show,
+				Before:    assertArgPresent("howto"),
 			},
 		},
 	}
@@ -59,7 +60,7 @@ func main() {
 		}
 
 		if strings.Contains(errStr, "cannot be set along with") {
-			log.Printf("\nIncorrect Usage: %s", err)
+			log.Printf("\nIncorrect usage: %s", err)
 			os.Exit(1)
 		}
 
@@ -123,4 +124,27 @@ func PrintDirContents(dirPath string) error {
 		}
 	}
 	return nil
+}
+
+// TODO properly share these with flight-core
+type MissingArguments struct {
+	Args []string
+}
+
+func (ma MissingArguments) Error() string {
+	if len(ma.Args) == 1 {
+		return fmt.Sprintf("Incorrect usage: missing argument %s", ma.Args[0])
+	} else {
+		return fmt.Sprintf("Incorrect usage: missing arguments %s", strings.Join(ma.Args, ", "))
+	}
+}
+
+func assertArgPresent(argNames ...string) cli.BeforeFunc {
+	return func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
+		if cmd.NArg() < len(argNames) {
+			missing := argNames[cmd.NArg():]
+			return ctx, MissingArguments{Args: missing}
+		}
+		return ctx, nil
+	}
 }
