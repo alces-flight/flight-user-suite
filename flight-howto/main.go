@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -74,9 +76,15 @@ func list(ctx context.Context, cmd *cli.Command) error {
 }
 
 func show(ctx context.Context, cmd *cli.Command) error {
-	fullPath := filepath.Join(howtoDir, cmd.Args().First())
+	howtoName := cmd.Args().First()
+	fullPath := filepath.Join(howtoDir, howtoName)
 	markdown, err := os.ReadFile(fullPath)
 	if err != nil {
+		if pathError, ok := errors.AsType[*fs.PathError](err); ok {
+			if pathError.Err.Error() == "no such file or directory" {
+				return UnknownHowto{Howto: howtoName}
+			}
+		}
 		return fmt.Errorf("reading howto: %w", err)
 	}
 
@@ -147,4 +155,12 @@ func assertArgPresent(argNames ...string) cli.BeforeFunc {
 		}
 		return ctx, nil
 	}
+}
+
+type UnknownHowto struct {
+	Howto string
+}
+
+func (ut UnknownHowto) Error() string {
+	return fmt.Sprintf("Unknown howto: %s", ut.Howto)
 }
