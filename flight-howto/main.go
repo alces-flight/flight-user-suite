@@ -38,6 +38,8 @@ func init() {
 
 func main() {
 	cmd := &cli.Command{
+		Name:  "flight howto",
+		Usage: "List and display Flight User Suite documentation",
 		Commands: []*cli.Command{
 			{
 				Name:    "list",
