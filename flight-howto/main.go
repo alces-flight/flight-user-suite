@@ -96,34 +96,30 @@ func show(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func PrintDirContents(dir_path string) error {
-	file, err := os.Open(dir_path)
+func PrintDirContents(dirPath string) error {
+	entries, err := os.ReadDir(dirPath)
+
 	if err != nil {
 		return fmt.Errorf("reading directory: %w", err)
 	}
-	defer file.Close()
-	names, _ := file.Readdirnames(0)
-	for _, name := range names {
-		filePath := fmt.Sprintf("%v/%v", dir_path, name)
-		file, err := os.Open(filePath)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		fileInfo, err := file.Stat()
-		if err != nil {
-			return err
-		}
-		relPath, err := filepath.Rel(howtoDir, filePath)
-		if err != nil {
-			return err
-		}
-		ext := filepath.Ext(relPath)
-		if ext == ".md" {
-			fmt.Println(relPath)
-		}
-		if fileInfo.IsDir() {
+
+	for _, entry := range entries {
+		name := entry.Name()
+		filePath := fmt.Sprintf("%v/%v", dirPath, name)
+
+		if entry.IsDir() {
 			PrintDirContents(filePath)
+		} else {
+			relPath, err := filepath.Rel(howtoDir, filePath)
+
+			if err != nil {
+				return fmt.Errorf("reading directory: %w", err)
+			}
+
+			ext := filepath.Ext(relPath)
+			if ext == ".md" {
+				fmt.Println(relPath)
+			}
 		}
 	}
 	return nil
