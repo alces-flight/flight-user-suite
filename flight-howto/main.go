@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"charm.land/glamour/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/urfave/cli/v3"
 )
 
@@ -94,7 +95,15 @@ func show(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	rendered, err := glamour.Render(string(markdown), "dark")
+	// In theory this should work; however lipgloss seems to always think my
+	// terminal has a dark background, even if that background is white.
+	isDark := lipgloss.HasDarkBackground(os.Stdin, os.Stdout)
+	theme := "light"
+	if isDark {
+		theme = "dark"
+	}
+
+	rendered, err := glamour.Render(string(markdown), theme)
 	if err != nil {
 		return err
 	}

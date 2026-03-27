@@ -2,11 +2,13 @@ module github.com/concertim/flight-user-suite/flight-howto
 
 go 1.26.1
 
-require github.com/urfave/cli/v3 v3.8.0
+require (
+	charm.land/glamour/v2 v2.0.0
+	charm.land/lipgloss/v2 v2.0.0
+	github.com/urfave/cli/v3 v3.8.0
+)
 
 require (
-	charm.land/glamour/v2 v2.0.0 // indirect
-	charm.land/lipgloss/v2 v2.0.0 // indirect
 	github.com/alecthomas/chroma/v2 v2.14.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/charmbracelet/colorprofile v0.4.2 // indirect
