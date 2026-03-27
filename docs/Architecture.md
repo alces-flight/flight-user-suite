@@ -1,197 +1,129 @@
-# Tooling, e.g., desktop and howto
+# Architecture
 
-## Main tool / entry point
+## Flight starter
 
-Provide a single entry point to all other tools at `/opt/flight/bin/flight`.
+Flight Starter is responsible for activating the Flight environment in a shell.
+It modifies the shell's `PATH` and `PS1` and sets a number of environment
+variables.
 
-Running this executable provides a list of available commands, e.g.,
+It installs two files outside of `/opt/flight`: `/etc/xdg/flight.config` and
+`/etc/profile.d/zz-flight-starter.sh`.
 
-```
-$ /opt/flight/bin/flight
-Usage: flight [--version] [--help] <command> [<args>]
+When `/etc/profile.d/zz-flight-starter.sh` is sourced the following happens:
 
-The following commands are available:
+* The `FLIGHT_ROOT` environment variable is read from `/etc/xdg/flight.config`.
+* Any enabled "login" hooks are run (see below for more details).
+* A `flight-start` function is defined which activates the Flight environment.
 
-    desktop    Manage virtual desktop environments
-    howto      Get help on using the flight user suite or your HPC cluster
-```
+When `flight-start` is called the following happens:
 
-Running with a command runs requested tool, e.g.,
+* Any scripts in `${FLIGHT_ROOT}/etc/profile.d/` are sourced.
+* Any enabled "activation" hooks are run (see below for more details).
+* `${FLIGHT_ROOT}/bin/` is added to the shell's `PATH`.
+* A `flight-stop` function is defined which deactivates the Flight environment.
+* The `flight-start` function is undefined.
 
-```
-$ /opt/flight/bin/flight howto --help
-Usage: flight howto [--version] [--help] <command> [<args>]
+When `flight-stop` is called any changes to the shell's environment are
+undone. This includes:
 
-The following commands are available:
+* Removing `${FLIGHT_ROOT}/bin/` from the shell's `PATH`.
+* Redefining the `flight-start` function.
+* Undefining `flight-stop` function.
+* Undoing any changes made by scripts in `${FLIGHT_ROOT}/etc/profile.d/`, such as modifying the `PS1`.
 
-    list      List available howto guides
-    show      View a howto guide
-    search    Search for a howto guide
-```
+## Flight core
 
+Flight core is the main entry point for configuring FUS and for accessing the
+tools it provides.  It is available as a binary at `${FLIGHT_ROOT}/bin/flight`.
+It can be ran using its full path without activating the Flight environment, or
+simply as `flight` once the Flight environment is activated.
 
-## Individual tools
+For root it allows managing the availability of tools and hooks and for
+accessing any enabled tools.
 
-Shamelessly ~ripped off of~ borrowed from Git's plugin architecture.
+For non-root users it allows accessing any enabled tools.
 
-* Executable file installed into `/opt/flight/usr/lib/flight-core/`.
-* Running `flight` / `flight --help` lists executable tools in `/opt/flight/usr/lib/flight-core/`.
-* Running, say, `flight howto` executes `/opt/flight/usr/lib/flight-core/flight-howto` passing any and all arguments to it.
+### Limitation
 
-This setup has the following features.
+Currently, if a tool or hook is enabled it is enabled for both root and
+non-root users.  It is expected that later work will allow for root-only tools
+and hooks.
 
-* Allows tools to be developed independently in the most appropriate language.
-* Allows non-standard cluster-specific tooling to be developed and easily integrated.
+## Hooks
 
+There are two types of hooks available: "login" hooks which are automatically
+run when a user creates a new login shell, and "activation" hooks that are run
+when the Flight environment is activated.
 
-## Toggle on-and-off-able
+Login hooks are defined as any file matching the glob
+`${FLIGHT_ROOT}/usr/lib/hooks/login/*`, whilst activation hooks are defined as
+any file matching the glob `${FLIGHT_ROOT}/usr/lib/hooks/activation/*`.
 
-Provide a command to toggle tool availability, e.g., `flight tools desktop
-<on|off>`. This command:
+A hook is enabled if it is executable and is disabled otherwise.
 
-1. toggles the executable permission for the corresponding tool in `/opt/flight/usr/lib/flight-core/`.
-2. adjusts symlinks in `/opt/flight/usr/share/doc/howtos-enabled/`.
+When a login shell is created all enabled login hooks will be executed, this is
+done as a result of login shells sourcing
+`/etc/profile.d/zz-flight-starter.sh`.
 
-If the tool is not executable:
+When `flight-start` is ran, all enabled activation hooks will be executed.
 
-* It does not appear in `flight --help` output.
-* Running it via `flight <tool>` will fail with command not known.
-* Running it directly via `/opt/flight/usr/lib/flight-core/flight-<tool>` will fail with file not executable.
+### Hook limitations
 
-If the tool's howto guides are not symlinked into `/opt/flight/usr/share/doc/howtos-enabled/`:
+The current implementation of hooks requires them to be executed---it does not
+support sourcing them.  Executing hooks prevents them from modifying the
+shell's environment, which prevents implementing all of the
+`${FLIGHT_ROOT}/etc/profile.d/*` scripts as hooks. An example is `02-prompt.sh`
+which needs to modify the shell's `PS1` variable.
 
-* `flight-howto` will be unaware of them.
+There is currently no support for disabling any scripts in
+`${FLIGHT_ROOT}/etc/profile.d/*`.  They are always ran when the Flight
+environment is activated.
 
-Issues with this approach:
+It is expected that future work will allow hooks to be sourced whilst still
+supporting enabling and disabling of any hook whether executed or sourced.
 
-* Tools are discoverable via standard CLI tools such as `ls` and `find`.
-* Tools can be enabled by anyone with root access.
-* Tool availability can diverge from one machine to another (this could potentially be a feature).
+## Tools
 
-## Disk layout
+Tools are programs that a user or admin can run to achieve a specific task.
+Unlike hooks, which run automatically, tools are only run on demand.  An
+example would be `flight desktop` that allows for managing virtual desktop
+environments.
 
-Putting all of that together, we would have the following on-disk layout.
+Tools are defined as any file matching the glob
+`${FLIGHT_ROOT}/usr/lib/flight-core/flight-*`. A tool is enabled if it is
+executable and is disabled otherwise.
 
-```
-/opt/flight/bin/flight
-/opt/flight/usr/lib/flight-core/flight-desktop
-/opt/flight/usr/lib/flight-core/flight-howto
-/opt/flight/usr/share/doc/howtos-enabled/
-/opt/flight/usr/share/doc/flight-core/01-access-your-cluster.md
-/opt/flight/usr/share/doc/flight-core/02-submit-a-job.md
-/opt/flight/usr/share/doc/flight-howto/01-use-flight-howto.md
-/opt/flight/usr/share/doc/flight-desktop/01-launch-desktop.md
-```
+An enabled tool can be run as `${FLIGHT_ROOT}/bin/flight <tool>`. E.g., running
+`${FLIGHT_ROOT}/bin/flight desktop --help` would run
+`${FLIGHT_ROOT}/usr/lib/flight-core/flight-desktop --help`. If the Flight
+environment is activated, this can be simplified to `flight <tool>`.
 
+### Howto guides
 
-## Distribution
+A tool can provide howto guides by creating markdown files in
+`${FLIGHT_ROOT}/usr/share/doc/flight-<tool>/`.
 
-Could be via a `tar.gz` file with the above layout.  Could be via an RPM or a
-DEB with the above layout.
+When a tool is enabled these are symlinked into
+`${FLIGHT_ROOT}/usr/share/doc/howtos-enabled/` which makes them available to
+the the `flight-howto` tool.
 
-In any case, there is no post-installation installation of tooling.
+Similarly, when a tool is disabled, those symlinks are removed.
 
+## Packaging
 
-# Integration
+There are separate directories (aka subprojects) for `flight-starter`,
+`flight-core` and the various tools.  Hooks might be defined in
+`flight-starter` one of the tool subprojects or as their own subproject.
 
-By default, `/opt/flight/bin` is not on `PATH`, so installation is opt-in.
+This separation allows for each subproject to be developed separately and to
+manage its own build and packaging requirements without conflict.
 
-We add a profile script at `/etc/profile.d/flight.sh`. This script defines a
-Bash function `flight-start`. To opt-in a user runs `flight-start` which does
-the following:
+Each subproject is required to contain a `Makefile` defining an `all` target.
+This target should build the subproject to `<subproject>/dist/`. The layout
+inside `<subproject>/dist/` should match the desired layout after installation,
+e.g., if subproject requires that a file is installed at
+`/opt/flight/usr/lib/flight-core/flight-desktop`, the `all` target should copy
+that file to `<subproject>/dist/opt/flight/usr/lib/flight-core/flight-desktop`.
 
-* adds `/opt/flight/bin` to `PATH`
-* sources profile scripts at `/opt/flight/etc/profile.d/`
-
-The following scripts in `/opt/flight/etc/profile.d/` are sourced:
-
-* `banner.sh` - displays a welcome to "Flight User Suite" banner.
-* `prompt.sh` - modifies `PS1` to include that the flight environment is active.
-* `stop.sh` - un-defines `flight-start` and defines `flight-stop`. 
-
-When `flight-stop` is ran it 
-
-1. re-defines `flight-start`
-2. un-defines `flight-stop`
-3. removes the side effects of running `flight-start`. This requires we track
-   the initial `PATH` and `PS1`.
-
-
-## Disk layout
-
-Disk layout for integration / starter work:
-
-```
-/etc/profile.d/flight.sh
-/opt/flight/etc/profile.d/01-banner.sh
-/opt/flight/etc/profile.d/01-prompt.sh
-/opt/flight/etc/profile.d/01-stop.sh
-```
-
-## Future enhancements
-
-### Support shells other than Bash.
-
-To support, say, tcsh we would add the following files:
-
-```
-/etc/profile.d/flight.csh
-/opt/flight/etc/profile.d/01-banner.csh
-/opt/flight/etc/profile.d/01-prompt.csh
-/opt/flight/etc/profile.d/01-stop.csh
-```
-
-The `flight-start` function defined in `/etc/profile.d/flight.csh` would source
-the `/opt/flight/etc/profile.d/*.csh` profiles scripts.
-
-
-### Add support for automatically starting the flight environment
-
-Add support for automatically starting the flight environment when a user logs
-in.  It should be possible to set a cluster-wide default and to override the
-default on a per-user basis.
-
-```
-$ flight config autostart <on|off> [--global]
-```
-
-Possible implementation:
-
-With `--global` present edit `/etc/xdg/flight.conf`, without `--global` edit
-`~/.config/flight.conf`. In either case, adjust an `autostart=True` /
-`autostart=False` line as appropriate.
-
-
-# More thoughts
-
-## Built-in vs plugin
-
-The Flight Core executable, aka `/opt/flight/bin/flight`, should probably have
-the `tools` command as a builtin to prevent disabling the `tools` tool.
-
-Both `howto` and `desktop` are implemented as plugins. `config` is probably a
-plugin.
-
-
-## Building the distribution
-
-We want to have a single file to distribute, e.g., a single `*.tar.gz` or a
-single RPM.  The easiest way to build that file is likely to have a mono-repo.
-
-We can then have a `build.sh`/`package.sh` script that has access to all the
-files it needs in the repo. This would make running it on CI easy.
-
-## Parallel development
-
-I see the following avenues for parallel development.
-
-* Flight Integration - Bash scripts to modify `PATH` and `PS1`.
-* Flight Core (a.k.a., `/opt/flight/bin/flight`) - wrapper to launch other scripts, plus `tools` command to manage tool availability.
-* `flight-desktop` - standalone tool to start/stop/list virtual desktops.
-* `flight-howto` - standalone tool to list/show howto documents in a specific directory.
-
-
-# Areas lacking thought
-
-* Exact functionality of each tool.
-* How flight desktop types will work.
+A top-level Makefile builds all of the subprojects and creates a tarball from
+them suitable for extration over `/`.

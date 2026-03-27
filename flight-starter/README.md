@@ -1,16 +1,16 @@
 # Flight Starter
 
-Flight Starter is responsible for activating the flight environment in a shell.
-It modifies the shell's PATH and PS1 and sets a number of environment
+Flight Starter is responsible for activating the Flight environment in a shell.
+It modifies the shell's `PATH` and `PS1` and sets a number of environment
 variables.
 
-After the flight environment has been activated, the `flight` executable
-provided by `flight-core` is available on the shell's PATH.  Further
-interaction with the Flight User Suite take place through that `flight`
-executable.
+After the Flight environment has been activated, by running `flight-start`, the
+`flight` executable provided by `flight-core` is available on the shell's
+`PATH`.  Further interaction with the Flight User Suite take place through that
+`flight` executable.
 
-When the flight environment is deactivated modifications to the environment are
-cleaned up.
+When the Flight environment is deactivated, by running `flight-stop`,
+modifications to the environment are cleaned up.
 
 
 ## Usage
