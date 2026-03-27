@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -13,17 +12,6 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/urfave/cli/v3"
 )
-
-// Wrapper around exec.ExitError that avoids the default handling by urfave/cli.
-// TODO deduplicate from flight-core/tools.go (both type and func below)
-type SilentExitError struct {
-	ExitCode  int
-	exitError error
-}
-
-func (ee SilentExitError) Error() string {
-	return ee.exitError.Error()
-}
 
 var (
 	flightRoot string = "/opt/flight"
@@ -44,7 +32,7 @@ func main() {
 		Commands: []*cli.Command{
 			{
 				Name:    "list",
-				Aliases: []string{"l"},
+				Aliases: []string{"l", "ls"},
 				Usage:   "list available howtos",
 				Action:  list,
 			},
@@ -75,24 +63,20 @@ func main() {
 			os.Exit(1)
 		}
 
-		if exitError, ok := errors.AsType[SilentExitError](err); ok {
-			os.Exit(exitError.ExitCode)
-		} else {
-			log.Printf("%s\n", err)
-			os.Exit(1)
-		}
+		log.Printf("%s\n", err)
+		os.Exit(1)
 	}
 }
 
 func list(ctx context.Context, cmd *cli.Command) error {
-	return _print_dir_contents(howtoDir)
+	return PrintDirContents(howtoDir)
 }
 
 func show(ctx context.Context, cmd *cli.Command) error {
 	fullPath := filepath.Join(howtoDir, cmd.Args().First())
 	markdown, err := os.ReadFile(fullPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading howto: %w", err)
 	}
 
 	// In theory this should work; however lipgloss seems to always think my
@@ -105,17 +89,17 @@ func show(ctx context.Context, cmd *cli.Command) error {
 
 	rendered, err := glamour.Render(string(markdown), theme)
 	if err != nil {
-		return err
+		return fmt.Errorf("rendering howto: %w", err)
 	}
 
 	fmt.Print(rendered)
 	return nil
 }
 
-func _print_dir_contents(dir_path string) error {
+func PrintDirContents(dir_path string) error {
 	file, err := os.Open(dir_path)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading directory: %w", err)
 	}
 	defer file.Close()
 	names, _ := file.Readdirnames(0)
@@ -139,7 +123,7 @@ func _print_dir_contents(dir_path string) error {
 			fmt.Println(relPath)
 		}
 		if fileInfo.IsDir() {
-			_print_dir_contents(filePath)
+			PrintDirContents(filePath)
 		}
 	}
 	return nil
