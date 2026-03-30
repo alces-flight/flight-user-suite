@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/netip"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -29,6 +30,10 @@ var (
 	validTypes            = []string{"terminal", "gnome"}
 	validTypeNames string = strings.Join(validTypes, ", ")
 )
+
+func libexecPath(relpath string) string {
+	return filepath.Join(flightRoot, "usr", "libexec", "desktop", relpath)
+}
 
 func startCommand() *cli.Command {
 	return &cli.Command{
@@ -76,6 +81,7 @@ func startCommand() *cli.Command {
 			fmt.Printf("\u2705 Starting session\n\n")
 			fmt.Printf("A '%s' desktop session has been started.\n", session.SessionType)
 			printSessionDetails(session)
+			accessSummary(session)
 			return nil
 		},
 	}
@@ -95,23 +101,6 @@ func assertTypeValid(argName string, argIndex int) cli.BeforeFunc {
 		}
 		return ctx, nil
 	}
-}
-
-func printSessionDetails(session Session) {
-	// TODO: Better output for TTY.
-	fmt.Println()
-	fmt.Printf("Identity\t%s\n", session.UUID)
-	fmt.Printf("Name\t\t%s\n", session.Name)
-	fmt.Printf("Type\t\t%s\n", session.SessionType)
-	// fmt.Printf("Host IP\t%s\n", session.)
-	fmt.Printf("Hostname\t%s\n", session.Metadata.Host)
-	fmt.Printf("Port\t\t%d\n", session.Metadata.Port())
-	fmt.Printf("Display\t\t:%s\n", session.Metadata.Display)
-	fmt.Printf("Password\t%s\n", session.Password)
-	fmt.Printf("State\t\t%s\n", session.SessionState)
-	fmt.Printf("Created at\t%s\n", session.CreatedAt)
-	fmt.Printf("Geometry\t%s\n", session.Geometry)
-	fmt.Println()
 }
 
 type sessionState string
@@ -147,6 +136,14 @@ func (s sessionMetadata) Port() int {
 	}
 	return 5900 + display
 
+}
+
+func (s Session) PrimaryIP() netip.Addr {
+	ip, err := getPrimaryIP()
+	if err != nil {
+		log.Debug("unable to get primary IP", "err", err)
+	}
+	return ip
 }
 
 func (s *Session) start(ctx context.Context) error {
@@ -240,7 +237,6 @@ func (s *Session) metadataFile() string {
 }
 
 func (s *Session) startVNC(ctx context.Context, dir string) error {
-	vncServerScriptPath := filepath.Join(flightRoot, "usr", "libexec", "vncserver")
 	passwdFile := s.passwordFile()
 	args := []string{
 		"-autokill",
@@ -250,7 +246,7 @@ func (s *Session) startVNC(ctx context.Context, dir string) error {
 		"-exedir", "/usr/bin",
 		"-geometry", s.Geometry,
 	}
-	cmd := exec.CommandContext(ctx, vncServerScriptPath, args...)
+	cmd := exec.CommandContext(ctx, libexecPath("vncserver"), args...)
 	cmd.Dir = dir
 	// TODO: Set environment.
 	// cmd.Env = []string{}
