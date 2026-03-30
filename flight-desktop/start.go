@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -100,10 +101,14 @@ func printSessionDetails(session Session) {
 	// TODO: Better output for TTY.
 	fmt.Println()
 	fmt.Printf("Identity\t%s\n", session.UUID)
-	fmt.Printf("Name\t%s\n", session.Name)
-	fmt.Printf("Type\t%s\n", session.SessionType)
+	fmt.Printf("Name\t\t%s\n", session.Name)
+	fmt.Printf("Type\t\t%s\n", session.SessionType)
+	// fmt.Printf("Host IP\t%s\n", session.)
+	fmt.Printf("Hostname\t%s\n", session.Metadata.Host)
+	fmt.Printf("Port\t\t%d\n", session.Metadata.Port())
+	fmt.Printf("Display\t\t:%s\n", session.Metadata.Display)
 	fmt.Printf("Password\t%s\n", session.Password)
-	fmt.Printf("State\t%s\n", session.SessionState)
+	fmt.Printf("State\t\t%s\n", session.SessionState)
 	fmt.Printf("Created at\t%s\n", session.CreatedAt)
 	fmt.Printf("Geometry\t%s\n", session.Geometry)
 	fmt.Println()
@@ -121,9 +126,27 @@ type Session struct {
 	Name         string    `yaml:"name"`
 	SessionType  string    `yaml:"session_type"`
 	Password     string
-	SessionState sessionState `yaml:"session_state"`
-	Geometry     string       `yaml:"geometry"`
-	CreatedAt    time.Time    `yaml:"created_at"`
+	SessionState sessionState    `yaml:"state"`
+	Geometry     string          `yaml:"geometry"`
+	CreatedAt    time.Time       `yaml:"created_at"`
+	Metadata     sessionMetadata `yaml:"metadata"`
+}
+
+type sessionMetadata struct {
+	Host    string `yaml:"host"`
+	Display string `yaml:"display"`
+	Log     string `yaml:"log"`
+	Pidfile string `yaml:"pidfile"`
+}
+
+func (s sessionMetadata) Port() int {
+	display, err := strconv.Atoi(s.Display)
+	if err != nil {
+		log.Debug("unable to parse display", "display", s.Display, "err", err)
+		return -1
+	}
+	return 5900 + display
+
 }
 
 func (s *Session) start(ctx context.Context) error {
@@ -172,7 +195,7 @@ func (s *Session) createPassword() error {
 	output, err := cmd.Output()
 	if err != nil {
 		if ee, ok := errors.AsType[*exec.ExitError](err); ok {
-			log.Debug("vncpasswd output", "stdout", output, "stderr", string(ee.Stderr))
+			log.Debug("vncpasswd output", "stdout", string(output), "stderr", string(ee.Stderr))
 		}
 		return fmt.Errorf("setting password: %w", err)
 	}
@@ -235,11 +258,30 @@ func (s *Session) startVNC(ctx context.Context, dir string) error {
 	output, err := cmd.Output()
 	if err != nil {
 		if ee, ok := errors.AsType[*exec.ExitError](err); ok {
-			log.Debug("vncserver", "stdout", output, "stderr", string(ee.Stderr))
+			log.Debug("vncserver", "stdout", string(output), "stderr", string(ee.Stderr))
 		}
 		return err
 	}
-	fmt.Printf("Output >>>\n%s\n", string(output))
+
+	inYamlBlock := false
+	var yamlString strings.Builder
+	for line := range strings.Lines(string(output)) {
+		if line == "<YAML>\n" {
+			inYamlBlock = true
+		} else if line == "</YAML>\n" {
+			inYamlBlock = false
+		} else if inYamlBlock {
+			yamlString.WriteString(line)
+		}
+	}
+	ys := yamlString.String()
+	var md sessionMetadata
+	err = yaml.Unmarshal([]byte(ys), &md)
+	if err != nil {
+		return err
+	}
+	s.Metadata = md
+
 	return nil
 }
 
