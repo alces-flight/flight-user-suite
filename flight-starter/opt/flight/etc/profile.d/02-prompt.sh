@@ -1,26 +1,18 @@
 export FLIGHT_ORIG_ENV_PS1="${PS1}"
 
-if [ "$PS1" = "\\s-\\v\\\$ " ]; then
-  # Prompt hasn't been set yet, give it a default
-  PS1="[\u@\h \W]\\$ "
-fi
+FLIGHT_ORANGE="38;2;255;116;1"
+
+# Start with the basics - we'll end up injecting a space between \h and \W later
+PS1="[\u@\h\W]\\$ "
+
+# Prepend an orange <flight>
+PS1="\[\033[${FLIGHT_ORANGE}m\]\$(__flight_ps1_active \"<%s>\")\[\033[00m\] ${PS1}"
 
 FLIGHT_PS1="$(
     "${FLIGHT_ROOT}"/libexec/flight-starter/augment-bash-prompt \
         "$PS1" \
-        '$(__flight_ps1_active "<%s>")' \
-        '1;32;40' \
-        2>/dev/null
-    )"
-if [ $? -eq 0 ] ; then
-    PS1="${FLIGHT_PS1}"
-fi
-
-FLIGHT_PS1="$(
-    "${FLIGHT_ROOT}"/libexec/flight-starter/augment-bash-prompt \
-        "$PS1" \
-        '$(__flight_ps1_clustername)' \
-        '1;32;40' \
+        '$(__flight_ps1_clustername "(%s) ")' \
+        "$FLIGHT_ORANGE" \
         2>/dev/null
     )"
 if [ $? -eq 0 ] ; then
@@ -60,7 +52,7 @@ __flight_ps1_active() {
 
     local flight_string
     if [ "${FLIGHT_ACTIVE}" == "true" ] ; then
-        flight_string="Flight env active"
+        flight_string="flight"
     fi
 
     if [ "${flight_string}" != "" ]; then
@@ -69,4 +61,4 @@ __flight_ps1_active() {
 }
 
 FLIGHT_DEFINED_SYMBOLS+=(__flight_ps1_active __flight_ps1_clustername)
-unset FLIGHT_PS1
+unset FLIGHT_PS1 FLIGHT_ORANGE
