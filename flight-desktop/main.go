@@ -49,7 +49,7 @@ func main() {
 	}
 	cmd := &cli.Command{
 		Name:                   progName,
-		Usage:                  "The Flight User Suite",
+		Usage:                  "Manage interactive GUI desktop sessions",
 		Version:                version,
 		Suggest:                true,
 		Copyright:              "(c) 2026 Stephen F Norledge & Concertim Ltd.",

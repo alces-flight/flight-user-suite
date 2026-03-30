@@ -217,7 +217,6 @@ func (s *Session) metadataFile() string {
 }
 
 func (s *Session) startVNC(ctx context.Context, dir string) error {
-	// TODO: Use correct script
 	vncServerScriptPath := filepath.Join(flightRoot, "usr", "libexec", "vncserver")
 	passwdFile := s.passwordFile()
 	args := []string{

@@ -1,13 +1,14 @@
 #!/usr/bin/env perl
 #==============================================================================
-# Copyright (C) 2019-present Alces Flight Ltd
+# Copyright (C) 2026-present Concertim Ltd
 #
 # This file/package is part of Flight Desktop.
 #
 # For more information on Flight Desktop, please visit:
-# https://github.com/alces-flight/flight-desktop
+# https://github.com/concertim/flight-user-suite
 #==============================================================================
 #
+#  Copyright (C) 2019 Stephen F. Norledge and Alces Flight Ltd.
 #  Copyright (C) 2015 Stephen F. Norledge and Alces Software Ltd.
 #  Copyright (C) 2009-2010 D. R. Commander.  All Rights Reserved.
 #  Copyright (C) 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
