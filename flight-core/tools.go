@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -148,21 +147,10 @@ func runTool(tool string) func(ctx context.Context, cmd *cli.Command) error {
 	run := func(ctx context.Context, cmd *cli.Command) error {
 		tp := toolPath(tool)
 		log.Debug("Execing", "tool", tool, "path", tp, "args", cmd.Args().Slice())
-
 		exe := exec.CommandContext(ctx, tp, cmd.Args().Slice()...)
-		stdout, err := exe.StdoutPipe()
-		if err != nil {
-			return fmt.Errorf("creating stdout pipe: %w", err)
-		}
-		stderr, err := exe.StderrPipe()
-		if err != nil {
-			return fmt.Errorf("creating stderr pipe: %w", err)
-		}
-
-		go func() { io.Copy(os.Stdout, stdout) }()
-		go func() { io.Copy(os.Stderr, stderr) }()
-
-		err = exe.Run()
+		exe.Stdout = os.Stdout
+		exe.Stderr = os.Stderr
+		err := exe.Run()
 		return transformToolError(tool, err)
 	}
 
