@@ -93,6 +93,7 @@ func main() {
 			listSessionsCommand(),
 			killSessionCommand(),
 			showSessionCommand(),
+			typeAvailCommand(),
 		},
 	}
 
