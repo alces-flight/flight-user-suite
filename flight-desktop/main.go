@@ -89,7 +89,7 @@ func main() {
 			},
 		},
 		Commands: []*cli.Command{
-			startCommand(),
+			startSessionCommand(),
 			listSessionsCommand(),
 			killSessionCommand(),
 			showSessionCommand(),
