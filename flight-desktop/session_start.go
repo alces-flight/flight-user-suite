@@ -58,7 +58,7 @@ func startCommand() *cli.Command {
 				Name:         cmd.String("name"),
 				Geometry:     cmd.String("geometry"),
 			}
-			err := session.start(ctx)
+			err := session.Start(ctx)
 
 			// TODO: Stop the spinner
 

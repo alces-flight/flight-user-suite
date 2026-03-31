@@ -40,6 +40,39 @@ type Session struct {
 	Metadata     sessionMetadata `yaml:"metadata"`
 }
 
+func (s *Session) Start(ctx context.Context) error {
+	if err := s.mkSessionDir(); err != nil {
+		return err
+	}
+	if err := s.createPassword(); err != nil {
+		return err
+	}
+	if err := s.installSessionScript(); err != nil {
+		return err
+	}
+	if err := s.startVNC(ctx, xdg.Home); err != nil {
+		return fmt.Errorf("staring VNC server: %w", err)
+	}
+	s.CreatedAt = time.Now()
+	s.SessionState = Active
+	err := s.Save()
+	if err != nil {
+		return fmt.Errorf("saving session: %w", err)
+	}
+	return nil
+}
+
+func (s *Session) Save() error {
+	data, err := yaml.Marshal(&s)
+	if err != nil {
+		return fmt.Errorf("saving session: %w", err)
+	}
+	metadataFile := s.metadataFile()
+	log.Debug("saving session", "file", metadataFile)
+	os.WriteFile(metadataFile, data, 0o600)
+	return nil
+}
+
 func (s *Session) Kill(ctx context.Context) error {
 	args := []string{
 		"-kill",
@@ -75,26 +108,17 @@ func (s Session) PrimaryIP() netip.Addr {
 	return ip
 }
 
-func (s *Session) start(ctx context.Context) error {
-	if err := s.mkSessionDir(); err != nil {
-		return err
-	}
-	if err := s.createPassword(); err != nil {
-		return err
-	}
-	if err := s.installSessionScript(); err != nil {
-		return err
-	}
-	if err := s.startVNC(ctx, xdg.Home); err != nil {
-		return fmt.Errorf("staring VNC server: %w", err)
-	}
-	s.CreatedAt = time.Now()
-	s.SessionState = Active
-	err := s.save()
+func (s Session) Port() int {
+	display, err := strconv.Atoi(s.Display())
 	if err != nil {
-		return fmt.Errorf("saving session: %w", err)
+		log.Debug("unable to parse display", "display", s.Display(), "err", err)
+		return -1
 	}
-	return nil
+	return 5900 + display
+}
+
+func (s Session) Display() string {
+	return s.Metadata.Display
 }
 
 func (s *Session) mkSessionDir() error {
@@ -210,32 +234,11 @@ func (s *Session) startVNC(ctx context.Context, dir string) error {
 	return nil
 }
 
-func (s *Session) save() error {
-	data, err := yaml.Marshal(&s)
-	if err != nil {
-		return fmt.Errorf("saving session: %w", err)
-	}
-	metadataFile := s.metadataFile()
-	log.Debug("saving session", "file", metadataFile)
-	os.WriteFile(metadataFile, data, 0o600)
-	return nil
-}
-
 type sessionMetadata struct {
 	Host    string `yaml:"host"`
 	Display string `yaml:"display"`
 	Log     string `yaml:"log"`
 	Pidfile string `yaml:"pidfile"`
-}
-
-func (s sessionMetadata) Port() int {
-	display, err := strconv.Atoi(s.Display)
-	if err != nil {
-		log.Debug("unable to parse display", "display", s.Display, "err", err)
-		return -1
-	}
-	return 5900 + display
-
 }
 
 // Wrapper around exec.ExitError that avoids the default handling by urfave/cli.
