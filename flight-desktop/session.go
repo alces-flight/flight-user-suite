@@ -39,6 +39,56 @@ type Session struct {
 	Metadata     sessionMetadata `yaml:"metadata"`
 }
 
+func loadAllSessions() ([]*Session, error) {
+	glob := filepath.Join(xdg.StateHome, "flight", "desktop", "sessions", "*", "metadata.yml")
+	log.Debug("Loading all sessions", "glob", glob)
+	sessions := make([]*Session, 0)
+	matches, err := filepath.Glob(glob)
+	if err != nil {
+		return nil, fmt.Errorf("loading sessions: %w", err)
+	}
+	for _, match := range matches {
+		id := filepath.Base(filepath.Dir(match))
+		session, err := loadSession(id)
+		if err != nil {
+			log.Debug("Skipping bad session", "match", match, "err", err)
+			continue
+		}
+		sessions = append(sessions, session)
+	}
+	return sessions, nil
+}
+
+func loadSession(id string) (*Session, error) {
+	session := &Session{ID: id}
+	log.Debug("Loading session", "sessionDir", session.sessionDir())
+	info, err := os.Stat(session.sessionDir())
+	if err != nil {
+		log.Debug("Error checking session dir", "sessionDir", session.sessionDir(), "err", err)
+		session.SessionState = Broken
+		return session, UnknownSession{Session: id}
+	}
+	if !info.IsDir() {
+		log.Debug("Session dir is not a directory", "sessionDir", session.sessionDir())
+		session.SessionState = Broken
+		return session, UnknownSession{Session: id}
+	}
+
+	data, err := os.ReadFile(session.metadataFile())
+	if err != nil {
+		log.Debug("Reading session metadata", "metadataFile", session.metadataFile(), "err", err)
+		session.SessionState = Broken
+		return session, nil
+	}
+	err = yaml.Unmarshal(data, &session)
+	if err != nil {
+		log.Debug("Loading session metadata", "metadataFile", session.metadataFile(), "err", err)
+		session.SessionState = Broken
+		return session, nil
+	}
+	return session, nil
+}
+
 func (s *Session) Start(ctx context.Context) error {
 	if err := s.mkSessionDir(); err != nil {
 		return err
@@ -114,6 +164,14 @@ func (s Session) Port() int {
 		return -1
 	}
 	return 5900 + display
+}
+
+func (s Session) PrimaryConnectionString() string {
+	if s.SessionState == Broken {
+		return ""
+	}
+	ip := s.PrimaryIP().String()
+	return fmt.Sprintf("%s:%d", ip, s.Port())
 }
 
 func (s Session) Display() string {

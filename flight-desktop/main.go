@@ -26,6 +26,7 @@ var (
 
 	progName     string = "flight desktop"
 	flightRoot   string = "/opt/flight"
+	termWidth    int    = 80
 	maxTextWidth int    = 80
 )
 
@@ -36,7 +37,8 @@ func init() {
 	if root, ok := os.LookupEnv("FLIGHT_ROOT"); ok {
 		flightRoot = root
 	}
-	termWidth, _, err := term.GetSize(int(os.Stdout.Fd()))
+	var err error
+	termWidth, _, err = term.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
 		termWidth = 80
 	}
@@ -88,6 +90,7 @@ func main() {
 		},
 		Commands: []*cli.Command{
 			startCommand(),
+			listSessionsCommand(),
 			killSessionCommand(),
 		},
 	}

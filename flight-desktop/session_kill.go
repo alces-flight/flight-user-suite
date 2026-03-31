@@ -3,12 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"charm.land/log/v2"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/urfave/cli/v3"
-	"gopkg.in/yaml.v3"
 )
 
 func killSessionCommand() *cli.Command {
@@ -42,36 +40,6 @@ func killSessionCommand() *cli.Command {
 			return nil
 		},
 	}
-}
-
-func loadSession(id string) (*Session, error) {
-	session := &Session{ID: id}
-	log.Debug("Loading session", "sessionDir", session.sessionDir())
-	info, err := os.Stat(session.sessionDir())
-	if err != nil {
-		log.Debug("Error checking session dir", "sessionDir", session.sessionDir(), "err", err)
-		session.SessionState = Broken
-		return session, UnknownSession{Session: id}
-	}
-	if !info.IsDir() {
-		log.Debug("Session dir is not a directory", "sessionDir", session.sessionDir())
-		session.SessionState = Broken
-		return session, UnknownSession{Session: id}
-	}
-
-	data, err := os.ReadFile(session.metadataFile())
-	if err != nil {
-		log.Debug("Reading session metadata", "metadataFile", session.metadataFile(), "err", err)
-		session.SessionState = Broken
-		return session, nil
-	}
-	err = yaml.Unmarshal(data, &session)
-	if err != nil {
-		log.Debug("Loading session metadata", "metadataFile", session.metadataFile(), "err", err)
-		session.SessionState = Broken
-		return session, nil
-	}
-	return session, nil
 }
 
 type UnknownSession struct {
