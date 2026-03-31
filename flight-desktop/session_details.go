@@ -20,7 +20,7 @@ func printSessionStartedMessage(session Session) {
 	}
 	ip := session.PrimaryIP().String()
 	vnc := fmt.Sprintf("vnc://%s:%s@%s:%d", username, session.Password, ip, session.Port())
-	ipPort := fmt.Sprintf("%s:%d", ip, session.Port())
+	ipPort := session.PrimaryConnectionString()
 	ipDisplay := fmt.Sprintf("%s:%s", ip, session.Display())
 
 	var name string
