@@ -15,6 +15,7 @@ func typeAvailCommand() *cli.Command {
 		Name:        "avail",
 		Usage:       "Show available desktop types",
 		Description: wordwrap.String("Display a list of available desktop types.", maxTextWidth),
+		Category:    "Desktop types",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			types, err := loadAllTypes()
 			if err != nil {

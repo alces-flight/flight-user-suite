@@ -13,6 +13,7 @@ func showSessionCommand() *cli.Command {
 		Name:        "show",
 		Usage:       "Show information about a desktop session",
 		Description: wordwrap.String("Display the connection information for a desktop session.", maxTextWidth),
+		Category:    "Sessions",
 		Arguments: []cli.Argument{
 			&cli.StringArg{Name: "id", UsageText: "<id>"},
 		},

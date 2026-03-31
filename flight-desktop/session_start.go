@@ -21,6 +21,7 @@ func startSessionCommand() *cli.Command {
 		Name:        "start",
 		Usage:       "Start an interactive desktop session",
 		Description: wordwrap.String("Start a new interactive desktop session and display details about the new session.\n\nAvailable desktop types can be shown using the 'avail' command.", maxTextWidth),
+		Category:    "Sessions",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "name",

@@ -15,6 +15,7 @@ func listSessionsCommand() *cli.Command {
 		Name:        "list",
 		Usage:       "List interactive desktop sessions",
 		Description: wordwrap.String("Display all known desktop sessions and their states.", 80),
+		Category:    "Sessions",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			sessions, err := loadAllSessions()
 			if err != nil {

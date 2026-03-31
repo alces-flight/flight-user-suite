@@ -14,6 +14,7 @@ func killSessionCommand() *cli.Command {
 		Name:        "kill",
 		Usage:       "Terminate an interactive desktop session",
 		Description: wordwrap.String(fmt.Sprintf("Instruct an active interactive desktop session to terminate.\n\nThe <id> parameter should specify the session identity, use '%s list' to see a list of your sessions.", progName), 80),
+		Category:    "Sessions",
 		Arguments: []cli.Argument{
 			&cli.StringArg{Name: "id", UsageText: "<id>"},
 		},

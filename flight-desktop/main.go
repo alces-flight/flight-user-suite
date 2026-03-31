@@ -89,11 +89,11 @@ func main() {
 			},
 		},
 		Commands: []*cli.Command{
+			typeAvailCommand(),
 			startSessionCommand(),
 			listSessionsCommand(),
-			killSessionCommand(),
 			showSessionCommand(),
-			typeAvailCommand(),
+			killSessionCommand(),
 		},
 	}
 
