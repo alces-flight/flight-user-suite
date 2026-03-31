@@ -1,0 +1,118 @@
+#!/bin/bash
+# =============================================================================
+# Copyright (C) 2019-present Concertim Ltd.
+#
+# This file is part of Flight Desktop.
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which is available at
+# <https://www.eclipse.org/legal/epl-2.0>, or alternative license
+# terms made available by Alces Flight Ltd - please direct inquiries
+# about licensing to licensing@alces-flight.com.
+#
+# Flight Desktop is distributed in the hope that it will be useful, but
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR
+# IMPLIED INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OR CONDITIONS
+# OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR A
+# PARTICULAR PURPOSE. See the Eclipse Public License 2.0 for more
+# details.
+#
+# You should have received a copy of the Eclipse Public License 2.0
+# along with Flight Desktop. If not, see:
+#
+#  https://opensource.org/licenses/EPL-2.0
+#
+# For more information on Flight Desktop, please visit:
+# https://github.com/alces-flight/flight-desktop
+# ==============================================================================
+network_is_ec2() {
+  (
+    [ -f /sys/hypervisor/uuid ] &&
+      [ "$(head -c3 /sys/hypervisor/uuid)" == "ec2" ]
+  ) || (
+    [ -f /sys/class/dmi/id/board_vendor ] &&
+      [ "$(cat /sys/class/dmi/id/board_vendor)" == "Amazon Corporate LLC" ]
+  ) || (
+    [ -f /sys/class/dmi/id/board_vendor ] &&
+      [ "$(cat /sys/class/dmi/id/board_vendor)" == "Amazon EC2" ]
+  )
+}
+
+network_is_azure() {
+  [ -f /sys/class/dmi/id/chassis_vendor ] &&
+    [ "$(cat /sys/class/dmi/id/chassis_vendor)" == "Microsoft Corporation" ]
+}
+
+network_is_virtualbox() {
+  (
+    [ -f /sys/class/dmi/id/product_name ] &&
+      [ "$(cat /sys/class/dmi/id/product_name)" == "VirtualBox" ]
+  ) || (
+    [ -f /sys/class/dmi/id/board_name ] &&
+      [ "$(cat /sys/class/dmi/id/board_name)" == "VirtualBox" ]
+  ) || (
+    [ -f /sys/class/dmi/id/bios_version ] &&
+      [ "$(cat /sys/class/dmi/id/bios_version)" == "VirtualBox" ]
+  )
+}
+
+network_get_virtualbox_address() {
+  # For Vagrant/VirtualBox we want to avoid using the NAT device on eth0 if we
+  # can, otherwise all machines in the cluster will get the same primary IP
+  # address.  The NAT device always has the IP address 10.0.2.15
+  ip=$(network_get_iface_address $(network_get_route_iface 8.8.8.8))
+  if [ "$ip" == "10.0.2.15" ]; then
+    # This is the NAT device, we want to avoid that and use the address of
+    # the third device if we can.
+    ip=$( ip -o -4 address show \
+        | tail -n +3 \
+        | head -n 1 \
+        | sed 's/.*inet \([^\/ ]\+\).*/\1/g'
+    )
+    if [ "$ip" == "" ]; then
+        echo 10.0.2.15
+    else
+        echo "$ip"
+    fi
+  else
+      echo "$ip"
+  fi
+}
+
+network_get_route_iface() {
+    local target_ip
+    target_ip="$1"
+
+    ip -o route get "${target_ip}" \
+        | head -n 1 \
+        | sed 's/.*dev \(\S*\).*/\1/g'
+}
+
+network_get_iface_address() {
+    local target_iface
+    target_iface="$1"
+
+    ip -o -4 address show dev ${target_iface} \
+        | head -n 1 \
+        | sed 's/.*inet \([^\/ ]\+\).*/\1/g'
+}
+
+if network_is_ec2; then
+  ip=$(curl -fs http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null)
+  if [ $? -gt 0 ]; then
+    curl -fs http://169.254.169.254/latest/meta-data/local-ipv4
+  else
+    echo "$ip"
+  fi
+elif network_is_azure; then
+  ip=$(curl -s -H Metadata:true "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0/publicIpAddress?api-version=2017-08-01&format=text")
+  if [ -z "$ip" ]; then
+    network_get_iface_address $(network_get_route_iface 8.8.8.8)
+  else
+    echo "$ip"
+  fi
+elif network_is_virtualbox; then
+  network_get_virtualbox_address
+else
+  network_get_iface_address $(network_get_route_iface 8.8.8.8)
+fi

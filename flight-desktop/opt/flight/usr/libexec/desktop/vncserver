@@ -245,10 +245,10 @@ if (!(-x $sessionScript)) {
 warn "Starting applications specified in $sessionScript\n";
 warn "Log file is $sessionLog\n\n";
 print "<YAML>\n";
-print ":host: \"$host\"\n";
-print ":display: \"$displayNumber\"\n";
-print ":log: \"$sessionLog\"\n";
-print ":pidfile: \"$pidFile\"\n";
+print "host: \"$host\"\n";
+print "display: \"$displayNumber\"\n";
+print "log: \"$sessionLog\"\n";
+print "pidfile: \"$pidFile\"\n";
 print "</YAML>\n";
 
 # If the unix domain socket exists then use that (DISPLAY=:n) otherwise use

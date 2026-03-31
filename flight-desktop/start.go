@@ -7,10 +7,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/netip"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -28,6 +30,10 @@ var (
 	validTypes            = []string{"terminal", "gnome"}
 	validTypeNames string = strings.Join(validTypes, ", ")
 )
+
+func libexecPath(relpath string) string {
+	return filepath.Join(flightRoot, "usr", "libexec", "desktop", relpath)
+}
 
 func startCommand() *cli.Command {
 	return &cli.Command{
@@ -75,6 +81,7 @@ func startCommand() *cli.Command {
 			fmt.Printf("\u2705 Starting session\n\n")
 			fmt.Printf("A '%s' desktop session has been started.\n", session.SessionType)
 			printSessionDetails(session)
+			accessSummary(session)
 			return nil
 		},
 	}
@@ -96,19 +103,6 @@ func assertTypeValid(argName string, argIndex int) cli.BeforeFunc {
 	}
 }
 
-func printSessionDetails(session Session) {
-	// TODO: Better output for TTY.
-	fmt.Println()
-	fmt.Printf("Identity\t%s\n", session.UUID)
-	fmt.Printf("Name\t%s\n", session.Name)
-	fmt.Printf("Type\t%s\n", session.SessionType)
-	fmt.Printf("Password\t%s\n", session.Password)
-	fmt.Printf("State\t%s\n", session.SessionState)
-	fmt.Printf("Created at\t%s\n", session.CreatedAt)
-	fmt.Printf("Geometry\t%s\n", session.Geometry)
-	fmt.Println()
-}
-
 type sessionState string
 
 var (
@@ -121,9 +115,35 @@ type Session struct {
 	Name         string    `yaml:"name"`
 	SessionType  string    `yaml:"session_type"`
 	Password     string
-	SessionState sessionState `yaml:"session_state"`
-	Geometry     string       `yaml:"geometry"`
-	CreatedAt    time.Time    `yaml:"created_at"`
+	SessionState sessionState    `yaml:"state"`
+	Geometry     string          `yaml:"geometry"`
+	CreatedAt    time.Time       `yaml:"created_at"`
+	Metadata     sessionMetadata `yaml:"metadata"`
+}
+
+type sessionMetadata struct {
+	Host    string `yaml:"host"`
+	Display string `yaml:"display"`
+	Log     string `yaml:"log"`
+	Pidfile string `yaml:"pidfile"`
+}
+
+func (s sessionMetadata) Port() int {
+	display, err := strconv.Atoi(s.Display)
+	if err != nil {
+		log.Debug("unable to parse display", "display", s.Display, "err", err)
+		return -1
+	}
+	return 5900 + display
+
+}
+
+func (s Session) PrimaryIP() netip.Addr {
+	ip, err := getPrimaryIP()
+	if err != nil {
+		log.Debug("unable to get primary IP", "err", err)
+	}
+	return ip
 }
 
 func (s *Session) start(ctx context.Context) error {
@@ -172,7 +192,7 @@ func (s *Session) createPassword() error {
 	output, err := cmd.Output()
 	if err != nil {
 		if ee, ok := errors.AsType[*exec.ExitError](err); ok {
-			log.Debug("vncpasswd output", "stdout", output, "stderr", string(ee.Stderr))
+			log.Debug("vncpasswd output", "stdout", string(output), "stderr", string(ee.Stderr))
 		}
 		return fmt.Errorf("setting password: %w", err)
 	}
@@ -217,7 +237,6 @@ func (s *Session) metadataFile() string {
 }
 
 func (s *Session) startVNC(ctx context.Context, dir string) error {
-	vncServerScriptPath := filepath.Join(flightRoot, "usr", "libexec", "vncserver")
 	passwdFile := s.passwordFile()
 	args := []string{
 		"-autokill",
@@ -227,7 +246,7 @@ func (s *Session) startVNC(ctx context.Context, dir string) error {
 		"-exedir", "/usr/bin",
 		"-geometry", s.Geometry,
 	}
-	cmd := exec.CommandContext(ctx, vncServerScriptPath, args...)
+	cmd := exec.CommandContext(ctx, libexecPath("vncserver"), args...)
 	cmd.Dir = dir
 	// TODO: Set environment.
 	// cmd.Env = []string{}
@@ -235,11 +254,30 @@ func (s *Session) startVNC(ctx context.Context, dir string) error {
 	output, err := cmd.Output()
 	if err != nil {
 		if ee, ok := errors.AsType[*exec.ExitError](err); ok {
-			log.Debug("vncserver", "stdout", output, "stderr", string(ee.Stderr))
+			log.Debug("vncserver", "stdout", string(output), "stderr", string(ee.Stderr))
 		}
 		return err
 	}
-	fmt.Printf("Output >>>\n%s\n", string(output))
+
+	inYamlBlock := false
+	var yamlString strings.Builder
+	for line := range strings.Lines(string(output)) {
+		if line == "<YAML>\n" {
+			inYamlBlock = true
+		} else if line == "</YAML>\n" {
+			inYamlBlock = false
+		} else if inYamlBlock {
+			yamlString.WriteString(line)
+		}
+	}
+	ys := yamlString.String()
+	var md sessionMetadata
+	err = yaml.Unmarshal([]byte(ys), &md)
+	if err != nil {
+		return err
+	}
+	s.Metadata = md
+
 	return nil
 }
 
