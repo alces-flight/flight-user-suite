@@ -34,7 +34,7 @@ func accessSummary(s Session) {
 
 	if isPublic {
 		prefix = "This desktop session is directly accessible from the public internet."
-		suffix = wordwrap.String("Accessing desktop  sessions directly is NOT SECURE and we highly recommend using a secure port forwarding technique with 'ssh' to secure your desktop session.", 80)
+		suffix = wordwrap.String("Accessing desktop sessions directly is NOT SECURE and we highly recommend using a secure port forwarding technique with 'ssh' to secure your desktop session.", 80)
 	} else {
 		prefix = wordwrap.String("This desktop session is not accessible from the public internet, but may be directly accessible from within your local network or over a virtual private network (VPN).", 80)
 		suffix = ""
