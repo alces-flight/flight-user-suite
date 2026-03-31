@@ -11,97 +11,14 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
 
 	"charm.land/log/v2"
 	"github.com/adrg/xdg"
-	"github.com/google/uuid"
-	"github.com/muesli/reflow/wordwrap"
-	"github.com/urfave/cli/v3"
 	"gopkg.in/yaml.v3"
 )
-
-var (
-	// TODO: Determine this dynamically by listing the correct directory
-	// (opt/flight/usr/lib/desktop/types/).
-	validTypes            = []string{"terminal", "gnome"}
-	validTypeNames string = strings.Join(validTypes, ", ")
-)
-
-func libexecPath(relpath string) string {
-	return filepath.Join(flightRoot, "usr", "libexec", "desktop", relpath)
-}
-
-func startCommand() *cli.Command {
-	return &cli.Command{
-		Name:        "start",
-		Usage:       "Start an interactive desktop session",
-		Description: wordwrap.String("Start a new interactive desktop session and display details about the new session.\n\nAvailable desktop types can be shown using the 'avail' command.", maxTextWidth),
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:    "name",
-				Aliases: []string{"n"},
-				Usage:   "Name the desktop session `NAME` so it can be more easily identified.",
-			},
-			&cli.StringFlag{
-				Name:    "geometry",
-				Aliases: []string{"g"},
-				Usage:   "Set the desktop geometry to `WIDTHxHEIGHT`.",
-				Value:   "1024x768",
-			},
-		},
-		Arguments: []cli.Argument{
-			&cli.StringArg{Name: "type", UsageText: "<type>"},
-		},
-		Before: composeBeforeFuncs(assertArgPresent("type"), assertTypeValid("type", 0)),
-		Action: func(ctx context.Context, cmd *cli.Command) error {
-			sessionType := cmd.StringArg("type")
-			fmt.Printf("Starting a '%s' desktop session:\n\n", sessionType)
-
-			// TODO: Display a spinner.
-
-			session := Session{
-				UUID:         uuid.New(),
-				SessionState: New,
-				SessionType:  sessionType,
-				Name:         cmd.String("name"),
-				Geometry:     cmd.String("geometry"),
-			}
-			err := session.start(ctx)
-
-			// TODO: Stop the spinner
-
-			if err != nil {
-				fmt.Printf("\u274c Starting session\n\n")
-				return fmt.Errorf("starting session: %w", err)
-			}
-			fmt.Printf("\u2705 Starting session\n\n")
-			fmt.Printf("A '%s' desktop session has been started.\n", session.SessionType)
-			printSessionDetails(session)
-			accessSummary(session)
-			return nil
-		},
-	}
-}
-
-func assertTypeValid(argName string, argIndex int) cli.BeforeFunc {
-	return func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
-
-		event := cmd.Args().Get(argIndex)
-		if !slices.Contains(validTypes, event) {
-			return ctx, fmt.Errorf(
-				"Incorrect Usage: unknown %s '%s'. Valid values are %s.",
-				argName,
-				event,
-				validTypeNames,
-			)
-		}
-		return ctx, nil
-	}
-}
 
 type sessionState string
 
@@ -112,14 +29,47 @@ var (
 )
 
 type Session struct {
-	UUID         uuid.UUID `yaml:"uuid"`
-	Name         string    `yaml:"name"`
-	SessionType  string    `yaml:"session_type"`
-	Password     string
+	ID           string          `yaml:"id"`
+	Name         string          `yaml:"name"`
+	SessionType  string          `yaml:"session_type"`
+	Password     string          `yaml:"password"`
 	SessionState sessionState    `yaml:"state"`
 	Geometry     string          `yaml:"geometry"`
 	CreatedAt    time.Time       `yaml:"created_at"`
 	Metadata     sessionMetadata `yaml:"metadata"`
+}
+
+func (s *Session) Start(ctx context.Context) error {
+	if err := s.mkSessionDir(); err != nil {
+		return err
+	}
+	if err := s.createPassword(); err != nil {
+		return err
+	}
+	if err := s.installSessionScript(); err != nil {
+		return err
+	}
+	if err := s.startVNC(ctx, xdg.Home); err != nil {
+		return fmt.Errorf("staring VNC server: %w", err)
+	}
+	s.CreatedAt = time.Now()
+	s.SessionState = Active
+	err := s.Save()
+	if err != nil {
+		return fmt.Errorf("saving session: %w", err)
+	}
+	return nil
+}
+
+func (s *Session) Save() error {
+	data, err := yaml.Marshal(&s)
+	if err != nil {
+		return fmt.Errorf("saving session: %w", err)
+	}
+	metadataFile := s.metadataFile()
+	log.Debug("saving session", "file", metadataFile)
+	os.WriteFile(metadataFile, data, 0o600)
+	return nil
 }
 
 func (s *Session) Kill(ctx context.Context) error {
@@ -149,23 +99,6 @@ func (s *Session) RemoveSessionDir() error {
 	return nil
 }
 
-type sessionMetadata struct {
-	Host    string `yaml:"host"`
-	Display string `yaml:"display"`
-	Log     string `yaml:"log"`
-	Pidfile string `yaml:"pidfile"`
-}
-
-func (s sessionMetadata) Port() int {
-	display, err := strconv.Atoi(s.Display)
-	if err != nil {
-		log.Debug("unable to parse display", "display", s.Display, "err", err)
-		return -1
-	}
-	return 5900 + display
-
-}
-
 func (s Session) PrimaryIP() netip.Addr {
 	ip, err := getPrimaryIP()
 	if err != nil {
@@ -174,26 +107,17 @@ func (s Session) PrimaryIP() netip.Addr {
 	return ip
 }
 
-func (s *Session) start(ctx context.Context) error {
-	if err := s.mkSessionDir(); err != nil {
-		return err
-	}
-	if err := s.createPassword(); err != nil {
-		return err
-	}
-	if err := s.installSessionScript(); err != nil {
-		return err
-	}
-	if err := s.startVNC(ctx, xdg.Home); err != nil {
-		return fmt.Errorf("staring VNC server: %w", err)
-	}
-	s.CreatedAt = time.Now()
-	s.SessionState = Active
-	err := s.save()
+func (s Session) Port() int {
+	display, err := strconv.Atoi(s.Display())
 	if err != nil {
-		return fmt.Errorf("saving session: %w", err)
+		log.Debug("unable to parse display", "display", s.Display(), "err", err)
+		return -1
 	}
-	return nil
+	return 5900 + display
+}
+
+func (s Session) Display() string {
+	return s.Metadata.Display
 }
 
 func (s *Session) mkSessionDir() error {
@@ -207,7 +131,7 @@ func (s *Session) mkSessionDir() error {
 }
 
 func (s *Session) sessionDir() string {
-	return filepath.Join(xdg.StateHome, "flight", "desktop", "sessions", s.UUID.String())
+	return filepath.Join(xdg.StateHome, "flight", "desktop", "sessions", s.ID)
 }
 
 func (s *Session) createPassword() error {
@@ -309,15 +233,11 @@ func (s *Session) startVNC(ctx context.Context, dir string) error {
 	return nil
 }
 
-func (s *Session) save() error {
-	data, err := yaml.Marshal(&s)
-	if err != nil {
-		return fmt.Errorf("saving session: %w", err)
-	}
-	metadataFile := s.metadataFile()
-	log.Debug("saving session", "file", metadataFile)
-	os.WriteFile(metadataFile, data, 0o600)
-	return nil
+type sessionMetadata struct {
+	Host    string `yaml:"host"`
+	Display string `yaml:"display"`
+	Log     string `yaml:"log"`
+	Pidfile string `yaml:"pidfile"`
 }
 
 // Wrapper around exec.ExitError that avoids the default handling by urfave/cli.

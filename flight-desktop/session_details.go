@@ -12,13 +12,13 @@ import (
 func printSessionDetails(session Session) {
 	// TODO: Better output for TTY.
 	fmt.Println()
-	fmt.Printf("Identity\t%s\n", session.UUID)
+	fmt.Printf("Identity\t%s\n", session.ID)
 	fmt.Printf("Name\t\t%s\n", session.Name)
 	fmt.Printf("Type\t\t%s\n", session.SessionType)
 	fmt.Printf("Host IP\t\t%s\n", session.PrimaryIP())
 	fmt.Printf("Hostname\t%s\n", session.Metadata.Host)
-	fmt.Printf("Port\t\t%d\n", session.Metadata.Port())
-	fmt.Printf("Display\t\t:%s\n", session.Metadata.Display)
+	fmt.Printf("Port\t\t%d\n", session.Port())
+	fmt.Printf("Display\t\t:%s\n", session.Display())
 	fmt.Printf("Password\t%s\n", session.Password)
 	fmt.Printf("State\t\t%s\n", session.SessionState)
 	fmt.Printf("Created at\t%s\n", session.CreatedAt.Format(time.RFC822))
@@ -27,7 +27,7 @@ func printSessionDetails(session Session) {
 }
 
 func accessSummary(s Session) {
-	isPublic := !s.PrimaryIP().IsPrivate() && portIsReachable(s.Metadata.Port())
+	isPublic := !s.PrimaryIP().IsPrivate() && portIsReachable(s.Port())
 
 	var prefix string
 	var suffix string
@@ -48,9 +48,9 @@ func accessSummary(s Session) {
 	}
 	username = u.Username
 	ip := s.PrimaryIP().String()
-	vnc := fmt.Sprintf("\tvnc://%s:%s@%s:%d", username, s.Password, ip, s.Metadata.Port())
-	ipPort := fmt.Sprintf("\t%s:%d", ip, s.Metadata.Port())
-	ipDisplay := fmt.Sprintf("\t%s:%s", ip, s.Metadata.Display)
+	vnc := fmt.Sprintf("\tvnc://%s:%s@%s:%d", username, s.Password, ip, s.Port())
+	ipPort := fmt.Sprintf("\t%s:%d", ip, s.Port())
+	ipDisplay := fmt.Sprintf("\t%s:%s", ip, s.Display())
 
 	details := wordwrap.String("Depending on your client and network configuration you may be able to directly connect to the session using:", 80)
 	details = fmt.Sprintf("%s\n\n%s\n%s\n%s", details, vnc, ipPort, ipDisplay)
