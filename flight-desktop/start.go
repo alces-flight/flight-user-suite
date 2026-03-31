@@ -108,6 +108,7 @@ type sessionState string
 var (
 	New    sessionState = "new"
 	Active sessionState = "active"
+	Broken sessionState = "broken"
 )
 
 type Session struct {
@@ -119,6 +120,33 @@ type Session struct {
 	Geometry     string          `yaml:"geometry"`
 	CreatedAt    time.Time       `yaml:"created_at"`
 	Metadata     sessionMetadata `yaml:"metadata"`
+}
+
+func (s *Session) Kill(ctx context.Context) error {
+	args := []string{
+		"-kill",
+		"-sessiondir", s.sessionDir(),
+	}
+	cmd := exec.CommandContext(ctx, libexecPath("vncserver"), args...)
+	// TODO: Set environment.
+	// cmd.Env = []string{}
+	output, err := cmd.CombinedOutput()
+	if exitError, ok := errors.AsType[*exec.ExitError](err); ok {
+		log.Debug("vncserver", "stdout/stderr", string(output))
+		return SilentExitError{ExitCode: exitError.ExitCode(), exitError: exitError}
+	} else if err != nil {
+		log.Debug("vncserver", "stdout/stderr", string(output))
+		return fmt.Errorf("killing VNC server: %w", err)
+	}
+	return s.RemoveSessionDir()
+}
+
+func (s *Session) RemoveSessionDir() error {
+	err := os.RemoveAll(s.sessionDir())
+	if err != nil {
+		return fmt.Errorf("removing session dir: %w", err)
+	}
+	return nil
 }
 
 type sessionMetadata struct {
@@ -290,4 +318,14 @@ func (s *Session) save() error {
 	log.Debug("saving session", "file", metadataFile)
 	os.WriteFile(metadataFile, data, 0o600)
 	return nil
+}
+
+// Wrapper around exec.ExitError that avoids the default handling by urfave/cli.
+type SilentExitError struct {
+	ExitCode  int
+	exitError error
+}
+
+func (ee SilentExitError) Error() string {
+	return ee.exitError.Error()
 }

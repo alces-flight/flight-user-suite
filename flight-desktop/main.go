@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -87,6 +88,7 @@ func main() {
 		},
 		Commands: []*cli.Command{
 			startCommand(),
+			killSessionCommand(),
 		},
 	}
 
@@ -124,8 +126,12 @@ func main() {
 			os.Exit(1)
 		}
 
-		log.Printf("%s\n", err)
-		os.Exit(1)
+		if exitError, ok := errors.AsType[SilentExitError](err); ok {
+			os.Exit(exitError.ExitCode)
+		} else {
+			log.Printf("%s\n", err)
+			os.Exit(1)
+		}
 	}
 }
 
