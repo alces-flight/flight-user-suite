@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"charm.land/log/v2"
@@ -26,6 +27,7 @@ var (
 	New    sessionState = "new"
 	Active sessionState = "active"
 	Broken sessionState = "broken"
+	Exited sessionState = "exited"
 )
 
 type Session struct {
@@ -85,6 +87,9 @@ func loadSession(id string) (*Session, error) {
 		log.Debug("Loading session metadata", "metadataFile", session.metadataFile(), "err", err)
 		session.SessionState = Broken
 		return session, nil
+	}
+	if !session.isActive() {
+		session.SessionState = Exited
 	}
 	return session, nil
 }
@@ -244,6 +249,26 @@ func (s *Session) sessionScript() string {
 
 func (s *Session) metadataFile() string {
 	return filepath.Join(s.sessionDir(), "metadata.yml")
+}
+
+func (s *Session) isActive() bool {
+	b, err := os.ReadFile(s.Metadata.Pidfile)
+	if err != nil {
+		log.Debug("Unable to read", "pidfile", s.Metadata.Pidfile, "err", err)
+		return false
+	}
+	pid, err := strconv.Atoi(strings.TrimSpace(string(b)))
+	if err != nil {
+		log.Debug("Unable to parse", "pidfile", s.Metadata.Pidfile, "err", err)
+		return false
+	}
+	p, err := os.FindProcess(pid)
+	if err != nil {
+		log.Debug("Unable to find process", "pid", pid, "err", err)
+		return false
+	}
+	err = p.Signal(syscall.Signal(0))
+	return err == nil
 }
 
 func (s *Session) startVNC(ctx context.Context, dir string) error {
