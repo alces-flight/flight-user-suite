@@ -37,21 +37,21 @@ func init() {
 func main() {
 	cmd := &cli.Command{
 		Name:  "flight howto",
-		Usage: "List and display Flight User Suite documentation",
+		Usage: "View user guides for your HPC environment",
 		Commands: []*cli.Command{
 			{
 				Name:    "list",
 				Aliases: []string{"l", "ls"},
-				Usage:   "list available howtos",
+				Usage:   "List available user guides",
 				Action:  list,
 			},
 			{
 				Name:      "show",
 				Aliases:   []string{"s"},
-				Usage:     "show a howto",
-				ArgsUsage: "<howto>",
+				Usage:     "Open a user guide for viewing in the terminal",
+				ArgsUsage: "<guide-name>",
 				Action:    show,
-				Before:    assertArgPresent("howto"),
+				Before:    assertArgPresent("guide-name"),
 			},
 		},
 	}
