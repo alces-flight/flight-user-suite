@@ -67,7 +67,8 @@ func startCommand() *cli.Command {
 				return fmt.Errorf("starting session: %w", err)
 			}
 			fmt.Printf("\u2705 Your %s session is ready!\n\n", session.SessionType)
-			printSessionStartedMessage(session)
+			sessionStarted(&session)
+			connectionInfo(&session)
 			return nil
 		},
 	}
