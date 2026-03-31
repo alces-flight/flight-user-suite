@@ -12,7 +12,7 @@ import (
 func printSessionDetails(session Session) {
 	// TODO: Better output for TTY.
 	fmt.Println()
-	fmt.Printf("Identity\t%s\n", session.UUID)
+	fmt.Printf("Identity\t%s\n", session.ID)
 	fmt.Printf("Name\t\t%s\n", session.Name)
 	fmt.Printf("Type\t\t%s\n", session.SessionType)
 	fmt.Printf("Host IP\t\t%s\n", session.PrimaryIP())

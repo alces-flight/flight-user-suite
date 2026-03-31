@@ -17,7 +17,6 @@ import (
 
 	"charm.land/log/v2"
 	"github.com/adrg/xdg"
-	"github.com/google/uuid"
 	"gopkg.in/yaml.v3"
 )
 
@@ -30,10 +29,10 @@ var (
 )
 
 type Session struct {
-	UUID         uuid.UUID `yaml:"uuid"`
-	Name         string    `yaml:"name"`
-	SessionType  string    `yaml:"session_type"`
-	Password     string
+	ID           string          `yaml:"id"`
+	Name         string          `yaml:"name"`
+	SessionType  string          `yaml:"session_type"`
+	Password     string          `yaml:"password"`
 	SessionState sessionState    `yaml:"state"`
 	Geometry     string          `yaml:"geometry"`
 	CreatedAt    time.Time       `yaml:"created_at"`
@@ -132,7 +131,7 @@ func (s *Session) mkSessionDir() error {
 }
 
 func (s *Session) sessionDir() string {
-	return filepath.Join(xdg.StateHome, "flight", "desktop", "sessions", s.UUID.String())
+	return filepath.Join(xdg.StateHome, "flight", "desktop", "sessions", s.ID)
 }
 
 func (s *Session) createPassword() error {

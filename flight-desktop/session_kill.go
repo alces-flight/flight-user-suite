@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"charm.land/log/v2"
-	"github.com/google/uuid"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/urfave/cli/v3"
 	"gopkg.in/yaml.v3"
@@ -31,7 +30,7 @@ func killSessionCommand() *cli.Command {
 				return err
 			}
 			// TODO: Display a spinner.
-			fmt.Printf("Killing desktop session %s\n", session.UUID.String())
+			fmt.Printf("Killing desktop session %s\n", session.ID)
 			err = session.Kill(ctx)
 			// TODO: Stop the spinner
 			if err != nil {
@@ -39,14 +38,14 @@ func killSessionCommand() *cli.Command {
 				return fmt.Errorf("terminating session: %w", err)
 			}
 			fmt.Printf("\u2705 Terminating session\n\n")
-			fmt.Printf("Desktop session '%s' has been terminated.\n", session.UUID.String())
+			fmt.Printf("Desktop session '%s' has been terminated.\n", session.ID)
 			return nil
 		},
 	}
 }
 
 func loadSession(id string) (*Session, error) {
-	session := &Session{UUID: uuid.MustParse(id)}
+	session := &Session{ID: id}
 	log.Debug("Loading session", "sessionDir", session.sessionDir())
 	info, err := os.Stat(session.sessionDir())
 	if err != nil {

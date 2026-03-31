@@ -52,7 +52,7 @@ func startCommand() *cli.Command {
 			// TODO: Display a spinner.
 
 			session := Session{
-				UUID:         uuid.New(),
+				ID:           uuid.New().String(),
 				SessionState: New,
 				SessionType:  sessionType,
 				Name:         cmd.String("name"),
