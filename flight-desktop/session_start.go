@@ -63,13 +63,11 @@ func startCommand() *cli.Command {
 			// TODO: Stop the spinner
 
 			if err != nil {
-				fmt.Printf("\u274c Starting session\n\n")
+				fmt.Printf("\u274c Starting session failed\n\n")
 				return fmt.Errorf("starting session: %w", err)
 			}
-			fmt.Printf("\u2705 Starting session\n\n")
-			fmt.Printf("A '%s' desktop session has been started.\n", session.SessionType)
-			printSessionDetails(session)
-			accessSummary(session)
+			fmt.Printf("\u2705 Your %s session is ready!\n\n", session.SessionType)
+			printSessionStartedMessage(session)
 			return nil
 		},
 	}

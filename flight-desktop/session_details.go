@@ -9,56 +9,25 @@ import (
 	"github.com/muesli/reflow/wordwrap"
 )
 
-func printSessionDetails(session Session) {
-	// TODO: Better output for TTY.
-	fmt.Println()
-	fmt.Printf("Identity\t%s\n", session.ID)
-	fmt.Printf("Name\t\t%s\n", session.Name)
-	fmt.Printf("Type\t\t%s\n", session.SessionType)
-	fmt.Printf("Host IP\t\t%s\n", session.PrimaryIP())
-	fmt.Printf("Hostname\t%s\n", session.Metadata.Host)
-	fmt.Printf("Port\t\t%d\n", session.Port())
-	fmt.Printf("Display\t\t:%s\n", session.Display())
-	fmt.Printf("Password\t%s\n", session.Password)
-	fmt.Printf("State\t\t%s\n", session.SessionState)
-	fmt.Printf("Created at\t%s\n", session.CreatedAt.Format(time.RFC822))
-	fmt.Printf("Geometry\t%s\n", session.Geometry)
-	fmt.Println()
-}
-
-func accessSummary(s Session) {
-	isPublic := !s.PrimaryIP().IsPrivate() && portIsReachable(s.Port())
-
-	var prefix string
-	var suffix string
-
-	if isPublic {
-		prefix = "This desktop session is directly accessible from the public internet."
-		suffix = wordwrap.String("Accessing desktop sessions directly is NOT SECURE and we highly recommend using a secure port forwarding technique with 'ssh' to secure your desktop session.", 80)
-	} else {
-		prefix = wordwrap.String("This desktop session is not accessible from the public internet, but may be directly accessible from within your local network or over a virtual private network (VPN).", 80)
-		suffix = ""
-	}
-
+func printSessionStartedMessage(session Session) {
 	var username string
 	u, err := user.Current()
-	if err != nil {
+	if u == nil {
 		log.Debug("unable to get current user", "err", err)
 		username = "USERNAME"
+	} else {
+		username = u.Username
 	}
-	username = u.Username
-	ip := s.PrimaryIP().String()
-	vnc := fmt.Sprintf("\tvnc://%s:%s@%s:%d", username, s.Password, ip, s.Port())
-	ipPort := fmt.Sprintf("\t%s:%d", ip, s.Port())
-	ipDisplay := fmt.Sprintf("\t%s:%s", ip, s.Display())
+	ip := session.PrimaryIP().String()
+	vnc := fmt.Sprintf("vnc://%s:%s@%s:%d", username, session.Password, ip, session.Port())
+	ipPort := fmt.Sprintf("%s:%d", ip, session.Port())
+	ipDisplay := fmt.Sprintf("%s:%s", ip, session.Display())
 
-	details := wordwrap.String("Depending on your client and network configuration you may be able to directly connect to the session using:", 80)
-	details = fmt.Sprintf("%s\n\n%s\n%s\n%s", details, vnc, ipPort, ipDisplay)
-
-	fmt.Printf("%s\n\n", prefix)
-	fmt.Printf("%s\n\n", details)
-	if suffix != "" {
-		fmt.Printf("%s\n\n", suffix)
+	var name string
+	if session.Name != "" {
+		name = fmt.Sprintf("(%s) ", session.Name)
 	}
-	fmt.Printf("If prompted, you should supply the following password: %s\n", s.Password)
+	out := fmt.Sprintf("A new destop session %shas been started. To connect, use the details below:\n\n1. Connection Address\n\nCopy and paste the first address into your VNC viewer. If that doesn't work, try one of the alternatives:\n\n* Primary:       %s\n* Alternative 1: %s\n* Alternative 2: %s\n\n2. Password\n\nIf prompted, use this password: %s\n\n3. Need Help?\n\nFor a more details on how to connect, run: 'flight howto show flight-desktop'\n\n4. Manage this session\n\nTo view details or stop this session later, you will need the Session ID:\n\n    %s\n\n(Tip: Run 'flight desktop --help' to see management commands)\n\nStarted at: %s\n", name, ipPort, vnc, ipDisplay, session.Password, session.ID, session.CreatedAt.Format(time.RFC822))
+	out = wordwrap.String(out, 80)
+	fmt.Print(out)
 }
