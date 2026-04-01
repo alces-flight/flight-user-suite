@@ -107,7 +107,7 @@ it is possible to tunnel the VNC ports to your local system for connection.
    ssh -L 5901:localhost:5901 USERNAME@HPC_ENVIRONMENT_LOGIN
    ```
 
-   Replace `5901` with the VNC port, `USERNAME` with your username and
+   - Replace `5901` with the VNC port, `USERNAME` with your username and
    `HPC_ENVIRONMENT_LOGIN` with the hostname/IP you usually use to connect to
    your HPC environment.
 1. Launch your VNC viewer application and connect to `localhost:5901` (or the
