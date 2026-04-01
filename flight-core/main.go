@@ -102,7 +102,8 @@ func main() {
 	addToolProxyCommands(cmd)
 
 	// Override help printer to inject some colour.
-	cli.HelpPrinter = pkg.OrangifiedHelpPrinter()
+	origHelpPrinter := cli.HelpPrinter
+	cli.HelpPrinter = pkg.OrangifiedHelpPrinter(origHelpPrinter)
 
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
 		// A bunch of checks to avoid reporting the usage errors twice.
