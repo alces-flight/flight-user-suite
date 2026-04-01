@@ -96,6 +96,11 @@ func list(ctx context.Context, cmd *cli.Command) error {
 func show(ctx context.Context, cmd *cli.Command) error {
 	howtoName := cmd.Args().First()
 	fullPath := filepath.Join(howtoDir, howtoName)
+
+	if !strings.HasSuffix(fullPath, ".md") {
+		fullPath = fullPath + ".md"
+	}
+
 	markdown, err := os.ReadFile(fullPath)
 	if err != nil {
 		if pathError, ok := errors.AsType[*fs.PathError](err); ok {
@@ -143,7 +148,8 @@ func PrintDirContents(dirPath string) error {
 
 			ext := filepath.Ext(relPath)
 			if ext == ".md" {
-				fmt.Println(relPath)
+				name, _ = strings.CutSuffix(relPath, ".md")
+				fmt.Println(name)
 			}
 		}
 	}
