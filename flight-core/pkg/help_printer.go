@@ -9,9 +9,10 @@ import (
 
 	"github.com/cyucelen/marker"
 	"github.com/fatih/color"
+	"github.com/urfave/cli/v3"
 )
 
-func OrangifiedHelpPrinter(origHelpPrinter func(w io.Writer, templ string, data any)) func(w io.Writer, templ string, data any) {
+func OrangifiedHelpPrinter(origHelpPrinter cli.HelpPrinterFunc) cli.HelpPrinterFunc {
 	return func(w io.Writer, templ string, data any) {
 		var buf bytes.Buffer
 		origHelpPrinter(&buf, templ, data)
