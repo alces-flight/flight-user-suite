@@ -1,0 +1,71 @@
+package main
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"charm.land/log/v2"
+	"gopkg.in/yaml.v3"
+)
+
+func loadAllTypes() ([]*Type, error) {
+	glob := filepath.Join(flightRoot, "usr", "lib", "desktop", "types", "*", "metadata.yml")
+	log.Debug("Loading all desktop types", "glob", glob)
+	types := make([]*Type, 0)
+	matches, err := filepath.Glob(glob)
+	if err != nil {
+		return nil, fmt.Errorf("loading types: %w", err)
+	}
+	for _, match := range matches {
+		id := filepath.Base(filepath.Dir(match))
+		typ, err := loadType(id)
+		if err != nil {
+			log.Debug("Skipping bad type", "match", match, "err", err)
+			continue
+		}
+		types = append(types, typ)
+	}
+	return types, nil
+}
+
+func loadType(id string) (*Type, error) {
+	typ := &Type{ID: id}
+	log.Debug("Loading desktop type", "dir", typ.dir())
+	info, err := os.Stat(typ.dir())
+	if err != nil {
+		log.Debug("Error checking dir", "dir", typ.dir(), "err", err)
+		return typ, UnknownType{Type: id}
+	}
+	if !info.IsDir() {
+		log.Debug("Desktop type dir is not a directory", "dir", typ.dir())
+		return typ, UnknownType{Type: id}
+	}
+
+	data, err := os.ReadFile(typ.metadataFile())
+	if err != nil {
+		log.Debug("Reading desktop type metadata", "metadataFile", typ.metadataFile(), "err", err)
+		return typ, nil
+	}
+	err = yaml.Unmarshal(data, &typ)
+	if err != nil {
+		log.Debug("Loading desktop type metadata", "metadataFile", typ.metadataFile(), "err", err)
+		return typ, nil
+	}
+	return typ, nil
+}
+
+type Type struct {
+	ID      string
+	Name    string `yaml:"name"`
+	Summary string `yaml:"summary"`
+	URL     string `yaml:"url"`
+}
+
+func (t *Type) dir() string {
+	return filepath.Join(flightRoot, "usr", "lib", "desktop", "types", t.ID)
+}
+
+func (t *Type) metadataFile() string {
+	return filepath.Join(t.dir(), "metadata.yml")
+}

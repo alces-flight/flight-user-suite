@@ -12,22 +12,16 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-var (
-	// TODO: Determine this dynamically by listing the correct directory
-	// (opt/flight/usr/lib/desktop/types/).
-	validTypes            = []string{"terminal", "gnome"}
-	validTypeNames string = strings.Join(validTypes, ", ")
-)
-
 func libexecPath(relpath string) string {
 	return filepath.Join(flightRoot, "usr", "libexec", "desktop", relpath)
 }
 
-func startCommand() *cli.Command {
+func startSessionCommand() *cli.Command {
 	return &cli.Command{
 		Name:        "start",
 		Usage:       "Start an interactive desktop session",
 		Description: wordwrap.String("Start a new interactive desktop session and display details about the new session.\n\nAvailable desktop types can be shown using the 'avail' command.", maxTextWidth),
+		Category:    "Sessions",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "name",
@@ -76,14 +70,21 @@ func startCommand() *cli.Command {
 
 func assertTypeValid(argName string, argIndex int) cli.BeforeFunc {
 	return func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
-
-		event := cmd.Args().Get(argIndex)
-		if !slices.Contains(validTypes, event) {
+		availableTypes, err := loadAllTypes()
+		typeNames := make([]string, 0, len(availableTypes))
+		for _, typ := range availableTypes {
+			typeNames = append(typeNames, typ.ID)
+		}
+		if err != nil {
+			return ctx, err
+		}
+		typ := cmd.Args().Get(argIndex)
+		if !slices.Contains(typeNames, typ) {
 			return ctx, fmt.Errorf(
 				"Incorrect Usage: unknown %s '%s'. Valid values are %s.",
 				argName,
-				event,
-				validTypeNames,
+				typ,
+				strings.Join(typeNames, ", "),
 			)
 		}
 		return ctx, nil
