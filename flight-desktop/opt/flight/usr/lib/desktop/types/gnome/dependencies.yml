@@ -1,20 +1,25 @@
 - type: exe
-  paths:
-    - "xrdb"
-
-- type: exe
-  paths:
-    - "gconftool-2"
-
-- type: exe
+  description: "Terminal emulator for GNOME"
   paths:
     - "gnome-terminal"
 
 - type: exe
+  description: "GNOME session management utility"
   paths:
     - "gnome-session"
 
+- type: exe
+  optional: true
+  paths:
+    - "gconftool-2"
+
+- type: exe
+  description: "X server resource database utility"
+  paths:
+    - "xrdb"
+
 - type: dir
+  description: "Fonts"
   # Any one of these not being empty is good enough.
   paths:
     - "/usr/share/X11/fonts"

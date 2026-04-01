@@ -1,7 +1,9 @@
 - type: exe
+  description: "Terminal emulator for X"
   paths:
     - "xterm"
 
 - type: exe
+  description: "X server resource database utility"
   paths:
     - "xrdb"

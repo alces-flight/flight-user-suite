@@ -1,20 +1,25 @@
 dependencies:
   - type: exe
+    description: "X VNC server"
     paths:
       - "/usr/bin/Xvnc"
 
   - type: exe
-    paths:
-      - "xauth"
-
-  - type: exe
+    description: "VNC password management"
     paths:
       - "/usr/bin/vncpasswd"
 
   - type: exe
+    description: "VNC configuration utility"
     paths:
       - "vncconfig"
 
   - type: exe
+    description: "X authority file utility"
     paths:
-      - "curl"
+      - "xauth"
+
+  - type: exe
+    description: "Perl"
+    paths:
+      - "perl"

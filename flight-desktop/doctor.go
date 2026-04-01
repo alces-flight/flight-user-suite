@@ -22,72 +22,121 @@ func doctorCommand() *cli.Command {
 		Description: wordwrap.String("Perform a health check on the system to check that all dependencies are present.", maxTextWidth),
 		Category:    "Desktop types",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
+			greenText := lipgloss.NewStyle().Foreground(lipgloss.Green)
+			redText := lipgloss.NewStyle().Foreground(lipgloss.Red)
 			config, err := loadConfig()
 			if err != nil {
 				return err
 			}
-			allOK := true
 			fmt.Println()
-			p := pin.New("Checking core dependencies...",
-				pin.WithSpinnerColor(pin.ColorCyan),
-				pin.WithTextColor(pin.ColorGreen),
-				pin.WithDoneSymbol('\u2705'),
-				pin.WithFailSymbol('\u274c'),
-				pin.WithFailColor(pin.ColorRed),
+			allOK := checkRequiredDeps(
+				ctx,
+				"Checking critical dependencies...",
+				"Critical dependencies",
+				"Critical dependencies not satisfied",
+				requiredDependencies(config.Dependencies),
 			)
-			cancel := p.Start(ctx)
-			defer cancel()
-			checkResults, ok := runDoctor(config.Dependencies)
-			<-time.After(1 * time.Second)
-			if ok {
-				p.Stop("Core dependencies")
-			} else {
-				p.Fail("Missing core dependencies")
-				allOK = false
-			}
-			printCheckResults(checkResults)
+			checkOptionalDeps(
+				ctx,
+				"Checking optional dependencies...",
+				"Optional dependencies",
+				"OPTIONAL dependencies not satisfied",
+				optionalDependencies(config.Dependencies),
+			)
 
 			types, err := loadAllTypes()
 			if err != nil {
-				fmt.Printf("\u274c Checking dependencies for desktop types failed: %s", err.Error())
+				fmt.Print("\u274c ")
+				lipgloss.Println(redText.Render("Checking dependencies for desktop types failed"))
+				fmt.Printf("\n > %s\n", err)
 				allOK = false
 			} else {
 				for _, typ := range types {
-					deps, err := typ.Dependencies()
-					if err != nil {
-						fmt.Printf("\u274c Checking dependencies for %s desktop type failed: %s", typ.ID, err.Error())
+					fmt.Println()
+					if err := typ.loadDependencies(); err != nil {
+						fmt.Print("\u274c ")
+						lipgloss.Println(redText.Render(fmt.Sprintf("Checking dependencies for %s desktop type failed", typ.ID)))
+						fmt.Printf("\n > %s\n", err)
 						allOK = false
 						continue
 					}
-					fmt.Println()
-					p := pin.New(fmt.Sprintf("Checking dependencies for %s.. desktop type.", typ.ID),
-						pin.WithSpinnerColor(pin.ColorCyan),
-						pin.WithTextColor(pin.ColorGreen),
-						pin.WithDoneSymbol('\u2705'),
-						pin.WithFailSymbol('\u274c'),
-						pin.WithFailColor(pin.ColorRed),
+					ok := checkRequiredDeps(
+						ctx,
+						fmt.Sprintf("Checking required dependencies for %s desktop type.", typ.ID),
+						fmt.Sprintf("Required dependencies for %s desktop type", typ.ID),
+						fmt.Sprintf("Missing required dependencies for %s desktop type", typ.ID),
+						requiredDependencies(typ.dependencies),
 					)
-					cancel := p.Start(ctx)
-					defer cancel()
-					checkResults, ok := runDoctor(deps)
-					<-time.After(1 * time.Second)
-					if ok {
-						p.Stop(fmt.Sprintf("Dependencies for %s desktop type", typ.ID))
-					} else {
-						p.Fail(fmt.Sprintf("Missing dependencies for %s desktop type", typ.ID))
-						allOK = false
-					}
-					printCheckResults(checkResults)
+					allOK = allOK && ok
+					checkOptionalDeps(
+						ctx,
+						fmt.Sprintf("Checking optional dependencies for %s desktop type.", typ.ID),
+						fmt.Sprintf("Optional dependencies for %s desktop type", typ.ID),
+						fmt.Sprintf("OPTIONAL dependencies for %s desktop type are not satisfied", typ.ID),
+						optionalDependencies(typ.dependencies),
+					)
 				}
 			}
 			if allOK {
+				fmt.Println()
+				msg := greenText.Render("\u2705 All required dependencies satisfied")
+				lipgloss.Println(msg)
 				return nil
 			} else {
 				fmt.Println()
-				return cli.Exit("Required dependencies missing", 1)
+				msg := redText.Render("\u274c Required dependencies not satisfied")
+				lipgloss.Println(msg)
+				return cli.Exit("", 1)
 			}
 		},
 	}
+}
+
+func checkRequiredDeps(ctx context.Context, spinnerText string, doneText string, failText string, deps []dependency) bool {
+	allOK := true
+	p := pin.New(spinnerText,
+		pin.WithSpinnerColor(pin.ColorCyan),
+		pin.WithTextColor(pin.ColorGreen),
+		pin.WithDoneSymbol('\u2705'),
+		pin.WithFailSymbol('\u274c'),
+		pin.WithFailColor(pin.ColorRed),
+	)
+	cancel := p.Start(ctx)
+	defer cancel()
+	checkResults, ok := runDoctor(deps)
+	<-time.After(1 * time.Second)
+	if ok {
+		p.Stop(doneText)
+	} else {
+		p.Fail(failText)
+		allOK = false
+	}
+	printCheckResults(checkResults)
+	return allOK
+}
+
+func checkOptionalDeps(ctx context.Context, spinnerText string, doneText string, failText string, deps []dependency) {
+	if len(deps) == 0 {
+		return
+	}
+	fmt.Println()
+	p := pin.New(spinnerText,
+		pin.WithSpinnerColor(pin.ColorCyan),
+		pin.WithTextColor(pin.ColorGreen),
+		pin.WithDoneSymbol('\u2705'),
+		pin.WithFailSymbol('\u274c'),
+		pin.WithFailColor(pin.ColorYellow),
+	)
+	cancel := p.Start(ctx)
+	defer cancel()
+	checkResults, ok := runDoctor(deps)
+	<-time.After(1 * time.Second)
+	if ok {
+		p.Stop(doneText)
+	} else {
+		p.Fail(failText)
+	}
+	printCheckResults(checkResults)
 }
 
 type checkResult struct {
@@ -129,8 +178,11 @@ func printCheckResults(checkResults []checkResult) {
 			tick = " > \u274c "
 			outcome = result.err.Error()
 		}
-		formattedPath := strings.Join(result.dependency.Paths, "\n")
-		depPart := lipgloss.JoinHorizontal(lipgloss.Top, tick, formattedPath)
+		description := result.dependency.Description
+		if description == "" {
+			description = strings.Join(result.dependency.Paths, "\n")
+		}
+		depPart := lipgloss.JoinHorizontal(lipgloss.Top, tick, description)
 		resultPart := lipgloss.JoinHorizontal(lipgloss.Top, " : ", outcome)
 		depParts = append(depParts, depPart)
 		resultParts = append(resultParts, resultPart)
@@ -168,25 +220,23 @@ func checkExeAvailable(dep dependency) checkResult {
 }
 
 func checkDirNonEmpty(dep dependency) checkResult {
-	foundNonEmtpy := false
-	var foundAt string
-
+	var errs error
 	for _, dir := range dep.Paths {
-		entries, _ := os.ReadDir(dir)
+		entries, err := os.ReadDir(dir)
 		if len(entries) > 0 {
-			foundAt = dir
-			foundNonEmtpy = true
-			break
+			return checkResult{
+				dependency: dep,
+				found:      true,
+				foundAt:    dir,
+				err:        nil,
+			}
 		}
-	}
-	var err error
-	if !foundNonEmtpy {
-		err = errors.New("non-empty directory not-found")
+		errs = errors.Join(errs, err)
 	}
 	return checkResult{
 		dependency: dep,
-		found:      foundNonEmtpy,
-		foundAt:    foundAt,
-		err:        err,
+		found:      false,
+		foundAt:    "",
+		err:        errs,
 	}
 }
