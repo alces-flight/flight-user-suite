@@ -1,18 +1,14 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"os"
-	"regexp"
 	"strings"
 
 	"charm.land/log/v2"
-	"github.com/cyucelen/marker"
-	"github.com/fatih/color"
+	"github.com/concertim/flight-user-suite/flight/pkg"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/urfave/cli/v3"
 	"golang.org/x/term"
@@ -99,21 +95,7 @@ func main() {
 
 	// Override help printer to inject some colour.
 	origHelpPrinter := cli.HelpPrinter
-	cli.HelpPrinter = func(w io.Writer, templ string, data any) {
-		var buf bytes.Buffer
-		origHelpPrinter(&buf, templ, data)
-		bytes, err := io.ReadAll(&buf)
-		if err != nil {
-			log.Fatal("error formatting help output", "err", err)
-		}
-		headers := regexp.MustCompile("(?m:^[[:word:]].*:)")
-		b := &marker.MarkBuilder{}
-		ctmOrange := color.RGB(255, 116, 1)
-		out := b.SetString(string(bytes)).
-			Mark(marker.MatchRegexp(headers), ctmOrange).
-			Build()
-		fmt.Fprint(w, out)
-	}
+	cli.HelpPrinter = pkg.OrangifiedHelpPrinter(origHelpPrinter)
 
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
 		// A bunch of checks to avoid reporting the usage errors twice.

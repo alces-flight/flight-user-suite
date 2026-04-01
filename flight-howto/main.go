@@ -12,13 +12,17 @@ import (
 
 	"charm.land/glamour/v2"
 	"charm.land/lipgloss/v2"
+	"github.com/concertim/flight-user-suite/flight/pkg"
 	"github.com/urfave/cli/v3"
+	"golang.org/x/term"
 )
 
 var (
-	flightRoot string = "/opt/flight"
-	howtoDir   string
-	themeDir   string
+	flightRoot   string = "/opt/flight"
+	howtoDir     string
+	themeDir     string
+	termWidth    int = 80
+	maxTextWidth int = 80
 )
 
 func init() {
@@ -27,29 +31,41 @@ func init() {
 	}
 	howtoDir = filepath.Join(flightRoot, "usr", "share", "doc", "howtos-enabled")
 	themeDir = filepath.Join(flightRoot, "usr", "lib", "flight-howto", "themes")
+	var err error
+	termWidth, _, err = term.GetSize(int(os.Stdout.Fd()))
+	if err != nil {
+		termWidth = 80
+	}
+	maxTextWidth = min(termWidth, 80)
 }
 
 func main() {
 	cmd := &cli.Command{
-		Name:  "flight howto",
-		Usage: "List and display Flight User Suite documentation",
+		Name:        "flight howto",
+		Usage:       "View user guides for your HPC environment",
+		Description: lipgloss.Wrap("View user guides for your HPC environment", maxTextWidth, " "),
+		Copyright:   "(c) 2026 Stephen F Norledge & Concertim Ltd.",
 		Commands: []*cli.Command{
 			{
 				Name:    "list",
 				Aliases: []string{"l", "ls"},
-				Usage:   "list available howtos",
+				Usage:   "List available user guides",
 				Action:  list,
 			},
 			{
 				Name:      "show",
 				Aliases:   []string{"s"},
-				Usage:     "show a howto",
-				ArgsUsage: "<howto>",
+				Usage:     "Open a user guide for viewing in the terminal",
+				ArgsUsage: "<guide-name>",
 				Action:    show,
-				Before:    assertArgPresent("howto"),
+				Before:    assertArgPresent("guide-name"),
 			},
 		},
 	}
+
+	// Override help printer to inject some colour.
+	origHelpPrinter := cli.HelpPrinter
+	cli.HelpPrinter = pkg.OrangifiedHelpPrinter(origHelpPrinter)
 
 	// TODO deduplicate this from equivalent section in flight-core/main.go?
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
