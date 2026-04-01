@@ -70,6 +70,7 @@ func startSessionCommand() *cli.Command {
 			fmt.Println()
 			sessionStarted(&session)
 			connectionInfo(&session)
+			managementInfo(&session)
 			return nil
 		},
 	}

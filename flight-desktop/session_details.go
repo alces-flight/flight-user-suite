@@ -35,6 +35,7 @@ func sessionInfo(session *Session) {
 			dt.Render("Name"),
 			dt.Render("Type"),
 			dt.Render("Screen size"),
+			dt.Render("State"),
 			dt.Render("Started at"),
 		),
 		lipgloss.JoinVertical(
@@ -42,6 +43,7 @@ func sessionInfo(session *Session) {
 			dd.Render(session.Name),
 			dd.Render(session.SessionType),
 			dd.Render(session.Geometry),
+			dd.Render(string(session.SessionState)),
 			dd.Render(session.CreatedAt.Format(time.RFC822)),
 		),
 	)
@@ -96,11 +98,18 @@ func connectionInfo(session *Session) {
 		subheader.Render("3. Need Help?"),
 		lipgloss.JoinHorizontal(
 			lipgloss.Top,
-			paragraph.Render("For more details on how to connect, run:"),
+			paragraph.MarginBottom(0).Render("For more details on how to connect, run:"),
 			code.Render("flight howto show flight-desktop"),
 		),
-		header.MarginTop(0).Render("Manage this session"),
-		paragraph.PaddingBottom(0).Render("To view details or stop this session later, you will need the Session ID:"),
+	)
+	lipgloss.Println(out)
+}
+
+func managementInfo(session *Session) {
+	out := lipgloss.JoinVertical(
+		lipgloss.Left,
+		header.Render("Manage this session"),
+		paragraph.PaddingBottom(0).Render("To view details or stop this session, you will need the Session ID:"),
 		code.Margin(0, 0, 1, 1).Render(session.ID),
 		paragraph.Render("(Tip: Run 'flight desktop --help' to see management commands)"),
 	)
