@@ -35,6 +35,12 @@ func listSessionsCommand() *cli.Command {
 }
 
 func sessionsTable(sessions []*Session) error {
+	namecolWidth := 8
+	maxNamecolWidth := 20
+	typecolWidth := 8
+	connectioncolWidth := 8
+	passwordcolWidth := 10
+
 	t := table.New().
 		Border(lipgloss.NormalBorder()).
 		BorderStyle(lipgloss.NewStyle().Foreground(ctmOrange)).
@@ -48,15 +54,36 @@ func sessionsTable(sessions []*Session) error {
 			default:
 				style = tableOddRowStyle
 			}
+			switch col {
+			case 0:
+				return style.Width(namecolWidth)
+			case 1:
+				return style.Width(typecolWidth)
+			case 2:
+				return style.MaxWidth(connectioncolWidth)
+			case 3:
+				return style.Width(passwordcolWidth)
+			case 4:
+				return style.Width(8)
+			case 5:
+				return style.MaxWidth(39)
+			}
 			return style
 		}).
 		Width(termWidth)
 	t.Headers("Name", "Type", "Connection string", "Password", "State", "ID")
 	for _, s := range sessions {
+		connectionString := s.PrimaryConnectionString()
+		namecolWidth = min(max(namecolWidth, len(s.Name)+2), maxNamecolWidth)
+		namecolWidth = max(namecolWidth, len(s.Name)+2)
+		typecolWidth = max(typecolWidth, len(s.SessionType)+2)
+		connectioncolWidth = max(connectioncolWidth, len(connectionString)+2)
+		passwordcolWidth = max(passwordcolWidth, len(s.Password)+2)
+
 		t.Row(
 			s.Name,
 			s.SessionType,
-			s.PrimaryConnectionString(),
+			connectionString,
 			s.Password,
 			string(s.SessionState),
 			s.ID,
