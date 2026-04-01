@@ -6,10 +6,12 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"slices"
 	"strings"
 
 	"charm.land/log/v2"
+	"github.com/adrg/xdg"
 	"github.com/ergochat/readline"
 	"github.com/urfave/cli/v3"
 )
@@ -92,10 +94,13 @@ func runShell(ctx context.Context, cmd *cli.Command) error {
 		}
 		prompt = promptStyle.Render(fmt.Sprintf("flight %s» ", baseTool))
 	}
+	historyFile, err := xdg.CacheFile(filepath.Join("flight", "shell", "history"))
+	if err != nil {
+		historyFile = ""
+	}
 	rlConfig := &readline.Config{
-		Prompt: prompt,
-		// TODO: Use an XDG cache/data dir for history file.
-		HistoryFile:       "/tmp/readline.tmp",
+		Prompt:            prompt,
+		HistoryFile:       historyFile,
 		InterruptPrompt:   "^C",
 		EOFPrompt:         "exit",
 		HistorySearchFold: true,

@@ -5,18 +5,20 @@ go 1.26.1
 require (
 	charm.land/log/v2 v2.0.0
 	github.com/concertim/flight-user-suite/flight v0.0.0-00010101000000-000000000000
-	github.com/cyucelen/marker v0.0.0-20220628090808-ec8d542c2d28
-	github.com/fatih/color v1.19.0
 	github.com/muesli/reflow v0.3.0
 	github.com/urfave/cli/v3 v3.8.0
 	golang.org/x/term v0.41.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require github.com/yarlson/pin v0.9.1 // indirect
+require (
+	github.com/cyucelen/marker v0.0.0-20220628090808-ec8d542c2d28 // indirect
+	github.com/fatih/color v1.19.0 // indirect
+	github.com/yarlson/pin v0.9.1
+)
 
 require (
-	charm.land/lipgloss/v2 v2.0.1 // indirect
+	charm.land/lipgloss/v2 v2.0.1
 	github.com/adrg/xdg v0.5.3
 	github.com/charmbracelet/colorprofile v0.4.2 // indirect
 	github.com/charmbracelet/ultraviolet v0.0.0-20251205161215-1948445e3318 // indirect

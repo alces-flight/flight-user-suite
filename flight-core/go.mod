@@ -5,6 +5,7 @@ go 1.26.1
 require (
 	charm.land/lipgloss/v2 v2.0.1
 	charm.land/log/v2 v2.0.0
+	github.com/adrg/xdg v0.5.3
 	github.com/cyucelen/marker v0.0.0-20220628090808-ec8d542c2d28
 	github.com/ergochat/readline v0.1.3
 	github.com/fatih/color v1.19.0
