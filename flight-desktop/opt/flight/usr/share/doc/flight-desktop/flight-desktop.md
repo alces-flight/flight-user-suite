@@ -27,6 +27,14 @@ criteria:
 - The system, network and platform firewalls are configured to allow in a range
   of VNC ports (a range starting at `5901`)
 
+You will also need to ensure that certain dependencies are installed on your
+system. Flight desktop can provide a report highlighting any missing
+dependencies, by running:
+
+```bash
+flight desktop doctor
+```
+
 ## Desktop environment support
 
 Flight Desktop comes with support for running sessions in the following

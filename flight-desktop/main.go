@@ -86,6 +86,7 @@ func main() {
 		},
 		Commands: []*cli.Command{
 			typeAvailCommand(),
+			doctorCommand(),
 			startSessionCommand(),
 			listSessionsCommand(),
 			showSessionCommand(),

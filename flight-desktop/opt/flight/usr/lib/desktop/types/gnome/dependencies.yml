@@ -1,0 +1,22 @@
+- type: exe
+  paths:
+    - "xrdb"
+
+- type: exe
+  paths:
+    - "gconftool-2"
+
+- type: exe
+  paths:
+    - "gnome-terminal"
+
+- type: exe
+  paths:
+    - "gnome-session"
+
+- type: dir
+  # Any one of these not being empty is good enough.
+  paths:
+    - "/usr/share/X11/fonts"
+    - "/usr/share/fonts"
+    - "/usr/share/fonts/X11"

@@ -62,6 +62,20 @@ type Type struct {
 	URL     string `yaml:"url"`
 }
 
+func (t *Type) Dependencies() ([]dependency, error) {
+	path := filepath.Join(t.dir(), "dependencies.yml")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("loading dependencies for %s: %w", t.ID, err)
+	}
+	var deps []dependency
+	err = yaml.Unmarshal(data, &deps)
+	if err != nil {
+		return nil, fmt.Errorf("loading config from %s: %w", path, err)
+	}
+	return deps, nil
+}
+
 func (t *Type) dir() string {
 	return filepath.Join(flightRoot, "usr", "lib", "desktop", "types", t.ID)
 }
