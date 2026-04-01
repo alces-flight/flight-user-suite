@@ -18,6 +18,7 @@ import (
 var (
 	flightRoot string = "/opt/flight"
 	howtoDir   string
+	themeDir   string
 )
 
 func init() {
@@ -25,6 +26,7 @@ func init() {
 		flightRoot = root
 	}
 	howtoDir = filepath.Join(flightRoot, "usr", "share", "doc", "howtos-enabled")
+	themeDir = filepath.Join(flightRoot, "usr", "lib", "flight-howto", "themes")
 }
 
 func main() {
@@ -88,12 +90,10 @@ func show(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("reading howto: %w", err)
 	}
 
-	// In theory this should work; however lipgloss seems to always think my
-	// terminal has a dark background, even if that background is white.
 	isDark := lipgloss.HasDarkBackground(os.Stdin, os.Stdout)
-	theme := "light"
+	theme := filepath.Join(themeDir, "flight-light.json")
 	if isDark {
-		theme = "dark"
+		theme = filepath.Join(themeDir, "flight-dark.json")
 	}
 
 	rendered, err := glamour.Render(string(markdown), theme)
