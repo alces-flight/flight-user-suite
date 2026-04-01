@@ -5,8 +5,7 @@ go 1.26.1
 require (
 	charm.land/glamour/v2 v2.0.0
 	charm.land/lipgloss/v2 v2.0.0
-	github.com/cyucelen/marker v0.0.0-20220628090808-ec8d542c2d28
-	github.com/fatih/color v1.19.0
+	github.com/concertim/flight-user-suite/flight v0.0.0-00010101000000-000000000000
 	github.com/urfave/cli/v3 v3.8.0
 )
 
@@ -22,7 +21,9 @@ require (
 	github.com/charmbracelet/x/windows v0.2.2 // indirect
 	github.com/clipperhouse/displaywidth v0.11.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
+	github.com/cyucelen/marker v0.0.0-20220628090808-ec8d542c2d28 // indirect
 	github.com/dlclark/regexp2 v1.11.0 // indirect
+	github.com/fatih/color v1.19.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
@@ -39,3 +40,5 @@ require (
 	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/text v0.24.0 // indirect
 )
+
+replace github.com/concertim/flight-user-suite/flight => ../flight-core

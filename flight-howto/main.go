@@ -1,22 +1,18 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"charm.land/glamour/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/cyucelen/marker"
-	"github.com/fatih/color"
+	"github.com/concertim/flight-user-suite/flight/pkg"
 	"github.com/urfave/cli/v3"
 )
 
@@ -58,21 +54,7 @@ func main() {
 
 	// Override help printer to inject some colour.
 	origHelpPrinter := cli.HelpPrinter
-	cli.HelpPrinter = func(w io.Writer, templ string, data any) {
-		var buf bytes.Buffer
-		origHelpPrinter(&buf, templ, data)
-		bytes, err := io.ReadAll(&buf)
-		if err != nil {
-			log.Fatal("error formatting help output", "err", err)
-		}
-		headers := regexp.MustCompile("(?m:^[[:word:]].*:)")
-		b := &marker.MarkBuilder{}
-		ctmOrange := color.RGB(255, 116, 1)
-		out := b.SetString(string(bytes)).
-			Mark(marker.MatchRegexp(headers), ctmOrange).
-			Build()
-		fmt.Fprint(w, out)
-	}
+	cli.HelpPrinter = pkg.OrangifiedHelpPrinter(origHelpPrinter)
 
 	// TODO deduplicate this from equivalent section in flight-core/main.go?
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
