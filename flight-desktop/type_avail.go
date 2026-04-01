@@ -59,7 +59,7 @@ func typesTable(types []*Type) error {
 		Width(termWidth)
 	t.Headers("Name", "Summary")
 	for _, typ := range types {
-		namecolWidth = max(namecolWidth, len(typ.Name)+2)
+		namecolWidth = max(namecolWidth, len(typ.ID)+2)
 		summary := lipgloss.JoinVertical(
 			lipgloss.Left,
 			typ.Summary,
@@ -69,7 +69,7 @@ func typesTable(types []*Type) error {
 				hyperlink.MarginBottom(1).Hyperlink(typ.URL).Render(typ.URL),
 			),
 		)
-		t.Row(typ.Name, summary)
+		t.Row(typ.ID, summary)
 	}
 	_, err := lipgloss.Println(t)
 	return err
