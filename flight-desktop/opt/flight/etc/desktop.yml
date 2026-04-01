@@ -1,0 +1,20 @@
+dependencies:
+  - type: exe
+    paths:
+      - "/usr/bin/Xvnc"
+
+  - type: exe
+    paths:
+      - "xauth"
+
+  - type: exe
+    paths:
+      - "/usr/bin/vncpasswd"
+
+  - type: exe
+    paths:
+      - "vncconfig"
+
+  - type: exe
+    paths:
+      - "curl"
