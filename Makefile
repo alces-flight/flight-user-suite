@@ -14,6 +14,9 @@ $(MODULES):
 
 $(DIST): $(MODULES)
 	rsync -rlptgo $(foreach module,$(MODULES),$(module)/dist/) $(DIST)/
+# Disable all tools by default except flight-howto
+	chmod 0444 $(DIST)/opt/flight/usr/lib/flight-core/*
+	chmod 0555 $(DIST)/opt/flight/usr/lib/flight-core/flight-howto
 
 $(TARFILE): $(DIST)
 	tar czf $@ --owner=root:0 --group=root:0 -C $(DIST) .
