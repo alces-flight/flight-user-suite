@@ -12,6 +12,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
+require github.com/yarlson/pin v0.9.1 // indirect
+
 require (
 	charm.land/lipgloss/v2 v2.0.1 // indirect
 	github.com/adrg/xdg v0.5.3

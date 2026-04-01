@@ -7,6 +7,7 @@ import (
 	"charm.land/log/v2"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/urfave/cli/v3"
+	"github.com/yarlson/pin"
 )
 
 func killSessionCommand() *cli.Command {
@@ -28,15 +29,22 @@ func killSessionCommand() *cli.Command {
 				}
 				return err
 			}
-			// TODO: Display a spinner.
-			fmt.Printf("Killing desktop session %s\n", session.ID)
+			p := pin.New(fmt.Sprintf("Killing desktop session %s", session.ID),
+				pin.WithSpinnerColor(pin.ColorCyan),
+				pin.WithTextColor(pin.ColorGreen),
+				pin.WithDoneSymbol('\u2705'),
+				pin.WithFailSymbol('\u274c'),
+				pin.WithFailColor(pin.ColorRed),
+			)
+			cancel := p.Start(ctx)
+			defer cancel()
 			err = session.Kill(ctx)
-			// TODO: Stop the spinner
 			if err != nil {
-				fmt.Printf("\u274c Terminating session\n\n")
+				p.Fail("Terminating session failed")
 				return fmt.Errorf("terminating session: %w", err)
 			}
-			fmt.Printf("\u2705 Terminating session\n\n")
+			p.Stop("Session terminated")
+			fmt.Println()
 			fmt.Printf("Desktop session '%s' has been terminated.\n", session.ID)
 			return nil
 		},

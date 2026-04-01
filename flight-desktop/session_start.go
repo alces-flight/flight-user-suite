@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/urfave/cli/v3"
+	"github.com/yarlson/pin"
 )
 
 func libexecPath(relpath string) string {
@@ -43,7 +44,15 @@ func startSessionCommand() *cli.Command {
 			sessionType := cmd.StringArg("type")
 			fmt.Printf("Starting a '%s' desktop session:\n\n", sessionType)
 
-			// TODO: Display a spinner.
+			p := pin.New("Starting session...",
+				pin.WithSpinnerColor(pin.ColorCyan),
+				pin.WithTextColor(pin.ColorGreen),
+				pin.WithDoneSymbol('\u2705'),
+				pin.WithFailSymbol('\u274c'),
+				pin.WithFailColor(pin.ColorRed),
+			)
+			cancel := p.Start(ctx)
+			defer cancel()
 
 			session := Session{
 				ID:           uuid.New().String(),
@@ -53,14 +62,12 @@ func startSessionCommand() *cli.Command {
 				Geometry:     cmd.String("geometry"),
 			}
 			err := session.Start(ctx)
-
-			// TODO: Stop the spinner
-
 			if err != nil {
-				fmt.Printf("\u274c Starting session failed\n\n")
+				p.Fail("Starting session failed")
 				return fmt.Errorf("starting session: %w", err)
 			}
-			fmt.Printf("\u2705 Your %s session is ready!\n\n", session.SessionType)
+			p.Stop(fmt.Sprintf("Your %s session is ready!", session.SessionType))
+			fmt.Println()
 			sessionStarted(&session)
 			connectionInfo(&session)
 			return nil
