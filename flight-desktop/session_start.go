@@ -86,7 +86,7 @@ func startSessionCommand() *cli.Command {
 			err = session.Start(ctx)
 			if err != nil {
 				p.Fail("Starting session failed")
-				return fmt.Errorf("starting session: %w", err)
+				return err
 			}
 			p.Stop(fmt.Sprintf("Your %s session is ready!", session.SessionType))
 			fmt.Println()

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/netip"
 	"os"
 	"os/exec"
@@ -203,10 +204,26 @@ func (s Session) Display() string {
 }
 
 func (s *Session) mkSessionDir() error {
+	// Create the session directory in two steps:
+	//
+	// 1. Create the parent directory using [os.MkdirAll], which is safe to call even when all of the directories already exist.
+	// 2. Create the session directory itself using [os.Mkdir], which will return an error if the directory already exists.
+	//
+	// This two step process allows us to be certain that the session name is unique.
+
 	dir := s.sessionDir()
 	log.Debug("creating session dir", "dir", dir)
-	err := os.MkdirAll(dir, 0o700)
+	parent := filepath.Dir(s.sessionDir())
+	err := os.MkdirAll(parent, 0o700)
 	if err != nil {
+		return fmt.Errorf("creating session directory: %w", err)
+	}
+	if err := os.Mkdir(dir, 0o700); err != nil {
+		if pathError, ok := errors.AsType[*fs.PathError](err); ok {
+			if pathError.Err.Error() == "file exists" {
+				return fmt.Errorf("Session name '%s' is taken.", s.Name)
+			}
+		}
 		return fmt.Errorf("creating session directory: %w", err)
 	}
 	return nil
