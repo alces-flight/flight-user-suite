@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/rand"
 	"fmt"
 	"path/filepath"
 	"regexp"
@@ -63,7 +62,7 @@ func startSessionCommand() *cli.Command {
 			sessionType := cmd.StringArg("type")
 			name := cmd.String("name")
 			if name == "" {
-				name = generateName(sessionType)
+				name = newNameGenerator(sessionType).Generate()
 			}
 			fmt.Printf("Starting '%s' desktop session '%s':\n\n", sessionType, name)
 
@@ -96,14 +95,6 @@ func startSessionCommand() *cli.Command {
 			return nil
 		},
 	}
-}
-
-func generateName(sessionType string) string {
-	ng := newNameGenerator(sessionType)
-	if ng.err == nil {
-		return ng.Generate()
-	}
-	return fmt.Sprintf("%s.%s", sessionType, rand.Text()[0:8])
 }
 
 func assertTypeValid(argName string, argIndex int) cli.BeforeFunc {

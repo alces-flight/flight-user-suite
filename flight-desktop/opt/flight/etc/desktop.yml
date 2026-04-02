@@ -1,3 +1,8 @@
+# Configuration for generating default session names.
+name_generator:
+  # Either "absurd" or "meaningless". Default "absurd".
+  strategy: "absurd"
+
 dependencies:
   - type: exe
     description: "X VNC server"

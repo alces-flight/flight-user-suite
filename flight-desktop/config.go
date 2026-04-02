@@ -9,8 +9,13 @@ import (
 )
 
 type config struct {
-	Dependencies []dependency `yaml:"dependencies"`
-	EnvWhitelist []string     `yaml:"environment_whitelist"`
+	NameGenerator nameGeneratorConfig `yaml:"name_generator"`
+	Dependencies  []dependency        `yaml:"dependencies"`
+	EnvWhitelist  []string            `yaml:"environment_whitelist"`
+}
+
+type nameGeneratorConfig struct {
+	Strategy string `yaml:"strategy"`
 }
 
 type dependency struct {

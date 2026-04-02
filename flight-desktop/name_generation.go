@@ -1,6 +1,7 @@
 package main
 
 import (
+	cryptorand "crypto/rand"
 	"fmt"
 	"math/rand/v2"
 	"os"
@@ -11,6 +12,7 @@ import (
 )
 
 type nameGenerator struct {
+	config       nameGeneratorConfig
 	combinations [][]string
 	adjectives   []string
 	adverbs      []string
@@ -22,20 +24,27 @@ type nameGenerator struct {
 }
 
 func newNameGenerator(sessionType string) *nameGenerator {
-	ng := nameGenerator{}
-	ng.loadCombinations()
-	ng.loadFileList("adjectives", &ng.adjectives)
-	ng.loadFileList("adverbs", &ng.adverbs)
-	ng.loadFileList("animals", &ng.animals)
-	ng.loadFileList("things", &ng.things)
-	ng.loadFileList("verbs", &ng.verbs)
-	ng.sessionType = sessionType
+	ng := nameGenerator{sessionType: sessionType}
+	c, err := loadConfig()
+	if err != nil {
+		ng.err = err
+		return &ng
+	}
+	ng.config = c.NameGenerator
+	if ng.config.Strategy == "absurd" {
+		ng.loadCombinations()
+		ng.loadFileList("adjectives", &ng.adjectives)
+		ng.loadFileList("adverbs", &ng.adverbs)
+		ng.loadFileList("animals", &ng.animals)
+		ng.loadFileList("things", &ng.things)
+		ng.loadFileList("verbs", &ng.verbs)
+	}
 	return &ng
 }
 
 func (ng *nameGenerator) Generate() string {
-	if ng.err != nil {
-		return ""
+	if ng.err != nil || ng.config.Strategy == "meaningless" {
+		return fmt.Sprintf("%s.%s", ng.sessionType, cryptorand.Text()[0:8])
 	}
 	b := make([]string, 0, 3)
 	combination := sample(ng.combinations)
