@@ -9,9 +9,9 @@
     - "gnome-session"
 
 - type: exe
-  optional: true
+  description: "GNOME session configuration utility"
   paths:
-    - "gconftool-2"
+    - "gsettings"
 
 - type: exe
   description: "X server resource database utility"
