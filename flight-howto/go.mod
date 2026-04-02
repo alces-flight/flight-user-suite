@@ -4,7 +4,7 @@ go 1.26.1
 
 require (
 	charm.land/glamour/v2 v2.0.0
-	charm.land/lipgloss/v2 v2.0.0
+	charm.land/lipgloss/v2 v2.0.1
 	github.com/concertim/flight-user-suite/flight v0.0.0-00010101000000-000000000000
 	github.com/urfave/cli/v3 v3.8.0
 	golang.org/x/term v0.41.0
