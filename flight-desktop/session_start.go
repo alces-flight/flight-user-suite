@@ -65,7 +65,7 @@ func startSessionCommand() *cli.Command {
 			if name == "" {
 				name = generateName(sessionType)
 			}
-			fmt.Printf("Starting a '%s' desktop session:\n\n", sessionType)
+			fmt.Printf("Starting '%s' desktop session '%s':\n\n", sessionType, name)
 
 			depsOK, err := checkDependencies(ctx, sessionType)
 
