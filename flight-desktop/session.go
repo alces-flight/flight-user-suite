@@ -95,6 +95,7 @@ func loadSession(id string) (*Session, error) {
 }
 
 func (s *Session) Start(ctx context.Context) error {
+	s.CreatedAt = time.Now()
 	if err := s.mkSessionDir(); err != nil {
 		return err
 	}
@@ -105,9 +106,13 @@ func (s *Session) Start(ctx context.Context) error {
 		return err
 	}
 	if err := s.startVNC(ctx, xdg.Home); err != nil {
+		s.SessionState = Broken
+		saveErr := s.Save()
+		if saveErr != nil {
+			log.Debug("Failed to save failed session", "save.err", saveErr, "err", err)
+		}
 		return fmt.Errorf("staring VNC server: %w", err)
 	}
-	s.CreatedAt = time.Now()
 	s.SessionState = Active
 	err := s.Save()
 	if err != nil {
@@ -291,9 +296,13 @@ func (s *Session) startVNC(ctx context.Context, dir string) error {
 		if ee, ok := errors.AsType[*exec.ExitError](err); ok {
 			log.Debug("vncserver", "stdout", string(output), "stderr", string(ee.Stderr))
 		}
+		s.parseVNCOutput(output) // nolint:errcheck
 		return err
 	}
+	return s.parseVNCOutput(output)
+}
 
+func (s *Session) parseVNCOutput(output []byte) error {
 	inYamlBlock := false
 	var yamlString strings.Builder
 	for line := range strings.Lines(string(output)) {
@@ -307,12 +316,11 @@ func (s *Session) startVNC(ctx context.Context, dir string) error {
 	}
 	ys := yamlString.String()
 	var md sessionMetadata
-	err = yaml.Unmarshal([]byte(ys), &md)
+	err := yaml.Unmarshal([]byte(ys), &md)
 	if err != nil {
 		return err
 	}
 	s.Metadata = md
-
 	return nil
 }
 
