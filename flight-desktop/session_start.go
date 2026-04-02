@@ -99,7 +99,10 @@ func startSessionCommand() *cli.Command {
 }
 
 func generateName(sessionType string) string {
-	// TODO: Update to use appropriately-humorous-wordplay.
+	ng := newNameGenerator(sessionType)
+	if ng.err == nil {
+		return ng.Generate()
+	}
 	return fmt.Sprintf("%s.%s", sessionType, rand.Text()[0:8])
 }
 
