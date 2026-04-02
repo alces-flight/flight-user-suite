@@ -99,7 +99,7 @@ func main() {
 			{
 				Name:        "shell",
 				Usage:       "Enter a shell-like sandbox for running Flight tools",
-				Description: wordwrap.String("Enter a shell-like sandbox for the 'flight' too.", maxTextWidth),
+				Description: wordwrap.String("Enter a shell-like sandbox for the 'flight' tool.", maxTextWidth),
 				Arguments: []cli.Argument{
 					&cli.StringArg{Name: "tool", UsageText: "[TOOL]"},
 				},
