@@ -105,7 +105,7 @@ func checkDependencies(ctx context.Context, sessionType string) (bool, error) {
 	cancel := p.Start(ctx)
 	defer cancel()
 
-	globalResults, globalDepsOK := runDoctor(config.Dependencies)
+	globalResults, globalDepsOK := runDoctor(requiredDependencies(config.Dependencies))
 
 	if !globalDepsOK {
 		p.Fail("Missing critical dependencies")
@@ -124,7 +124,7 @@ func checkDependencies(ctx context.Context, sessionType string) (bool, error) {
 		return false, err
 	}
 
-	typeResults, typeDepsOK := runDoctor(sessionTypeDef.dependencies)
+	typeResults, typeDepsOK := runDoctor(requiredDependencies(sessionTypeDef.dependencies))
 
 	if !typeDepsOK {
 		p.Fail(fmt.Sprintf("Missing required dependencies for %s desktop type", sessionType))
