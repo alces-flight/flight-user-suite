@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"time"
@@ -12,6 +13,13 @@ import (
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/urfave/cli/v3"
 	"github.com/yarlson/pin"
+)
+
+var (
+	nameWhitelist            = "-_.A-Za-z0-9"
+	nameWhitelistExplanation = "letters, numbers, hyphens, underscores and dots"
+	nameBlacklist            = regexp.MustCompile(fmt.Sprintf("[^%s]+", nameWhitelist))
+	nameMaxLen               = 40
 )
 
 func libexecPath(relpath string) string {
@@ -30,6 +38,15 @@ func startSessionCommand() *cli.Command {
 				Aliases:     []string{"n"},
 				Usage:       "Name the desktop session `NAME` so it can be more easily identified.",
 				DefaultText: "random",
+				Validator: func(name string) error {
+					if nameBlacklist.MatchString(name) {
+						return fmt.Errorf("it can contain only %s.", nameWhitelistExplanation)
+					}
+					if len(name) > nameMaxLen {
+						return fmt.Errorf("it must be no more than %d characters", nameMaxLen)
+					}
+					return nil
+				},
 			},
 			&cli.StringFlag{
 				Name:    "geometry",
