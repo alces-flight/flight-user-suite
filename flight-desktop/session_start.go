@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/muesli/reflow/wordwrap"
@@ -104,6 +105,9 @@ func checkDependencies(ctx context.Context, sessionType string) (bool, error) {
 	p := createPin("Checking system dependencies...")
 	cancel := p.Start(ctx)
 	defer cancel()
+
+	// Add a small delay to stop the spinner from flickering
+	<-time.After(1 * time.Second)
 
 	globalResults, globalDepsOK := runDoctor(requiredDependencies(config.Dependencies))
 
