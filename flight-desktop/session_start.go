@@ -44,13 +44,13 @@ func startSessionCommand() *cli.Command {
 			sessionType := cmd.StringArg("type")
 			fmt.Printf("Starting a '%s' desktop session:\n\n", sessionType)
 
-			p := pin.New("Starting session...",
-				pin.WithSpinnerColor(pin.ColorCyan),
-				pin.WithTextColor(pin.ColorGreen),
-				pin.WithDoneSymbol('\u2705'),
-				pin.WithFailSymbol('\u274c'),
-				pin.WithFailColor(pin.ColorRed),
-			)
+			depsOK, err := checkDependencies(ctx, sessionType)
+
+			if !depsOK {
+				return err
+			}
+
+			p := createPin("Starting session...")
 			cancel := p.Start(ctx)
 			defer cancel()
 
@@ -61,7 +61,7 @@ func startSessionCommand() *cli.Command {
 				Name:         cmd.String("name"),
 				Geometry:     cmd.String("geometry"),
 			}
-			err := session.Start(ctx)
+			err = session.Start(ctx)
 			if err != nil {
 				p.Fail("Starting session failed")
 				return fmt.Errorf("starting session: %w", err)
@@ -97,4 +97,53 @@ func assertTypeValid(argName string, argIndex int) cli.BeforeFunc {
 		}
 		return ctx, nil
 	}
+}
+
+func checkDependencies(ctx context.Context, sessionType string) (bool, error) {
+	config, err := loadConfig()
+	p := createPin("Checking system dependencies...")
+	cancel := p.Start(ctx)
+	defer cancel()
+
+	globalResults, globalDepsOK := runDoctor(config.Dependencies)
+
+	if !globalDepsOK {
+		p.Fail("Missing critical dependencies")
+		printCheckResults(globalResults)
+		return false, nil
+	}
+
+	sessionTypeDef, err := loadType(sessionType)
+
+	if err != nil {
+		return false, err
+	}
+
+	err = sessionTypeDef.loadDependencies()
+	if err != nil {
+		return false, err
+	}
+
+	typeResults, typeDepsOK := runDoctor(sessionTypeDef.dependencies)
+
+	if !typeDepsOK {
+		p.Fail(fmt.Sprintf("Missing required dependencies for %s desktop type", sessionType))
+		printCheckResults(typeResults)
+		return false, err
+	}
+
+	p.Stop("Dependencies OK")
+
+	return true, err
+}
+
+func createPin(text string) *pin.Pin {
+	return pin.New(
+		text,
+		pin.WithSpinnerColor(pin.ColorCyan),
+		pin.WithTextColor(pin.ColorGreen),
+		pin.WithDoneSymbol('\u2705'),
+		pin.WithFailSymbol('\u274c'),
+		pin.WithFailColor(pin.ColorRed),
+	)
 }
