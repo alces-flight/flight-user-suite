@@ -221,17 +221,22 @@ func checkExeAvailable(dep dependency) checkResult {
 
 func checkDirNonEmpty(dep dependency) checkResult {
 	var errs error
+	nonEmptyDirs := make([]string, 0)
 	for _, dir := range dep.Paths {
 		entries, err := os.ReadDir(dir)
 		if len(entries) > 0 {
-			return checkResult{
-				dependency: dep,
-				found:      true,
-				foundAt:    dir,
-				err:        nil,
-			}
+			nonEmptyDirs = append(nonEmptyDirs, dir)
+		} else {
+			errs = errors.Join(errs, err)
 		}
-		errs = errors.Join(errs, err)
+	}
+	if len(nonEmptyDirs) > 0 {
+		return checkResult{
+			dependency: dep,
+			found:      true,
+			foundAt:    strings.Join(nonEmptyDirs, "\n"),
+			err:        nil,
+		}
 	}
 	return checkResult{
 		dependency: dep,
