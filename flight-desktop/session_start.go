@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"path/filepath"
 	"slices"
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/urfave/cli/v3"
 	"github.com/yarlson/pin"
@@ -26,9 +26,10 @@ func startSessionCommand() *cli.Command {
 		Category:    "Sessions",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:    "name",
-				Aliases: []string{"n"},
-				Usage:   "Name the desktop session `NAME` so it can be more easily identified.",
+				Name:        "name",
+				Aliases:     []string{"n"},
+				Usage:       "Name the desktop session `NAME` so it can be more easily identified.",
+				DefaultText: "random",
 			},
 			&cli.StringFlag{
 				Name:    "geometry",
@@ -43,6 +44,10 @@ func startSessionCommand() *cli.Command {
 		Before: composeBeforeFuncs(assertArgPresent("type"), assertTypeValid("type", 0)),
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			sessionType := cmd.StringArg("type")
+			name := cmd.String("name")
+			if name == "" {
+				name = generateName(sessionType)
+			}
 			fmt.Printf("Starting a '%s' desktop session:\n\n", sessionType)
 
 			depsOK, err := checkDependencies(ctx, sessionType)
@@ -56,10 +61,9 @@ func startSessionCommand() *cli.Command {
 			defer cancel()
 
 			session := Session{
-				ID:           uuid.New().String(),
+				Name:         name,
 				SessionState: New,
 				SessionType:  sessionType,
-				Name:         cmd.String("name"),
 				Geometry:     cmd.String("geometry"),
 			}
 			err = session.Start(ctx)
@@ -75,6 +79,11 @@ func startSessionCommand() *cli.Command {
 			return nil
 		},
 	}
+}
+
+func generateName(sessionType string) string {
+	// TODO: Update to use appropriately-humorous-wordplay.
+	return fmt.Sprintf("%s.%s", sessionType, rand.Text()[0:8])
 }
 
 func assertTypeValid(argName string, argIndex int) cli.BeforeFunc {

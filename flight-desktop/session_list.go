@@ -36,7 +36,7 @@ func listSessionsCommand() *cli.Command {
 
 func sessionsTable(sessions []*Session) error {
 	namecolWidth := 8
-	maxNamecolWidth := 20
+	maxNamecolWidth := 40
 	typecolWidth := 8
 	connectioncolWidth := 8
 	passwordcolWidth := 10
@@ -65,13 +65,11 @@ func sessionsTable(sessions []*Session) error {
 				return style.Width(passwordcolWidth)
 			case 4:
 				return style.Width(8)
-			case 5:
-				return style.MaxWidth(39)
 			}
 			return style
 		}).
 		Width(termWidth)
-	t.Headers("Name", "Type", "Connection string", "Password", "State", "ID")
+	t.Headers("Name", "Type", "Connection string", "Password", "State")
 	for _, s := range sessions {
 		connectionString := s.PrimaryConnectionString()
 		namecolWidth = min(max(namecolWidth, len(s.Name)+2), maxNamecolWidth)
@@ -86,7 +84,6 @@ func sessionsTable(sessions []*Session) error {
 			connectionString,
 			s.Password,
 			string(s.SessionState),
-			s.ID,
 		)
 	}
 	_, err := lipgloss.Println(t)

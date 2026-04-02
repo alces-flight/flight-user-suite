@@ -14,22 +14,22 @@ func killSessionCommand() *cli.Command {
 	return &cli.Command{
 		Name:        "kill",
 		Usage:       "Terminate an interactive desktop session",
-		Description: wordwrap.String(fmt.Sprintf("Instruct an active interactive desktop session to terminate.\n\nThe <id> parameter should specify the session identity, use '%s list' to see a list of your sessions.", progName), 80),
+		Description: wordwrap.String(fmt.Sprintf("Instruct an active interactive desktop session to terminate.\n\nThe <name> parameter should specify the session's name, use '%s list' to see a list of your sessions.", progName), 80),
 		Category:    "Sessions",
 		Arguments: []cli.Argument{
-			&cli.StringArg{Name: "id", UsageText: "<id>"},
+			&cli.StringArg{Name: "name", UsageText: "<name>"},
 		},
-		Before: assertArgPresent("id"),
+		Before: assertArgPresent("name"),
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			id := cmd.StringArg("id")
-			session, err := loadSession(id)
+			name := cmd.StringArg("name")
+			session, err := loadSession(name)
 			if err != nil {
 				if err2 := session.RemoveSessionDir(); err2 != nil {
 					log.Debug("Removing session dir", "sessionDir", session.sessionDir(), "err", err2)
 				}
 				return err
 			}
-			p := pin.New(fmt.Sprintf("Killing desktop session %s", session.ID),
+			p := pin.New(fmt.Sprintf("Killing desktop session %s", session.Name),
 				pin.WithSpinnerColor(pin.ColorCyan),
 				pin.WithTextColor(pin.ColorGreen),
 				pin.WithDoneSymbol('\u2705'),
@@ -45,7 +45,7 @@ func killSessionCommand() *cli.Command {
 			}
 			p.Stop("Session terminated")
 			fmt.Println()
-			fmt.Printf("Desktop session '%s' has been terminated.\n", session.ID)
+			fmt.Printf("Desktop session '%s' has been terminated.\n", session.Name)
 			return nil
 		},
 	}
