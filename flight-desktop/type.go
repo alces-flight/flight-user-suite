@@ -56,24 +56,28 @@ func loadType(id string) (*Type, error) {
 }
 
 type Type struct {
-	ID      string
-	Name    string `yaml:"name"`
-	Summary string `yaml:"summary"`
-	URL     string `yaml:"url"`
+	ID           string `yaml:"id"`
+	Summary      string `yaml:"summary"`
+	URL          string `yaml:"url"`
+	dependencies []dependency
 }
 
-func (t *Type) Dependencies() ([]dependency, error) {
+func (t *Type) loadDependencies() error {
+	if t.dependencies != nil {
+		return nil
+	}
 	path := filepath.Join(t.dir(), "dependencies.yml")
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("loading dependencies for %s: %w", t.ID, err)
+		return fmt.Errorf("loading dependencies for %s: %w", t.ID, err)
 	}
 	var deps []dependency
 	err = yaml.Unmarshal(data, &deps)
 	if err != nil {
-		return nil, fmt.Errorf("loading config from %s: %w", path, err)
+		return fmt.Errorf("loading config from %s: %w", path, err)
 	}
-	return deps, nil
+	t.dependencies = deps
+	return nil
 }
 
 func (t *Type) dir() string {

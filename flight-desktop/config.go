@@ -13,8 +13,32 @@ type config struct {
 }
 
 type dependency struct {
-	Type  string   `yaml:"type"`
-	Paths []string `yaml:"paths"`
+	Type           string   `yaml:"type"`
+	Description    string   `yaml:"description"`
+	Optional       bool     `yaml:"optional"`
+	Paths          []string `yaml:"paths"`
+	FailureMessage string   `yaml:"failure_message"`
+	SuccessMessage string   `yaml:"success_message"`
+}
+
+func requiredDependencies(deps []dependency) []dependency {
+	opt := make([]dependency, 0)
+	for _, dep := range deps {
+		if !dep.Optional {
+			opt = append(opt, dep)
+		}
+	}
+	return opt
+}
+
+func optionalDependencies(deps []dependency) []dependency {
+	opt := make([]dependency, 0)
+	for _, dep := range deps {
+		if dep.Optional {
+			opt = append(opt, dep)
+		}
+	}
+	return opt
 }
 
 func loadConfig() (*config, error) {

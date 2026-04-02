@@ -1,7 +1,0 @@
-- type: exe
-  paths:
-    - "xterm"
-
-- type: exe
-  paths:
-    - "xrdb"

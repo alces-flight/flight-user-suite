@@ -14,8 +14,11 @@ fi
 # invisible mouse pointers (e.g. MacOS Screen Sharing).
 echo 'XTerm*vt100.pointerMode: 0' | xrdb -merge
 vncconfig -nowin &
-# Disable gnome-screensaver
-gconftool-2 --set -t boolean /apps/gnome-screensaver/idle_activation_enabled false
+
+# Disable gnome-screensaver, remove lock button, and stop screen blanking
+gsettings set org.gnome.desktop.screensaver lock-enabled false
+gsettings set org.gnome.desktop.lockdown disable-lock-screen true
+gsettings set org.gnome.desktop.session idle-delay 0
 
 # Create flag file to skip initial setup
 mark_initial_setup_done() {

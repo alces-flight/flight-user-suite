@@ -1,20 +1,28 @@
 - type: exe
-  paths:
-    - "xrdb"
-
-- type: exe
-  paths:
-    - "gconftool-2"
-
-- type: exe
+  description: "Terminal emulator for GNOME"
   paths:
     - "gnome-terminal"
 
 - type: exe
+  description: "GNOME session management utility"
   paths:
     - "gnome-session"
 
+- type: exe
+  description: "GNOME session configuration utility"
+  paths:
+    - "gsettings"
+
+- type: exe
+  description: "X server resource database utility"
+  paths:
+    - "xrdb"
+
 - type: dir
+  description: "Fonts"
+  optional: true
+  failure_message: "Unable to find fonts in standard locations. Ensure you have fonts installed."
+  success_message: "Available"
   # Any one of these not being empty is good enough.
   paths:
     - "/usr/share/X11/fonts"
