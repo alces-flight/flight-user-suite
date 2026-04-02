@@ -20,6 +20,9 @@
 
 - type: dir
   description: "Fonts"
+  optional: true
+  failure_message: "Unable to find fonts in standard locations. Ensure you have fonts installed."
+  success_message: "Available"
   # Any one of these not being empty is good enough.
   paths:
     - "/usr/share/X11/fonts"

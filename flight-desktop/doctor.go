@@ -174,9 +174,16 @@ func printCheckResults(checkResults []checkResult) {
 	for _, result := range checkResults {
 		tick := " > \u2705 "
 		outcome := result.foundAt
+		if len(result.dependency.SuccessMessage) > 0 {
+			outcome = lipgloss.Wrap(result.dependency.SuccessMessage, 60, "")
+		}
 		if !result.found {
 			tick = " > \u274c "
-			outcome = result.err.Error()
+			if len(result.dependency.FailureMessage) > 0 {
+				outcome = lipgloss.Wrap(result.dependency.FailureMessage, 60, "")
+			} else {
+				outcome = result.err.Error()
+			}
 		}
 		description := result.dependency.Description
 		if description == "" {
