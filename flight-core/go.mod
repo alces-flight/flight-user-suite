@@ -3,7 +3,7 @@ module github.com/concertim/flight-user-suite/flight
 go 1.26.1
 
 require (
-	charm.land/lipgloss/v2 v2.0.1
+	charm.land/lipgloss/v2 v2.0.2
 	charm.land/log/v2 v2.0.0
 	github.com/adrg/xdg v0.5.3
 	github.com/cyucelen/marker v0.0.0-20220628090808-ec8d542c2d28
