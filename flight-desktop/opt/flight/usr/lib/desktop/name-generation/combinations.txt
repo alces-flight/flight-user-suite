@@ -1,0 +1,5 @@
+adjective adjective sessiontype
+adjective animal sessiontype
+adjective thing sessiontype
+adverb verb sessiontype
+adverb adjective sessiontype

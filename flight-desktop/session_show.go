@@ -15,12 +15,12 @@ func showSessionCommand() *cli.Command {
 		Description: wordwrap.String("Display the connection information for a desktop session.", maxTextWidth),
 		Category:    "Sessions",
 		Arguments: []cli.Argument{
-			&cli.StringArg{Name: "id", UsageText: "<id>"},
+			&cli.StringArg{Name: "name", UsageText: "<name>"},
 		},
-		Before: assertArgPresent("id"),
+		Before: assertArgPresent("name"),
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			id := cmd.StringArg("id")
-			session, err := loadSession(id)
+			name := cmd.StringArg("name")
+			session, err := loadSession(name)
 			if err != nil {
 				if err2 := session.RemoveSessionDir(); err2 != nil {
 					log.Debug("Removing session dir", "sessionDir", session.sessionDir(), "err", err2)

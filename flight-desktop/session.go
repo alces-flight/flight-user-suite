@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/netip"
 	"os"
 	"os/exec"
@@ -46,8 +47,7 @@ var (
 )
 
 type Session struct {
-	ID           string          `yaml:"id"`
-	Name         string          `yaml:"name"`
+	Name         string
 	SessionType  string          `yaml:"session_type"`
 	Password     string          `yaml:"password"`
 	SessionState sessionState    `yaml:"state"`
@@ -65,8 +65,8 @@ func loadAllSessions() ([]*Session, error) {
 		return nil, fmt.Errorf("loading sessions: %w", err)
 	}
 	for _, match := range matches {
-		id := filepath.Base(filepath.Dir(match))
-		session, err := loadSession(id)
+		name := filepath.Base(filepath.Dir(match))
+		session, err := loadSession(name)
 		if err != nil {
 			log.Debug("Skipping bad session", "match", match, "err", err)
 			continue
@@ -76,19 +76,19 @@ func loadAllSessions() ([]*Session, error) {
 	return sessions, nil
 }
 
-func loadSession(id string) (*Session, error) {
-	session := &Session{ID: id}
+func loadSession(name string) (*Session, error) {
+	session := &Session{Name: name}
 	log.Debug("Loading session", "sessionDir", session.sessionDir())
 	info, err := os.Stat(session.sessionDir())
 	if err != nil {
 		log.Debug("Error checking session dir", "sessionDir", session.sessionDir(), "err", err)
 		session.SessionState = Broken
-		return session, UnknownSession{Session: id}
+		return session, UnknownSession{Session: name}
 	}
 	if !info.IsDir() {
 		log.Debug("Session dir is not a directory", "sessionDir", session.sessionDir())
 		session.SessionState = Broken
-		return session, UnknownSession{Session: id}
+		return session, UnknownSession{Session: name}
 	}
 
 	data, err := os.ReadFile(session.metadataFile())
@@ -106,6 +106,8 @@ func loadSession(id string) (*Session, error) {
 	if !session.isActive() {
 		session.SessionState = Exited
 	}
+	// Make certain that name isn't overridden by a value in the metadata file.
+	session.Name = name
 	return session, nil
 }
 
@@ -202,17 +204,33 @@ func (s Session) Display() string {
 }
 
 func (s *Session) mkSessionDir() error {
+	// Create the session directory in two steps:
+	//
+	// 1. Create the parent directory using [os.MkdirAll], which is safe to call even when all of the directories already exist.
+	// 2. Create the session directory itself using [os.Mkdir], which will return an error if the directory already exists.
+	//
+	// This two step process allows us to be certain that the session name is unique.
+
 	dir := s.sessionDir()
 	log.Debug("creating session dir", "dir", dir)
-	err := os.MkdirAll(dir, 0o700)
+	parent := filepath.Dir(s.sessionDir())
+	err := os.MkdirAll(parent, 0o700)
 	if err != nil {
+		return fmt.Errorf("creating session directory: %w", err)
+	}
+	if err := os.Mkdir(dir, 0o700); err != nil {
+		if pathError, ok := errors.AsType[*fs.PathError](err); ok {
+			if pathError.Err.Error() == "file exists" {
+				return fmt.Errorf("Session name '%s' is taken.", s.Name)
+			}
+		}
 		return fmt.Errorf("creating session directory: %w", err)
 	}
 	return nil
 }
 
 func (s *Session) sessionDir() string {
-	return filepath.Join(xdg.StateHome, "flight", "desktop", "sessions", s.ID)
+	return filepath.Join(xdg.StateHome, "flight", "desktop", "sessions", s.Name)
 }
 
 func (s *Session) createPassword() error {

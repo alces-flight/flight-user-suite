@@ -4,14 +4,21 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/urfave/cli/v3"
 	"github.com/yarlson/pin"
+)
+
+var (
+	nameWhitelist            = "-_.A-Za-z0-9"
+	nameWhitelistExplanation = "letters, numbers, hyphens, underscores and dots"
+	nameBlacklist            = regexp.MustCompile(fmt.Sprintf("[^%s]+", nameWhitelist))
+	nameMaxLen               = 40
 )
 
 func libexecPath(relpath string) string {
@@ -26,9 +33,19 @@ func startSessionCommand() *cli.Command {
 		Category:    "Sessions",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:    "name",
-				Aliases: []string{"n"},
-				Usage:   "Name the desktop session `NAME` so it can be more easily identified.",
+				Name:        "name",
+				Aliases:     []string{"n"},
+				Usage:       "Name the desktop session `NAME` so it can be more easily identified.",
+				DefaultText: "random",
+				Validator: func(name string) error {
+					if nameBlacklist.MatchString(name) {
+						return fmt.Errorf("it can contain only %s.", nameWhitelistExplanation)
+					}
+					if len(name) > nameMaxLen {
+						return fmt.Errorf("it must be no more than %d characters", nameMaxLen)
+					}
+					return nil
+				},
 			},
 			&cli.StringFlag{
 				Name:    "geometry",
@@ -43,7 +60,11 @@ func startSessionCommand() *cli.Command {
 		Before: composeBeforeFuncs(assertArgPresent("type"), assertTypeValid("type", 0)),
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			sessionType := cmd.StringArg("type")
-			fmt.Printf("Starting a '%s' desktop session:\n\n", sessionType)
+			name := cmd.String("name")
+			if name == "" {
+				name = newNameGenerator(sessionType).Generate()
+			}
+			fmt.Printf("Starting '%s' desktop session '%s':\n\n", sessionType, name)
 
 			depsOK, err := checkDependencies(ctx, sessionType)
 
@@ -56,16 +77,15 @@ func startSessionCommand() *cli.Command {
 			defer cancel()
 
 			session := Session{
-				ID:           uuid.New().String(),
+				Name:         name,
 				SessionState: New,
 				SessionType:  sessionType,
-				Name:         cmd.String("name"),
 				Geometry:     cmd.String("geometry"),
 			}
 			err = session.Start(ctx)
 			if err != nil {
 				p.Fail("Starting session failed")
-				return fmt.Errorf("starting session: %w", err)
+				return err
 			}
 			p.Stop(fmt.Sprintf("Your %s session is ready!", session.SessionType))
 			fmt.Println()

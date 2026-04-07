@@ -109,8 +109,8 @@ func managementInfo(session *Session) {
 	out := lipgloss.JoinVertical(
 		lipgloss.Left,
 		header.Render("Manage this session"),
-		paragraph.PaddingBottom(0).Render("To view details or stop this session, you will need the Session ID:"),
-		code.Margin(0, 0, 1, 1).Render(session.ID),
+		paragraph.PaddingBottom(0).Render("To view details or stop this session, you will need the Session Name:"),
+		code.Margin(0, 0, 1, 1).Render(session.Name),
 		paragraph.Render("(Tip: Run 'flight desktop --help' to see management commands)"),
 	)
 	lipgloss.Println(out)
