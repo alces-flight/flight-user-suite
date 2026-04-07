@@ -58,5 +58,8 @@ func loadConfig() (*config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("loading config from %s: %w", path, err)
 	}
+	if config.NameGenerator.Strategy == "" {
+		config.NameGenerator.Strategy = "absurd"
+	}
 	return &config, nil
 }
