@@ -19,7 +19,8 @@ $(DIST): $(MODULES)
 	chmod 0555 $(DIST)/opt/flight/usr/lib/flight-core/flight-howto
 # Note: if we ever want default-enabled tools that have documentation we will
 # also need to symlink the docs into
-# $(DIST)/opt/flight/usr/share/docs/howtos-enabled here.
+# $(DIST)/opt/flight/usr/share/doc/howtos-enabled here.
+	cp README.md $(DIST)/opt/flight/usr/share/doc/flight-core/01-about-flight-user-suite.md
 
 $(TARFILE): $(DIST)
 	tar czf $@ --owner=root:0 --group=root:0 -C $(DIST) .
