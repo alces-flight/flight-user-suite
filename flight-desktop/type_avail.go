@@ -39,7 +39,7 @@ func typesTable(types []*Type) error {
 
 	t := table.New().
 		Border(lipgloss.NormalBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(ctmOrange)).
+		BorderStyle(lipgloss.NewStyle().Foreground(alcesBlue)).
 		StyleFunc(func(row, col int) lipgloss.Style {
 			var style lipgloss.Style
 			switch {

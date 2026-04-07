@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	ctmOrange   = lipgloss.Color("#ff7401")
-	promptStyle = lipgloss.NewStyle().Foreground(ctmOrange)
+	alcesBlue   = lipgloss.Color("#209FCE")
+	promptStyle = lipgloss.NewStyle().Foreground(alcesBlue)
 )
 
 // Best effort attempt to convert from lipgloss.Color to fatish/color.Color.

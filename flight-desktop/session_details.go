@@ -26,7 +26,7 @@ func sessionStarted(session *Session) {
 }
 
 func sessionInfo(session *Session) {
-	dt := lipgloss.NewStyle().Foreground(ctmOrange).Padding(0, 2, 0, 1)
+	dt := lipgloss.NewStyle().Foreground(alcesBlue).Padding(0, 2, 0, 1)
 	dd := lipgloss.NewStyle().Foreground(lightDark(primary, cream))
 	metadata := lipgloss.JoinHorizontal(
 		lipgloss.Top,
