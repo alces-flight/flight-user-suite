@@ -64,11 +64,11 @@
     "unticked": "[ ] "
   },
   "link": {
-    "color": "30",
+    "color": "#83D0ED",
     "underline": true
   },
   "link_text": {
-    "color": "35",
+    "color": "#CCD0DA",
     "bold": true
   },
   "image": {
@@ -83,11 +83,11 @@
     "prefix": " ",
     "suffix": " ",
     "color": "#CCD0DA",
-    "background_color": "236"
+    "background_color": "#3D424A"
   },
   "code_block": {
     "margin": 4,
-    "theme": "solarized-dark"
+    "color": "#A2A7B4"
   },
   "table": {},
   "definition_list": {},
