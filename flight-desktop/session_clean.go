@@ -81,7 +81,7 @@ You can specify which sessions are cleaned by providing the optional <id> parame
 			if len(cleaned) > 0 {
 				coloured := make([]string, 0, len(cleaned))
 				for _, session := range cleaned {
-					coloured = append(coloured, cleanedStyle.Render(session.ID))
+					coloured = append(coloured, cleanedStyle.Render(session.Name))
 				}
 				out = lipgloss.JoinVertical(
 					lipgloss.Left,
@@ -91,7 +91,7 @@ You can specify which sessions are cleaned by providing the optional <id> parame
 			if len(failed) > 0 {
 				coloured := make([]string, 0, len(failed))
 				for _, session := range failed {
-					coloured = append(coloured, failedStyle.Render(session.ID))
+					coloured = append(coloured, failedStyle.Render(session.Name))
 				}
 				out = lipgloss.JoinVertical(
 					lipgloss.Left,
@@ -101,7 +101,7 @@ You can specify which sessions are cleaned by providing the optional <id> parame
 			if len(skipped) > 0 {
 				coloured := make([]string, 0, len(skipped))
 				for _, session := range skipped {
-					coloured = append(coloured, skippedStyle.Render(session.ID))
+					coloured = append(coloured, skippedStyle.Render(session.Name))
 				}
 				out = lipgloss.JoinVertical(
 					lipgloss.Left,
