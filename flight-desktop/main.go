@@ -96,7 +96,7 @@ func main() {
 
 	// Override help printer to inject some colour.
 	origHelpPrinter := cli.HelpPrinter
-	cli.HelpPrinter = pkg.OrangifiedHelpPrinter(origHelpPrinter)
+	cli.HelpPrinter = pkg.ColourisedHelpPrinter(origHelpPrinter)
 
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
 		// A bunch of checks to avoid reporting the usage errors twice.

@@ -12,7 +12,7 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-func OrangifiedHelpPrinter(origHelpPrinter cli.HelpPrinterFunc) cli.HelpPrinterFunc {
+func ColourisedHelpPrinter(origHelpPrinter cli.HelpPrinterFunc) cli.HelpPrinterFunc {
 	return func(w io.Writer, templ string, data any) {
 		var buf bytes.Buffer
 		origHelpPrinter(&buf, templ, data)
@@ -22,9 +22,9 @@ func OrangifiedHelpPrinter(origHelpPrinter cli.HelpPrinterFunc) cli.HelpPrinterF
 		}
 		headers := regexp.MustCompile("(?m:^[[:word:]].*:)")
 		b := &marker.MarkBuilder{}
-		ctmOrange := color.RGB(255, 116, 1)
+		alcesBlue := color.RGB(32, 159, 206)
 		out := b.SetString(string(bytes)).
-			Mark(marker.MatchRegexp(headers), ctmOrange).
+			Mark(marker.MatchRegexp(headers), alcesBlue).
 			Build()
 		fmt.Fprint(w, out)
 	}

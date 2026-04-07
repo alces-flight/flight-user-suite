@@ -65,7 +65,7 @@ func main() {
 
 	// Override help printer to inject some colour.
 	origHelpPrinter := cli.HelpPrinter
-	cli.HelpPrinter = pkg.OrangifiedHelpPrinter(origHelpPrinter)
+	cli.HelpPrinter = pkg.ColourisedHelpPrinter(origHelpPrinter)
 
 	// TODO deduplicate this from equivalent section in flight-core/main.go?
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
