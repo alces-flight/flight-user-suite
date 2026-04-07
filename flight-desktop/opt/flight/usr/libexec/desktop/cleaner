@@ -1,0 +1,22 @@
+#!/bin/bash
+process_wait_for_pid() {
+    local pid
+    pid=$1
+    while [ -d /proc/$pid ]; do
+        sleep 5 &
+        # Wait for the backgrounded sleep to complete. Running the sleep in the
+        # background, allows this process to be responsive to any signals it
+        # receives.
+        wait $!
+    done
+}
+
+process_wait_for_pid $SESSION_VNC_PID
+
+for a in $SESSION_PIDS; do
+  kill $a
+done
+
+if [ -z "$FLIGHT_DESKTOP_DEBUG" ]; then
+  rm -rf $SESSION_DIR
+fi

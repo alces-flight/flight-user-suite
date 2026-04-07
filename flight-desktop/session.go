@@ -117,18 +117,22 @@ func (s *Session) Start(ctx context.Context) error {
 		return err
 	}
 	if err := s.createPassword(); err != nil {
+		s.cleanup()
 		return err
 	}
 	if err := s.installSessionScript(); err != nil {
+		s.cleanup()
 		return err
 	}
 	if err := s.startVNC(ctx, xdg.Home); err != nil {
-		s.SessionState = Broken
-		saveErr := s.Save()
-		if saveErr != nil {
-			log.Debug("Failed to save failed session", "save.err", saveErr, "err", err)
-		}
+		s.cleanup()
 		return fmt.Errorf("staring VNC server: %w", err)
+	}
+	if err := s.startCleaner(ctx); err != nil {
+		// Don't return an error here, as we still want to save the session and
+		// recovering from this error is possible by manually running the clean
+		// command.
+		log.Debug("Failed to start cleaner script", "err", err)
 	}
 	s.SessionState = Active
 	err := s.Save()
@@ -138,6 +142,15 @@ func (s *Session) Start(ctx context.Context) error {
 	return nil
 }
 
+func (s *Session) cleanup() {
+	if os.Getenv("FLIGHT_DESKTOP_DEBUG") != "" {
+		return
+	}
+	if err := s.RemoveSessionDir(); err != nil {
+		log.Debug("Failed to remove session dir", "err", err)
+	}
+}
+
 func (s *Session) Save() error {
 	data, err := yaml.Marshal(&s)
 	if err != nil {
@@ -145,8 +158,7 @@ func (s *Session) Save() error {
 	}
 	metadataFile := s.metadataFile()
 	log.Debug("saving session", "file", metadataFile)
-	os.WriteFile(metadataFile, data, 0o600)
-	return nil
+	return os.WriteFile(metadataFile, data, 0o600)
 }
 
 func (s *Session) Kill(ctx context.Context) error {
@@ -366,6 +378,29 @@ func (s *Session) parseVNCOutput(output []byte) error {
 		return err
 	}
 	s.Metadata = md
+	return nil
+}
+
+func (s *Session) startCleaner(ctx context.Context) error {
+	data, err := os.ReadFile(s.Metadata.Pidfile)
+	if err != nil {
+		return fmt.Errorf("reading pidfile: %w", err)
+	}
+	pid := strings.TrimSpace(string(data))
+	cmd := exec.CommandContext(ctx, libexecPath("cleaner"))
+	cmd.Env = []string{
+		fmt.Sprintf("SESSION_VNC_PID=%s", pid),
+		"SESSION_PIDS=\"\"",
+		fmt.Sprintf("SESSION_DIR=%s", s.sessionDir()),
+	}
+	if os.Getenv("FLIGHT_DESKTOP_DEBUG") != "" {
+		cmd.Env = append(cmd.Env, "FLIGHT_DESKTOP_DEBUG=true")
+	}
+	cmd.Dir = "/"
+	err = cmd.Start()
+	if err != nil {
+		return fmt.Errorf("starting cleaner: %w", err)
+	}
 	return nil
 }
 
