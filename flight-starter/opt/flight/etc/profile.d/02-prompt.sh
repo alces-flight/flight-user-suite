@@ -1,18 +1,18 @@
 export FLIGHT_ORIG_ENV_PS1="${PS1}"
 
-FLIGHT_ORANGE="38;2;255;116;1"
+FLIGHT_BLUE="38;2;32;159;206"
 
 # Start with the basics - we'll end up injecting a space between \h and \W later
 PS1="[\u@\h\W]\\$ "
 
-# Prepend an orange <flight>
-PS1="\[\033[${FLIGHT_ORANGE}m\]\$(__flight_ps1_active \"<%s>\")\[\033[00m\] ${PS1}"
+# Prepend an alces blue <flight>
+PS1="\[\033[${FLIGHT_BLUE}m\]\$(__flight_ps1_active \"<%s>\")\[\033[00m\] ${PS1}"
 
 FLIGHT_PS1="$(
     "${FLIGHT_ROOT}"/libexec/flight-starter/augment-bash-prompt \
         "$PS1" \
         '$(__flight_ps1_clustername "(%s) ")' \
-        "$FLIGHT_ORANGE" \
+        "$FLIGHT_BLUE" \
         2>/dev/null
     )"
 if [ $? -eq 0 ] ; then
@@ -61,4 +61,4 @@ __flight_ps1_active() {
 }
 
 FLIGHT_DEFINED_SYMBOLS+=(__flight_ps1_active __flight_ps1_clustername)
-unset FLIGHT_PS1 FLIGHT_ORANGE
+unset FLIGHT_PS1 FLIGHT_BLUE
