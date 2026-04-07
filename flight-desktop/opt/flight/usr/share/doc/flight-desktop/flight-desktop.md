@@ -78,18 +78,18 @@ Replace `gnome` with the required environment type (as detailed above), and
 To view connection details (IP, port, etc) for an existing session:
 
 ```bash
-flight desktop show SESSION_ID
+flight desktop show SESSION_NAME
 ```
 
-Replace `SESSION_ID` with the ID of the session.
+Replace `SESSION_NAME` with the name of the session.
 
 To kill a session:
 
 ```bash
-flight desktop kill SESSION_ID
+flight desktop kill SESSION_NAME
 ```
 
-Replace SESSION_ID with the ID of the session.
+Replace SESSION_NAME with the name of the session.
 
 ## How to connect to a session
 
