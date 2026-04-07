@@ -5,7 +5,7 @@ FLIGHT_BLUE="38;2;32;159;206"
 # Start with the basics - we'll end up injecting a space between \h and \W later
 PS1="[\u@\h\W]\\$ "
 
-# Prepend an orange <flight>
+# Prepend an alces blue <flight>
 PS1="\[\033[${FLIGHT_BLUE}m\]\$(__flight_ps1_active \"<%s>\")\[\033[00m\] ${PS1}"
 
 FLIGHT_PS1="$(
