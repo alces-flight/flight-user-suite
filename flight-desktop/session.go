@@ -117,17 +117,15 @@ func (s *Session) Start(ctx context.Context) error {
 		return err
 	}
 	if err := s.createPassword(); err != nil {
+		s.cleanup()
 		return err
 	}
 	if err := s.installSessionScript(); err != nil {
+		s.cleanup()
 		return err
 	}
 	if err := s.startVNC(ctx, xdg.Home); err != nil {
-		s.SessionState = Broken
-		saveErr := s.Save()
-		if saveErr != nil {
-			log.Debug("Failed to save failed session", "save.err", saveErr, "err", err)
-		}
+		s.cleanup()
 		return fmt.Errorf("staring VNC server: %w", err)
 	}
 	s.SessionState = Active
@@ -138,6 +136,12 @@ func (s *Session) Start(ctx context.Context) error {
 	return nil
 }
 
+func (s *Session) cleanup() {
+	if err := s.RemoveSessionDir(); err != nil {
+		log.Debug("Failed to remove session dir", "err", err)
+	}
+}
+
 func (s *Session) Save() error {
 	data, err := yaml.Marshal(&s)
 	if err != nil {
@@ -145,8 +149,7 @@ func (s *Session) Save() error {
 	}
 	metadataFile := s.metadataFile()
 	log.Debug("saving session", "file", metadataFile)
-	os.WriteFile(metadataFile, data, 0o600)
-	return nil
+	return os.WriteFile(metadataFile, data, 0o600)
 }
 
 func (s *Session) Kill(ctx context.Context) error {
