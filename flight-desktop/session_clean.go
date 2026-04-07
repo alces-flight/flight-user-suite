@@ -52,7 +52,7 @@ You can specify which sessions are cleaned by providing the optional <id> parame
 			timer := time.After(1 * time.Second)
 
 			var firstErr error
-			skippedStyle := lipgloss.NewStyle().Foreground(primary).MarginLeft(1)
+			skippedStyle := lipgloss.NewStyle().Foreground(lightDark(primary, cream)).MarginLeft(1)
 			cleanedStyle := lipgloss.NewStyle().Foreground(lipgloss.Green).MarginLeft(1)
 			failedStyle := lipgloss.NewStyle().Foreground(lipgloss.Red).MarginLeft(1)
 			cleaned := make([]*Session, 0)
