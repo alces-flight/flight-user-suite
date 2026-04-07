@@ -13,6 +13,7 @@ var (
 	black     = lipgloss.Color("#000000")
 	cream     = lipgloss.Color("#FFFDF5")
 	alcesBlue = lipgloss.Color("#209FCE")
+	lightBlue = lipgloss.Color("#83D0ED")
 	grey      = lipgloss.Color("#CCD0DA")
 	primary   = lipgloss.Color("#2C3E50")
 
@@ -21,7 +22,7 @@ var (
 	paragraph = lipgloss.NewStyle().Margin(0, 1, 1, 1)
 	code      = lipgloss.NewStyle().Background(grey).Foreground(primary).Bold(true)
 	bullet    = lipgloss.NewStyle().PaddingLeft(1).PaddingRight(2).Bold(true)
-	hyperlink = lipgloss.NewStyle().Foreground(lipgloss.Cyan)
+	hyperlink = lipgloss.NewStyle().Foreground(lightBlue)
 
 	tableHeaderStyle  = lipgloss.NewStyle().Foreground(alcesBlue).Bold(true).Align(lipgloss.Center)
 	tableCellStyle    = lipgloss.NewStyle().Padding(0, 1)
