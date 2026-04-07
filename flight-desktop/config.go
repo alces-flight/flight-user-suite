@@ -10,6 +10,7 @@ import (
 
 type config struct {
 	Dependencies []dependency `yaml:"dependencies"`
+	EnvWhitelist []string     `yaml:"environment_whitelist"`
 }
 
 type dependency struct {

@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"syscall"
@@ -20,6 +21,20 @@ import (
 	"github.com/adrg/xdg"
 	"gopkg.in/yaml.v3"
 )
+
+func envWhitelist() []string {
+	config, err := loadConfig()
+	if err != nil {
+		whitelist := []string{"PWD", "HOME", "LANG", "USER", "UID", "PATH", "VNCDESKTOP", "DISPLAY", "FLIGHT_ROOT"}
+		log.Debug("Loading config failed: using default environment whitelist", "err", err)
+		return whitelist
+	}
+	whitelist := make([]string, 0, len(config.EnvWhitelist))
+	for _, item := range config.EnvWhitelist {
+		whitelist = append(whitelist, strings.TrimSpace(item))
+	}
+	return whitelist
+}
 
 type sessionState string
 
@@ -138,8 +153,6 @@ func (s *Session) Kill(ctx context.Context) error {
 		"-sessiondir", s.sessionDir(),
 	}
 	cmd := exec.CommandContext(ctx, libexecPath("vncserver"), args...)
-	// TODO: Set environment.
-	// cmd.Env = []string{}
 	output, err := cmd.CombinedOutput()
 	if exitError, ok := errors.AsType[*exec.ExitError](err); ok {
 		log.Debug("vncserver", "stdout/stderr", string(output))
@@ -244,6 +257,21 @@ func (s *Session) installSessionScript() error {
 	return nil
 }
 
+// Return a copy of the current environment with only whitelisted items remaining.
+func (s *Session) cleanEnvironment() []string {
+	whitelist := envWhitelist()
+	log.Debug("Sanitising environment", "whitelist", whitelist)
+	clean := make([]string, 0, len(os.Environ()))
+	for _, kv := range os.Environ() {
+		parts := strings.SplitN(kv, "=", 2)
+		key := parts[0]
+		if slices.Contains(whitelist, key) {
+			clean = append(clean, kv)
+		}
+	}
+	return clean
+}
+
 func (s *Session) passwordFile() string {
 	return filepath.Join(s.sessionDir(), "password.dat")
 }
@@ -288,8 +316,7 @@ func (s *Session) startVNC(ctx context.Context, dir string) error {
 	}
 	cmd := exec.CommandContext(ctx, libexecPath("vncserver"), args...)
 	cmd.Dir = dir
-	// TODO: Set environment.
-	// cmd.Env = []string{}
+	cmd.Env = s.cleanEnvironment()
 
 	output, err := cmd.Output()
 	if err != nil {

@@ -23,3 +23,16 @@ dependencies:
     description: "Perl"
     paths:
       - "perl"
+
+# Everything not included in this list is removed from the environment when
+# launching a new session.
+environment_whitelist:
+  - DISPLAY
+  - FLIGHT_ROOT
+  - HOME
+  - LANG
+  - PATH
+  - PWD
+  - UID
+  - USER
+  - VNCDESKTOP
