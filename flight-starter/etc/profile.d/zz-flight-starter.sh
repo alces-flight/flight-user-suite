@@ -41,20 +41,14 @@ unset hook
 
 # Load in any settings set by 'flight config set'. Allowing per-user settings
 # to override global settings.
-IFS=: read -a xdg_config <<< "${XDG_CONFIG_DIRS:-/etc/xdg}"
-for a in "${xdg_config[@]}"; do
-  if [ -e "${a}"/flight/settings.config ]; then
-    source "${a}"/flight/settings.config
-    break
-  fi
-done
-IFS=: read -a xdg_config <<< "${XDG_CONFIG_HOME:-$HOME/.config}"
-for a in "${xdg_config[@]}"; do
-  if [ -e "${a}"/flight/settings.config ]; then
-    source "${a}"/flight/settings.config
-    break
-  fi
-done
+if [ -e "/etc/xdg/flight/settings.config ]; then
+  source "/etc/xdg/flight/settings.config
+  break
+fi
+if [ -e "${XDG_CONFIG_HOME:-$HOME/.config}"/flight/settings.config ]; then
+  source "${XDG_CONFIG_HOME:-$HOME/.config}"/flight/settings.config
+  break
+fi
 
 if [ "${FLIGHT_AUTOSTART}" == "on" ] ; then
 	flight-start

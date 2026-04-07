@@ -211,12 +211,16 @@ func saveConfig(key, value string, global bool) error {
 	for k, v := range config {
 		fmt.Fprintf(&b, "%s=%s\n", k, v)
 	}
-	return os.WriteFile(path, []byte(b.String()), 0o600)
+	if global {
+		return os.WriteFile(path, []byte(b.String()), 0o666)
+	} else {
+		return os.WriteFile(path, []byte(b.String()), 0o600)
+	}
 }
 
 func globalConfigPath() (string, error) {
 	name := filepath.Join("flight", "settings.config")
-	paths := xdg.ConfigDirs
+	paths := []string{"/etc/xdg"}
 	return configPath(name, paths)
 }
 
@@ -235,7 +239,7 @@ func configPath(name string, paths []string) (string, error) {
 		if exists(dir) {
 			return p, nil
 		}
-		if err := os.MkdirAll(dir, os.ModeDir|0o700); err == nil {
+		if err := os.MkdirAll(dir, os.ModeDir|0o777); err == nil {
 			return p, nil
 		}
 
