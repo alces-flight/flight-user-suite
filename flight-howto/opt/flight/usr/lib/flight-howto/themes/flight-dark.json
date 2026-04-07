@@ -54,7 +54,7 @@
     "format": "\n--------\n"
   },
   "item": {
-    "block_prefix": "• "
+    "block_prefix": "\u001b[38;5;32;159;206m• \u001b[0m"
   },
   "enumeration": {
     "block_prefix": ". "
