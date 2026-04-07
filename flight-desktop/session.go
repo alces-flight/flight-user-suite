@@ -128,6 +128,12 @@ func (s *Session) Start(ctx context.Context) error {
 		s.cleanup()
 		return fmt.Errorf("staring VNC server: %w", err)
 	}
+	if err := s.startCleaner(ctx); err != nil {
+		// Don't return an error here, as we still want to save the session and
+		// recovering from this error is possible by manually running the clean
+		// command.
+		log.Debug("Failed to start cleaner script", "err", err)
+	}
 	s.SessionState = Active
 	err := s.Save()
 	if err != nil {
@@ -369,6 +375,26 @@ func (s *Session) parseVNCOutput(output []byte) error {
 		return err
 	}
 	s.Metadata = md
+	return nil
+}
+
+func (s *Session) startCleaner(ctx context.Context) error {
+	data, err := os.ReadFile(s.Metadata.Pidfile)
+	if err != nil {
+		return fmt.Errorf("reading pidfile: %w", err)
+	}
+	pid := strings.TrimSpace(string(data))
+	cmd := exec.CommandContext(ctx, libexecPath("cleaner"))
+	cmd.Env = []string{
+		fmt.Sprintf("SESSION_VNC_PID=%s", pid),
+		"SESSION_PIDS=\"\"",
+		fmt.Sprintf("SESSION_DIR=%s", s.sessionDir()),
+	}
+	cmd.Dir = "/"
+	err = cmd.Start()
+	if err != nil {
+		return fmt.Errorf("starting cleaner: %w", err)
+	}
 	return nil
 }
 
