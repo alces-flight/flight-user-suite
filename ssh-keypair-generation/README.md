@@ -7,5 +7,5 @@ node is outside the scope of this hook; we assume that adding it to
 
 ## Usage
 
-* Enable the hook: `/opt/flight/bin/flight hooks enable ssh-keypair-generation`.
+* Enable the hook: `/opt/flight/bin/flight hooks enable login ssh-keypair-generation`.
 * Activate the flight environment: `flight-start`.
