@@ -143,6 +143,9 @@ func (s *Session) Start(ctx context.Context) error {
 }
 
 func (s *Session) cleanup() {
+	if os.Getenv("FLIGHT_DESKTOP_DEBUG") != "" {
+		return
+	}
 	if err := s.RemoveSessionDir(); err != nil {
 		log.Debug("Failed to remove session dir", "err", err)
 	}
@@ -389,6 +392,9 @@ func (s *Session) startCleaner(ctx context.Context) error {
 		fmt.Sprintf("SESSION_VNC_PID=%s", pid),
 		"SESSION_PIDS=\"\"",
 		fmt.Sprintf("SESSION_DIR=%s", s.sessionDir()),
+	}
+	if os.Getenv("FLIGHT_DESKTOP_DEBUG") != "" {
+		cmd.Env = append(cmd.Env, "FLIGHT_DESKTOP_DEBUG=true")
 	}
 	cmd.Dir = "/"
 	err = cmd.Start()
