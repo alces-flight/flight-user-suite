@@ -60,7 +60,7 @@ You can specify which sessions are cleaned by providing the optional <id> parame
 			skipped := make([]*Session, 0)
 
 			for _, session := range sessions {
-				if session.SessionState == Active {
+				if !session.IsLocal() || session.State == Active {
 					skipped = append(skipped, session)
 				} else {
 					err := session.RemoveSessionDir()

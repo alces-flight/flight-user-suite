@@ -43,7 +43,7 @@ func sessionInfo(session *Session) {
 			dd.Render(session.Name),
 			dd.Render(session.SessionType),
 			dd.Render(session.Geometry),
-			dd.Render(string(session.SessionState)),
+			dd.Render(string(session.SessionState())),
 			dd.Render(session.CreatedAt.Format(time.RFC822)),
 		),
 	)
@@ -64,7 +64,7 @@ func connectionInfo(session *Session) {
 	} else {
 		username = u.Username
 	}
-	ip := session.PrimaryIP().String()
+	ip := session.IP
 	vnc := fmt.Sprintf("vnc://%s:%s@%s:%d", username, session.Password, ip, session.Port())
 	ipPort := session.PrimaryConnectionString()
 	ipDisplay := fmt.Sprintf("%s:%s", ip, session.Display())

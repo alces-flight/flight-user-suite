@@ -77,10 +77,10 @@ func startSessionCommand() *cli.Command {
 			defer cancel()
 
 			session := Session{
-				Name:         name,
-				SessionState: New,
-				SessionType:  sessionType,
-				Geometry:     cmd.String("geometry"),
+				Name:        name,
+				State:       New,
+				SessionType: sessionType,
+				Geometry:    cmd.String("geometry"),
 			}
 			err = session.Start(ctx)
 			if err != nil {

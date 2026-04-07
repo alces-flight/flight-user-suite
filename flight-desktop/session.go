@@ -44,16 +44,18 @@ var (
 	Active sessionState = "active"
 	Broken sessionState = "broken"
 	Exited sessionState = "exited"
+	Remote sessionState = "remote"
 )
 
 type Session struct {
-	Name         string
-	SessionType  string          `yaml:"session_type"`
-	Password     string          `yaml:"password"`
-	SessionState sessionState    `yaml:"state"`
-	Geometry     string          `yaml:"geometry"`
-	CreatedAt    time.Time       `yaml:"created_at"`
-	Metadata     sessionMetadata `yaml:"metadata"`
+	Name        string
+	SessionType string          `yaml:"session_type"`
+	Password    string          `yaml:"password"`
+	IP          string          `yaml:"ip"`
+	State       sessionState    `yaml:"state"`
+	Geometry    string          `yaml:"geometry"`
+	CreatedAt   time.Time       `yaml:"created_at"`
+	Metadata    sessionMetadata `yaml:"metadata"`
 }
 
 func loadAllSessions() ([]*Session, error) {
@@ -82,29 +84,29 @@ func loadSession(name string) (*Session, error) {
 	info, err := os.Stat(session.sessionDir())
 	if err != nil {
 		log.Debug("Error checking session dir", "sessionDir", session.sessionDir(), "err", err)
-		session.SessionState = Broken
+		session.State = Broken
 		return session, UnknownSession{Session: name}
 	}
 	if !info.IsDir() {
 		log.Debug("Session dir is not a directory", "sessionDir", session.sessionDir())
-		session.SessionState = Broken
+		session.State = Broken
 		return session, UnknownSession{Session: name}
 	}
 
 	data, err := os.ReadFile(session.metadataFile())
 	if err != nil {
 		log.Debug("Reading session metadata", "metadataFile", session.metadataFile(), "err", err)
-		session.SessionState = Broken
+		session.State = Broken
 		return session, nil
 	}
 	err = yaml.Unmarshal(data, &session)
 	if err != nil {
 		log.Debug("Loading session metadata", "metadataFile", session.metadataFile(), "err", err)
-		session.SessionState = Broken
+		session.State = Broken
 		return session, nil
 	}
 	if !session.isActive() {
-		session.SessionState = Exited
+		session.State = Exited
 	}
 	// Make certain that name isn't overridden by a value in the metadata file.
 	session.Name = name
@@ -134,7 +136,8 @@ func (s *Session) Start(ctx context.Context) error {
 		// command.
 		log.Debug("Failed to start cleaner script", "err", err)
 	}
-	s.SessionState = Active
+	s.State = Active
+	s.IP = s.PrimaryIP().String()
 	err := s.Save()
 	if err != nil {
 		return fmt.Errorf("saving session: %w", err)
@@ -194,6 +197,17 @@ func (s Session) PrimaryIP() netip.Addr {
 	return ip
 }
 
+func (s *Session) SessionState() sessionState {
+	if !s.IsLocal() {
+		return Remote
+	}
+	return s.State
+}
+
+func (s *Session) IsLocal() bool {
+	return s.IP == s.PrimaryIP().String()
+}
+
 func (s Session) Port() int {
 	display, err := strconv.Atoi(s.Display())
 	if err != nil {
@@ -204,11 +218,10 @@ func (s Session) Port() int {
 }
 
 func (s Session) PrimaryConnectionString() string {
-	if s.SessionState == Broken {
+	if s.State == Broken {
 		return ""
 	}
-	ip := s.PrimaryIP().String()
-	return fmt.Sprintf("%s:%d", ip, s.Port())
+	return fmt.Sprintf("%s:%d", s.IP, s.Port())
 }
 
 func (s Session) Display() string {

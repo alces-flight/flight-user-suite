@@ -29,6 +29,12 @@ func killSessionCommand() *cli.Command {
 				}
 				return err
 			}
+			if !session.IsLocal() {
+				return cli.Exit(fmt.Sprintf("Desktop session '%s' is not local.\n", session.Name), 1)
+			}
+			if session.State != Active {
+				return cli.Exit(fmt.Sprintf("Desktop session '%s' is not active.\n", session.Name), 1)
+			}
 			p := pin.New(fmt.Sprintf("Killing desktop session %s", session.Name),
 				pin.WithSpinnerColor(pin.ColorCyan),
 				pin.WithTextColor(pin.ColorGreen),
