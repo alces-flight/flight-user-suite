@@ -16,6 +16,8 @@ import (
 	"github.com/concertim/flight-user-suite/flight/pkg"
 	"github.com/urfave/cli/v3"
 	"golang.org/x/term"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 var (
@@ -159,6 +161,18 @@ func PrintDirContents(dirPath string) error {
 	return err
 }
 
+func parseFilename(filename string) (id string, title string) {
+	before, after, ok := strings.Cut(filename, "-")
+	if ok {
+		id = before
+		title = cases.Title(language.English, cases.Compact).String(strings.ReplaceAll(after, "-", " "))
+	} else {
+		id = filename
+		title = cases.Title(language.English, cases.Compact).String(strings.ReplaceAll(after, "-", " "))
+	}
+	return id, title
+}
+
 func entriesTable(filenames []string) error {
 	namecolWidth := 8
 
@@ -184,13 +198,13 @@ func entriesTable(filenames []string) error {
 		Width(termWidth)
 	t.Headers("ID", "Guide")
 	for _, name := range filenames {
-		id := name
+		id, title := parseFilename(name)
 		namecolWidth = max(namecolWidth, len(id)+2)
-		summary := lipgloss.JoinVertical(
+		titleColumn := lipgloss.JoinVertical(
 			lipgloss.Left,
-			id,
+			title,
 		)
-		t.Row(id, summary)
+		t.Row(id, titleColumn)
 	}
 	_, err := lipgloss.Println(t)
 	return err
