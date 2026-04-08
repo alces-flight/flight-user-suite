@@ -2,7 +2,7 @@
 # =============================================================================
 # Copyright (C) 2019-present Concertim Ltd.
 #
-# This file is part of Flight Desktop.
+# This file is part of Flight User Suite.
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which is available at
@@ -22,8 +22,8 @@
 #
 #  https://opensource.org/licenses/EPL-2.0
 #
-# For more information on Flight Desktop, please visit:
-# https://github.com/alces-flight/flight-desktop
+# For more information on Flight User Suite, please visit:
+# https://github.com/alces-flight/flight-user-suite
 # ==============================================================================
 port="$1"
 if curl -s https://ifconfig.co/port/$port | grep -q '"reachable":true'; then
