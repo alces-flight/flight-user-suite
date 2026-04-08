@@ -141,6 +141,9 @@ func enableHook(ctx context.Context, cmd *cli.Command) error {
 	if err := os.Chmod(hp, 0755); err != nil {
 		return transformHookError(event, hook, err)
 	}
+	if err := createHowtoSymlinks(hook, false); err != nil {
+		log.Debug("Error installing howtos", "hook", hook, "err", err)
+	}
 	log.Printf("Enabled %s hook", hook)
 	return nil
 }
@@ -155,6 +158,9 @@ func disableHook(ctx context.Context, cmd *cli.Command) error {
 	}
 	if err := os.Chmod(hp, 0444); err != nil {
 		return transformHookError(event, hook, err)
+	}
+	if err := removeHowtoSymlinks(hook, false); err != nil {
+		return fmt.Errorf("removing howto symlinks: %w", err)
 	}
 	log.Printf("Disabled flight %s hook", hook)
 	return nil
