@@ -61,9 +61,9 @@ func main() {
 				Name:      "show",
 				Aliases:   []string{"s"},
 				Usage:     "Open a user guide for viewing in the terminal",
-				ArgsUsage: "<guide-name>",
+				ArgsUsage: "<index>",
 				Action:    show,
-				Before:    assertArgPresent("guide-name"),
+				Before:    assertArgPresent("index"),
 			},
 		},
 	}
