@@ -169,7 +169,7 @@ func prettyFilename(filename string) (title string) {
 }
 
 func entriesTable(filenames []string) error {
-	namecolWidth := 4
+	namecolWidth := 7
 	t := table.New().
 		Border(lipgloss.NormalBorder()).
 		BorderStyle(lipgloss.NewStyle().Foreground(pkg.AlcesBlue)).
@@ -190,7 +190,7 @@ func entriesTable(filenames []string) error {
 			return style
 		}).
 		Width(termWidth)
-	t.Headers("ID", "Title")
+	t.Headers("Index", "Title")
 	for index, name := range filenames {
 		id := strconv.Itoa(index + 1)
 		namecolWidth = max(namecolWidth, len(id)+2)
