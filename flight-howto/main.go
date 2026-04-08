@@ -19,11 +19,11 @@ import (
 )
 
 var (
-	flightRoot   string = "/opt/flight"
-	howtoDir     string
-	themeDir     string
-	termWidth    int = 80
-	maxTextWidth int = 80
+	flightRoot       string = "/opt/flight"
+	howtoDir         string
+	markdownThemeDir string
+	termWidth        int = 80
+	maxTextWidth     int = 80
 )
 
 func init() {
@@ -31,7 +31,7 @@ func init() {
 		flightRoot = root
 	}
 	howtoDir = filepath.Join(flightRoot, "usr", "share", "doc", "howtos-enabled")
-	themeDir = filepath.Join(flightRoot, "usr", "lib", "flight-howto", "themes")
+	markdownThemeDir = filepath.Join(flightRoot, "usr", "lib", "flight-howto", "themes")
 	var err error
 	termWidth, _, err = term.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
@@ -113,12 +113,12 @@ func show(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	isDark := lipgloss.HasDarkBackground(os.Stdin, os.Stdout)
-	theme := filepath.Join(themeDir, "flight-light.json")
+	markdownTheme := filepath.Join(markdownThemeDir, "flight-light.json")
 	if isDark {
-		theme = filepath.Join(themeDir, "flight-dark.json")
+		markdownTheme = filepath.Join(markdownThemeDir, "flight-dark.json")
 	}
 
-	rendered, err := glamour.Render(string(markdown), theme)
+	rendered, err := glamour.Render(string(markdown), markdownTheme)
 	if err != nil {
 		return fmt.Errorf("rendering howto: %w", err)
 	}
@@ -164,16 +164,16 @@ func entriesTable(filenames []string) error {
 
 	t := table.New().
 		Border(lipgloss.NormalBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Cyan)).
+		BorderStyle(lipgloss.NewStyle().Foreground(pkg.AlcesBlue)).
 		StyleFunc(func(row, col int) lipgloss.Style {
 			var style lipgloss.Style
 			switch {
 			case row == table.HeaderRow:
-				return tableHeaderStyle
+				return pkg.TableHeaderStyle
 			case row%2 == 0:
-				style = tableEvenRowStyle
+				style = pkg.TableEvenRowStyle
 			default:
-				style = tableOddRowStyle
+				style = pkg.TableOddRowStyle
 			}
 			switch col {
 			case 0:
