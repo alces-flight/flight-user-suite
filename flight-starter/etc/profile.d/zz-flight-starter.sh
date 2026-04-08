@@ -67,13 +67,11 @@ unset hook
 
 # Load in any settings set by 'flight config set'. Allowing per-user settings
 # to override global settings.
-if [ -e "/etc/xdg/flight/settings.config ]; then
-  source "/etc/xdg/flight/settings.config
-  break
+if [ -e /etc/xdg/flight/settings.config ]; then
+  source /etc/xdg/flight/settings.config
 fi
 if [ -e "${XDG_CONFIG_HOME:-$HOME/.config}"/flight/settings.config ]; then
   source "${XDG_CONFIG_HOME:-$HOME/.config}"/flight/settings.config
-  break
 fi
 
 if [ "${FLIGHT_AUTOSTART}" == "on" ] ; then
