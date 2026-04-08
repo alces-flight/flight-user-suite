@@ -6,6 +6,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/table"
+	"charm.land/log/v2"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/urfave/cli/v3"
 )
@@ -53,11 +54,13 @@ func typesTable(types []*Type) error {
 			switch col {
 			case 0:
 				return style.Width(namecolWidth)
+			case 2:
+				return style.Width(15)
 			}
 			return style
 		}).
 		Width(termWidth)
-	t.Headers("Name", "Summary")
+	t.Headers("Name", "Summary", "Dependencies")
 	for _, typ := range types {
 		namecolWidth = max(namecolWidth, len(typ.ID)+2)
 		summary := lipgloss.JoinVertical(
@@ -69,7 +72,22 @@ func typesTable(types []*Type) error {
 				hyperlink.MarginBottom(1).Hyperlink(typ.URL).Render(typ.URL),
 			),
 		)
-		t.Row(typ.ID, summary)
+
+		depsText := "\u2754 Unknown"
+		depsLoadError := typ.loadDependencies()
+
+		if depsLoadError == nil {
+			_, depsOK := runDoctor(requiredDependencies(typ.dependencies))
+
+			depsText = lipgloss.NewStyle().Foreground(lipgloss.Red).Render("\u274c Missing")
+			if depsOK {
+				depsText = lipgloss.NewStyle().Foreground(lipgloss.Green).Render("\u2705 OK")
+			}
+		} else {
+			log.Debug("While loading dependencies for type", "type", typ.ID, "err", depsLoadError)
+		}
+
+		t.Row(typ.ID, summary, depsText)
 	}
 	_, err := lipgloss.Println(t)
 	return err
