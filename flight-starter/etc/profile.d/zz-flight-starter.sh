@@ -29,6 +29,7 @@ if [ -z "$BASH_VERSION" ]; then
 fi
 
 export FLIGHT_ROOT=${FLIGHT_ROOT:-/opt/flight}
+FLIGHT_ROOT_ORIG=${FLIGHT_ROOT}
 
 if [ "${-#*u}" != "$-" ]; then
   set +u
@@ -41,6 +42,9 @@ for a in "${xdg_config[@]}"; do
     break
   fi
 done
+# Honour the FLIGHT_ROOT setting initially set.
+FLIGHT_ROOT=${FLIGHT_ROOT_ORIG}
+unset FLIGHT_ROOT_ORIG
 
 if [ "$(type -t flight-start)" != "function" ]; then
   flight-start() {
@@ -60,6 +64,21 @@ if [ -d "${FLIGHT_ROOT}"/usr/lib/hooks/login ]; then
   shopt -u nullglob
 fi
 unset hook
+
+# Load in any settings set by 'flight config set'. Allowing per-user settings
+# to override global settings.
+if [ -e "/etc/xdg/flight/settings.config ]; then
+  source "/etc/xdg/flight/settings.config
+  break
+fi
+if [ -e "${XDG_CONFIG_HOME:-$HOME/.config}"/flight/settings.config ]; then
+  source "${XDG_CONFIG_HOME:-$HOME/.config}"/flight/settings.config
+  break
+fi
+
+if [ "${FLIGHT_AUTOSTART}" == "on" ] ; then
+	flight-start
+fi
 
 if [ "${_nounset_set}" == "true" ]; then
   set -u

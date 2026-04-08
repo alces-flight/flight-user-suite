@@ -9,6 +9,7 @@ require (
 	github.com/cyucelen/marker v0.0.0-20220628090808-ec8d542c2d28
 	github.com/ergochat/readline v0.1.3
 	github.com/fatih/color v1.19.0
+	github.com/hashicorp/go-envparse v0.1.0
 	github.com/muesli/reflow v0.3.0
 	github.com/urfave/cli/v3 v3.7.0
 	golang.org/x/term v0.41.0

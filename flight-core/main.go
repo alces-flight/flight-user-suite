@@ -30,6 +30,8 @@ var (
 	hookDir         string
 	validEvents            = []string{"login", "activation"}
 	validEventNames string = strings.Join(validEvents, ", ")
+	termWidth       int    = 80
+	maxTextWidth    int    = 80
 )
 
 func init() {
@@ -39,16 +41,17 @@ func init() {
 	if root, ok := os.LookupEnv("FLIGHT_ROOT"); ok {
 		flightRoot = root
 	}
+	var err error
+	termWidth, _, err = term.GetSize(int(os.Stdout.Fd()))
+	if err != nil {
+		termWidth = 80
+	}
+	maxTextWidth = min(termWidth, 80)
 	toolDir = filepath.Join(flightRoot, "usr", "lib", "flight-core")
 	hookDir = filepath.Join(flightRoot, "usr", "lib", "hooks")
 }
 
 func main() {
-	termWidth, _, err := term.GetSize(int(os.Stdout.Fd()))
-	if err != nil {
-		termWidth = 80
-	}
-	maxTextWidth := min(termWidth, 80)
 	user, err := user.Current()
 	if err != nil {
 		log.Warn("Unable to determine user: not adding admin commands", "err", err)
@@ -105,6 +108,7 @@ func main() {
 				},
 				Action: runShell,
 			},
+			configCommand(),
 		},
 	}
 	if user != nil && user.Uid == "0" {
