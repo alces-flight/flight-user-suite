@@ -96,7 +96,11 @@ func main() {
 }
 
 func list(ctx context.Context, cmd *cli.Command) error {
-	return PrintDirContents(howtoDir)
+	filenames, err := collectMarkdownFiles(howtoDir)
+	if err != nil {
+		return err
+	}
+	return entriesTable(filenames)
 }
 
 func show(ctx context.Context, cmd *cli.Command) error {
@@ -171,14 +175,6 @@ func collectMarkdownFiles(dirPath string) ([]string, error) {
 	}
 	sort.Strings(filenames)
 	return filenames, nil
-}
-
-func PrintDirContents(dirPath string) error {
-	filenames, err := collectMarkdownFiles(dirPath)
-	if err != nil {
-		return err
-	}
-	return entriesTable(filenames)
 }
 
 func prettyFilename(filename string) string {
