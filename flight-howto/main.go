@@ -171,7 +171,7 @@ func collectMarkdownFiles(dirPath string) ([]string, error) {
 			if err != nil {
 				return nil, err
 			}
-			name, _ := strings.CutSuffix(relPath, ".md")
+			name := strings.TrimSuffix(relPath, ".md")
 			filenames = append(filenames, name)
 		}
 	}
