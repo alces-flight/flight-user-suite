@@ -30,17 +30,17 @@ root and non-root users.
   ```
 * List all available hooks
   ```sh
-  flight hooks list <event>
+  flight hooks list
   ```
 * List all enabled hooks
   ```sh
-  flight hooks list --enabled <event>
+  flight hooks list --enabled
   ```
 * Enable a hook
   ```sh
-  flight hooks enable <hook> <event>
+  flight hooks enable <event> <hook>
   ```
 * Disable a hook
   ```sh
-  flight hooks disable <hook> <event>
+  flight hooks disable <event> <hook>
   ```

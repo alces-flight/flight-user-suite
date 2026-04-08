@@ -225,7 +225,9 @@ func addAdminCommands(cmd *cli.Command, maxTextWidth int) {
 			Usage:     "Manage Flight User Suite hooks",
 			UsageText: fmt.Sprintf("%s hooks command [command options]", progName),
 			Description: wordwrap.String(
-				"Manage the Flight User Suite hooks.\n\nThere are two types of hooks: 'login' hooks and 'activation' hooks.  Enabled 'login' hooks are exectued when a login shell is started. Enabled 'activation' hooks are executed with the Flight environment is activated.",
+				`Manage the Flight User Suite hooks.
+
+There are two types of hooks: 'login' hooks and 'activation' hooks.  Enabled 'login' hooks are exectued when a login shell is started. Enabled 'activation' hooks are executed with the Flight environment is activated.`,
 				maxTextWidth,
 			),
 			Category: "Hook management",
@@ -235,21 +237,29 @@ func addAdminCommands(cmd *cli.Command, maxTextWidth int) {
 					Usage: "List Flight User Suite hooks",
 					Description: wordwrap.String(
 						fmt.Sprintf(
-							"List all Flight User Suite hooks for the given event.  If the --enabled flag is set, only list those hooks that are currently enabled.\n\nValid events are %s.",
+							`List all Flight User Suite hooks for the given event.  If the --enabled flag is set, only list those hooks that are currently enabled.  If the --event flag is provided, only list hooks for the given event.
+
+Valid events are %s.`,
 							validEventNames,
 						),
 						maxTextWidth,
 					),
-					Arguments: []cli.Argument{
-						&cli.StringArg{Name: "event", UsageText: "<event>"},
-					},
 					Flags: []cli.Flag{
 						&cli.BoolFlag{
 							Name:  "enabled",
 							Usage: "list only enabled hooks",
 						},
+						&cli.StringFlag{
+							Name:  "event",
+							Usage: "list only hooks for the given event",
+							Validator: func(event string) error {
+								if event != "" && !slices.Contains(validEvents, event) {
+									return fmt.Errorf("valid values are %s", validEventNames)
+								}
+								return nil
+							},
+						},
 					},
-					Before: composeBeforeFuncs(assertArgPresent("event"), assertEventValid("event", 0)),
 					Action: listHooks,
 				},
 				{
@@ -309,12 +319,12 @@ func addToolProxyCommands(cmd *cli.Command) {
 	}
 	for _, tool := range tools {
 		proxy := cli.Command{
-			Name:            tool,
+			Name:            tool.Name,
 			Action:          runTool(tool),
 			SkipFlagParsing: true,
 			Category:        "Available tools",
 		}
-		if synopsis, found := synopsisMap[tool]; found {
+		if synopsis, found := synopsisMap[tool.Name]; found {
 			proxy.Usage = synopsis
 		}
 		cmd.Commands = append(cmd.Commands, &proxy)

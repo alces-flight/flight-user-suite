@@ -33,18 +33,30 @@ The following example shows how to list available hooks, enable a hook, and list
 enabled hooks.
 
 ```bash
-$ sudo /opt/flight/bin/flight hooks list login
-welcome
+$ sudo /opt/flight/bin/flight hooks list
+┌────────────┬────────────────────────┬─────────────┐
+│   Event    │          Name          │   Enabled   │
+├────────────┼────────────────────────┼─────────────┤
+│ login      │ welcome                │ ❌ Disabled │
+│ activation │ ssh-keypair-generation │ ❌ Disabled │
+└────────────┴────────────────────────┴─────────────┘
 $ sudo /opt/flight/bin/flight hooks enable login welcome
 Enabled welcome hook
-$ sudo /opt/flight/bin/flight hooks list login --enabled
-welcome
-$ sudo /opt/flight/bin/flight hooks list activation
-ssh-keypair-generation
+$ sudo /opt/flight/bin/flight hooks list --enabled
+┌───────┬─────────┬─────────────┐
+│ Event │  Name   │   Enabled   │
+├───────┼─────────┼─────────────┤
+│ login │ welcome │ ✅ Enabled  │
+└───────┴─────────┴─────────────┘
 $ sudo /opt/flight/bin/flight hooks enable activation ssh-keypair-generation
 Enabled ssh-keypair-generation hook
-$ sudo /opt/flight/bin/flight hooks list activation --enabled
-ssh-keypair-generation
+$ sudo /opt/flight/bin/flight hooks list
+┌────────────┬────────────────────────┬─────────────┐
+│   Event    │          Name          │   Enabled   │
+├────────────┼────────────────────────┼─────────────┤
+│ login      │ welcome                │ ✅ Enabled  │
+│ activation │ ssh-keypair-generation │ ✅ Enabled  │
+└────────────┴────────────────────────┴─────────────┘
 ```
 
 See `flight hooks --help` for more details.
@@ -60,12 +72,21 @@ enabled tools. (Note that `flight howto` is normally enabled by default.)
 
 ```bash
 $ sudo /opt/flight/bin/flight tools list
-desktop
-howto
-$ sudo /opt/flight/bin/flight tools enable howto
-Enabled flight howto tool
+┌─────────┬─────────────┐
+│  Name   │   Enabled   │
+├─────────┼─────────────┤
+│ desktop │ ❌ Disabled │
+│ howto   │ ✅ Enabled  │
+└─────────┴─────────────┘
+$ sudo /opt/flight/bin/flight tools enable desktop
+Enabled flight desktop tool
 $ sudo /opt/flight/bin/flight tools list --enabled
-howto
+┌─────────┬─────────────┐
+│  Name   │   Enabled   │
+├─────────┼─────────────┤
+│ desktop │ ✅ Enabled  │
+│ howto   │ ✅ Enabled  │
+└─────────┴─────────────┘
 ```
 
 ## Usage
@@ -80,11 +101,25 @@ Tools can be run with `flight <toolname>`, for example:
 
 ```bash
 $ flight howto --help
-Usage: flight howto [--help] [list]
+NAME:
+   flight howto - View user guides for your HPC environment
 
-View user guides for your HPC environment.
+USAGE:
+   flight howto [global options] [command [command options]]
 
-    --help              Show this help message
+DESCRIPTION:
+   View user guides for your HPC environment
+
+COMMANDS:
+   list, l, ls  List available user guides
+   show, s      Open a user guide for viewing in the terminal
+   help, h      Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+   --help, -h  show help
+
+COPYRIGHT:
+   (c) 2026 Stephen F Norledge & Concertim Ltd.
 ```
 
 The output of `flight --help` will list all enabled tools.

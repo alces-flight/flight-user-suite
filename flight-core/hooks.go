@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/table"
 	"charm.land/log/v2"
 	"github.com/urfave/cli/v3"
 )
@@ -28,41 +30,101 @@ func transformHookError(event, hook string, err error) error {
 
 func listHooks(_ context.Context, cmd *cli.Command) error {
 	onlyEnabled := cmd.Bool("enabled")
-	event := cmd.StringArg("event")
-	hooks, err := getHooks(event, onlyEnabled)
+	event := cmd.String("event")
+	var hooks []*Hook
+	var err error
+	if event == "" {
+		hooks, err = getAllHooks(onlyEnabled)
+	} else {
+		hooks, err = getEventHooks(event, onlyEnabled)
+	}
 	if err != nil {
 		return err
 	}
-	for _, hook := range hooks {
-		fmt.Println(hook)
+	if len(hooks) == 0 {
+		if onlyEnabled || event != "" {
+			fmt.Println("No hooks match the given filters.")
+		} else {
+			fmt.Println("No hooks found.")
+		}
+		return nil
 	}
-	return nil
+	return hooksTable(hooks)
 }
 
-func getHooks(event string, onlyEnabled bool) ([]string, error) {
-	if event != "" {
-		hookDir = filepath.Join(hookDir, event)
+func hooksTable(hooks []*Hook) error {
+	namecolWidth := 8
+	eventcolWidth := 8
+
+	t := table.New().
+		Border(lipgloss.NormalBorder()).
+		BorderStyle(lipgloss.NewStyle().Foreground(alcesBlue)).
+		StyleFunc(func(row, col int) lipgloss.Style {
+			var style lipgloss.Style
+			switch {
+			case row == table.HeaderRow:
+				return tableHeaderStyle
+			case row%2 == 0:
+				style = tableEvenRowStyle
+			default:
+				style = tableOddRowStyle
+			}
+			switch col {
+			case 0:
+				return style.MaxWidth(eventcolWidth)
+			case 1:
+				return style.Width(namecolWidth)
+			case 2:
+				return style.Width(13)
+			}
+			return style
+		})
+	t.Headers("Event", "Name", "Enabled")
+	for _, h := range hooks {
+		eventcolWidth = max(eventcolWidth, len(h.Event)+2)
+		namecolWidth = max(namecolWidth, len(h.Name)+2)
+		enabledText := "\u274c Disabled"
+		if h.Enabled {
+			enabledText = "\u2705 Enabled"
+		}
+		t.Row(h.Event, h.Name, enabledText)
 	}
+	_, err := lipgloss.Println(t)
+	return err
+}
+
+func getAllHooks(onlyEnabled bool) ([]*Hook, error) {
+	hooks := make([]*Hook, 0)
+	for _, event := range validEvents {
+		hs, err := getEventHooks(event, onlyEnabled)
+		if err != nil {
+			return hooks, err
+		}
+		hooks = append(hooks, hs...)
+	}
+	return hooks, nil
+}
+
+func getEventHooks(event string, onlyEnabled bool) ([]*Hook, error) {
+	hookDir := filepath.Join(hookDir, event)
 	log.Debug("getting hooks", "dir", hookDir, "onlyEnabled", onlyEnabled)
 	entries, err := os.ReadDir(hookDir)
 	if err != nil {
 		return nil, fmt.Errorf("listing hooks: %w", err)
 	}
-	hooks := make([]string, 0)
+	hooks := make([]*Hook, 0)
 	for _, entry := range entries {
 		if strings.HasPrefix(entry.Name(), ".") {
 			continue
 		}
-		if onlyEnabled {
-			info, err := entry.Info()
-			if err != nil {
-				return nil, fmt.Errorf("reading hook info: %w", err)
-			}
-			if info.Mode()&0111 != 0 {
-				hooks = append(hooks, entry.Name())
-			}
-		} else {
-			hooks = append(hooks, entry.Name())
+		info, err := entry.Info()
+		if err != nil {
+			return nil, fmt.Errorf("reading hook info: %w", err)
+		}
+		enabled := info.Mode()&0111 != 0
+		hook := &Hook{Name: entry.Name(), Event: event, Enabled: enabled}
+		if !onlyEnabled || hook.Enabled {
+			hooks = append(hooks, hook)
 		}
 	}
 	return hooks, nil
@@ -96,6 +158,12 @@ func disableHook(ctx context.Context, cmd *cli.Command) error {
 	}
 	log.Printf("Disabled flight %s hook", hook)
 	return nil
+}
+
+type Hook struct {
+	Enabled bool
+	Event   string
+	Name    string
 }
 
 type UnknownHook struct {
