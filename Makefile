@@ -20,7 +20,7 @@ $(DIST): $(MODULES)
 # Note: if we ever want default-enabled tools that have documentation we will
 # also need to symlink the docs into
 # $(DIST)/opt/flight/usr/share/doc/howtos-enabled here.
-	cp README.md $(DIST)/opt/flight/usr/share/doc/flight-user-suite/01-about-flight-user-suite.md
+	cp README.md $(DIST)/opt/flight/usr/share/doc/flight-user-suite/1-about-flight-user-suite.md
 	cp LICENSE.txt $(DIST)/opt/flight/usr/share/doc/flight-user-suite/
 
 $(TARFILE): $(DIST)

@@ -87,7 +87,7 @@ View user guides for your HPC environment.
     --help              Show this help message
 
 $ flight howto list
-01-about-flight-user-suite.md
+1-about-flight-user-suite.md
 ```
 
 The output of `flight --help` will list all enabled tools.
