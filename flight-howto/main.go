@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"charm.land/glamour/v2"
@@ -161,21 +162,14 @@ func PrintDirContents(dirPath string) error {
 	return err
 }
 
-func parseFilename(filename string) (id string, title string) {
-	before, after, ok := strings.Cut(filename, "-")
-	if ok {
-		id = before
-		title = cases.Title(language.English, cases.Compact).String(strings.ReplaceAll(after, "-", " "))
-	} else {
-		id = filename
-		title = cases.Title(language.English, cases.Compact).String(strings.ReplaceAll(after, "-", " "))
-	}
-	return id, title
+func prettyFilename(filename string) (title string) {
+	return cases.
+		Title(language.English, cases.Compact).
+		String(strings.ReplaceAll(filename, "-", " "))
 }
 
 func entriesTable(filenames []string) error {
-	namecolWidth := 8
-
+	namecolWidth := 4
 	t := table.New().
 		Border(lipgloss.NormalBorder()).
 		BorderStyle(lipgloss.NewStyle().Foreground(pkg.AlcesBlue)).
@@ -196,13 +190,13 @@ func entriesTable(filenames []string) error {
 			return style
 		}).
 		Width(termWidth)
-	t.Headers("ID", "Guide")
-	for _, name := range filenames {
-		id, title := parseFilename(name)
+	t.Headers("ID", "Title")
+	for index, name := range filenames {
+		id := strconv.Itoa(index + 1)
 		namecolWidth = max(namecolWidth, len(id)+2)
 		titleColumn := lipgloss.JoinVertical(
 			lipgloss.Left,
-			title,
+			prettyFilename(name),
 		)
 		t.Row(id, titleColumn)
 	}
