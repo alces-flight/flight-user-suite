@@ -104,14 +104,16 @@ func list(ctx context.Context, cmd *cli.Command) error {
 }
 
 func show(ctx context.Context, cmd *cli.Command) error {
-	howtoIndex, err := strconv.Atoi(cmd.Args().First())
-	if err != nil {
-		return fmt.Errorf("invalid input: %w", err)
-	}
-
 	filenames, err := collectMarkdownFiles(howtoDir)
 	if err != nil {
-		return fmt.Errorf("collecting howto files: %w", err)
+		return fmt.Errorf("collecting guide files: %w", err)
+	}
+
+	howtoIndex, err := strconv.Atoi(cmd.Args().First())
+	if err != nil || howtoIndex < 1 || howtoIndex > len(filenames) {
+		return fmt.Errorf(
+			"invalid input: '%s' is not a valid guide index. Use `flight howto list` to view the index for each user guide.",
+			cmd.Args().First())
 	}
 
 	howtoName := filenames[howtoIndex-1]
