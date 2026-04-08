@@ -1,0 +1,65 @@
+#!/bin/bash
+#==============================================================================
+# Copyright (C) 2026-present Concertim Ltd.
+#
+# This file is part of Flight User Suite.
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which is available at
+# <https://www.eclipse.org/legal/epl-2.0>, or alternative license
+# terms made available by Alces Flight Ltd - please direct inquiries
+# about licensing to licensing@concertim.com.
+#
+# Flight Runway is distributed in the hope that it will be useful, but
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR
+# IMPLIED INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OR CONDITIONS
+# OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR A
+# PARTICULAR PURPOSE. See the Eclipse Public License 2.0 for more
+# details.
+#
+# You should have received a copy of the Eclipse Public License 2.0
+# along with Flight Runway. If not, see:
+#
+#  https://opensource.org/licenses/EPL-2.0
+#
+# For more information on Flight User Suite, please visit:
+# https://github.com/alces-flight/flight-user-suite
+#==============================================================================
+set -euo pipefail
+
+main() {
+    echo "Creating symlink targets"
+    local target link_name config
+    config="$( cat "${FLIGHT_ROOT}"/etc/user-symlinks.config | sed -e '/^#/d' -e '/^\s*$/d' )"
+    IFS=$'\n' read -a links <<< "${config}"
+    for link in "${links[@]}"; do
+        IFS='=' read -a link_desc <<< "${link}"
+        target="$(USER="${PAM_USER}" bash -c "echo ${link_desc[1]}")"
+
+        if [ "${target}" == "" ] ; then
+            echo "Invalid target ''"
+            return 1
+        fi
+        if [[ "${target}" != *"${PAM_USER}"* ]] ; then
+            echo "Invalid target '${target}': expected to contain '${PAM_USER}'"
+            return 1
+        fi
+        if [ -d "${target}" ] ; then
+            echo "  ${target} : already exists"
+            return 0
+        fi
+
+        mkdir "${target}"
+        chown "${PAM_USER}":"${PAM_USER}" "${target}"
+        chmod 700 "${target}"
+        echo "  ${target} : created"
+    done
+}
+
+FLIGHT_ROOT=${FLIGHT_ROOT:-/opt/flight}
+
+if [ -f "${FLIGHT_ROOT}"/etc/user-symlinks.config ]; then
+    if [ "$PAM_TYPE" == "open_session" -a "${PAM_USER}" != "" ] ; then
+        main
+    fi
+fi

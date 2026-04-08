@@ -20,10 +20,6 @@ func toolPath(tool string) string {
 	return filepath.Join(toolDir, fmt.Sprintf("flight-%s", tool))
 }
 
-func howTosDir(tool string) string {
-	return filepath.Join(flightRoot, "usr", "share", "doc", fmt.Sprintf("flight-%s", tool))
-}
-
 func transformToolError(tool string, err error) error {
 	if pathError, ok := errors.AsType[*fs.PathError](err); ok {
 		if pathError.Err.Error() == "no such file or directory" {
@@ -123,7 +119,9 @@ func enableTool(ctx context.Context, cmd *cli.Command) error {
 	if err := os.Chmod(tp, 0555); err != nil {
 		return transformToolError(tool, err)
 	}
-	createHowtoSymlinks(tool)
+	if err := createHowtoSymlinks(tool, true); err != nil {
+		log.Debug("Error installing howtos", "tool", tool, "err", err)
+	}
 	log.Printf("Enabled flight %s tool", tool)
 	return nil
 }
@@ -135,54 +133,10 @@ func disableTool(ctx context.Context, cmd *cli.Command) error {
 	if err := os.Chmod(tp, 0444); err != nil {
 		return transformToolError(tool, err)
 	}
-	if err := removeHowtoSymlinks(tool); err != nil {
+	if err := removeHowtoSymlinks(tool, true); err != nil {
 		return fmt.Errorf("removing howto symlinks: %w", err)
 	}
 	log.Printf("Disabled flight %s tool", tool)
-	return nil
-}
-
-func createHowtoSymlinks(tool string) error {
-	tgtDir := filepath.Join(flightRoot, "usr", "share", "doc", "howtos-enabled")
-	srcDir := howTosDir(tool)
-	matches, err := filepath.Glob(filepath.Join(srcDir, "*.md"))
-	if err != nil {
-		return fmt.Errorf("globbing howtos: %w", err)
-	}
-	for _, oldpath := range matches {
-		newpath := filepath.Join(tgtDir, filepath.Base(oldpath))
-		log.Debug("Creating howto symlink", "target", oldpath, "link_name", newpath)
-		if err = os.Symlink(oldpath, newpath); err != nil {
-			return fmt.Errorf("creating howto symlink: %w", err)
-		}
-	}
-	return nil
-}
-
-func removeHowtoSymlinks(tool string) error {
-	symDir := filepath.Join(flightRoot, "usr", "share", "doc", "howtos-enabled")
-	srcDir := howTosDir(tool)
-
-	entries, err := os.ReadDir(symDir)
-	if err != nil {
-		return err
-	}
-	for _, entry := range entries {
-		if entry.Type()&os.ModeSymlink != 0 {
-			symTgt, err := os.Readlink(filepath.Join(symDir, entry.Name()))
-			if err != nil {
-				return err
-			}
-			if !filepath.IsAbs(symTgt) {
-				symTgt = filepath.Join(symDir, symTgt)
-			}
-			symTgtDir := filepath.Dir(filepath.Clean(symTgt))
-			if symTgtDir == srcDir {
-				log.Debug("Removing howto symlink", "target", symTgt, "link_name", filepath.Join(symDir, entry.Name()))
-				os.Remove(filepath.Join(symDir, entry.Name()))
-			}
-		}
-	}
 	return nil
 }
 
