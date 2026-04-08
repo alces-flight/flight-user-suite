@@ -99,9 +99,18 @@ func list(ctx context.Context, cmd *cli.Command) error {
 }
 
 func show(ctx context.Context, cmd *cli.Command) error {
-	howtoName := cmd.Args().First()
-	fullPath := filepath.Join(howtoDir, howtoName)
+	howtoIndex, err := strconv.Atoi(cmd.Args().First())
+	if err != nil {
+		return fmt.Errorf("invalid input: %w", err)
+	}
 
+	filenames, err := collectMarkdownFiles(howtoDir)
+	if err != nil {
+		return fmt.Errorf("collecting howto files: %w", err)
+	}
+
+	howtoName := filenames[howtoIndex-1]
+	fullPath := filepath.Join(howtoDir, howtoName)
 	if !strings.HasSuffix(fullPath, ".md") {
 		fullPath = fullPath + ".md"
 	}
