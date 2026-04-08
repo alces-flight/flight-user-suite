@@ -15,6 +15,7 @@ var (
 	AlcesBlue = lipgloss.Color("#209FCE")
 	LightBlue = lipgloss.Color("#83D0ED")
 	Grey      = lipgloss.Color("#CCD0DA")
+	DarkGrey  = lipgloss.Color("#A2A7B4")
 	Primary   = lipgloss.Color("#2C3E50")
 
 	Header    = lipgloss.NewStyle().Margin(1, 1, 1, 0).Bold(true).Foreground(AlcesBlue)

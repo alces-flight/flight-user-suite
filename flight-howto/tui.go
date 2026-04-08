@@ -51,8 +51,7 @@ var (
 				Align(lipgloss.Center, lipgloss.Center).
 				BorderStyle(lipgloss.NormalBorder()).
 				BorderForeground(pkg.LightBlue)
-	spinnerStyle = lipgloss.NewStyle().Foreground(pkg.AlcesBlue)
-	helpStyle    = lipgloss.NewStyle().Foreground(pkg.Grey)
+	helpStyle = lipgloss.NewStyle().Foreground(pkg.DarkGrey)
 )
 
 type mainModel struct {
@@ -193,21 +192,13 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m mainModel) View() tea.View {
 	var s strings.Builder
-	model := m.currentFocusedModel()
 	if m.state == guideView {
 		s.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, focusedModelStyle.Render(fmt.Sprintf("%4s", m.guide.viewport.View())), modelStyle.Render(m.spinner.View())))
 	} else {
 		s.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, modelStyle.Render(fmt.Sprintf("%4s", m.guide.viewport.View())), focusedModelStyle.Render(m.spinner.View())))
 	}
-	s.WriteString(helpStyle.Render(fmt.Sprintf("\ntab: focus next • n: new %s • q: exit\n", model)))
+	s.WriteString(helpStyle.Render("\ntab: focus next • q: exit\n"))
 	return tea.NewView(s.String())
-}
-
-func (m mainModel) currentFocusedModel() string {
-	if m.state == guideView {
-		return "guide"
-	}
-	return "spinner"
 }
 
 func (m *mainModel) Next() {
@@ -216,12 +207,6 @@ func (m *mainModel) Next() {
 	} else {
 		m.index++
 	}
-}
-
-func (m *mainModel) resetSpinner() {
-	m.spinner = spinner.New()
-	m.spinner.Style = spinnerStyle
-	m.spinner.Spinner = spinners[m.index]
 }
 
 func tui() {
