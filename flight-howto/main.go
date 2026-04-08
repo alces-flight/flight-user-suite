@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -182,6 +183,8 @@ func PrintDirContents(dirPath string) error {
 }
 
 func prettyFilename(filename string) string {
+	re := regexp.MustCompile(`^\d+-\s*`)
+	filename = re.ReplaceAllString(filename, "")
 	filename = strings.ReplaceAll(filename, "-", " ")
 	filename = strings.ReplaceAll(filename, "/", " > ")
 	return cases.
