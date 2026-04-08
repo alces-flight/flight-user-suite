@@ -169,7 +169,7 @@ func collectMarkdownFiles(dirPath string) ([]string, error) {
 			filenames = append(filenames, name)
 		}
 	}
-
+	sort.Strings(filenames)
 	return filenames, nil
 }
 
@@ -178,7 +178,6 @@ func PrintDirContents(dirPath string) error {
 	if err != nil {
 		return err
 	}
-	sort.Strings(filenames)
 	return entriesTable(filenames)
 }
 
