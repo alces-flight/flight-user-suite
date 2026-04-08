@@ -83,7 +83,7 @@ func sessionsTable(sessions []*Session) error {
 			s.SessionType,
 			connectionString,
 			s.Password,
-			string(s.SessionState),
+			string(s.SessionState()),
 		)
 	}
 	_, err := lipgloss.Println(t)

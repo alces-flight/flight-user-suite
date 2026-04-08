@@ -28,7 +28,7 @@ func showSessionCommand() *cli.Command {
 				return err
 			}
 			sessionInfo(session)
-			if session.SessionState == Active {
+			if session.State != Exited && session.State != Broken {
 				connectionInfo(session)
 			}
 			managementInfo(session)
