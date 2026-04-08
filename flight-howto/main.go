@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"log"
 	"os"
+	"os/user"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -16,6 +16,7 @@ import (
 	"charm.land/glamour/v2"
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/table"
+	"charm.land/log/v2"
 	"github.com/concertim/flight-user-suite/flight/pkg"
 	"github.com/urfave/cli/v3"
 	"golang.org/x/term"
@@ -32,6 +33,9 @@ var (
 )
 
 func init() {
+	log.SetReportTimestamp(false)
+	log.SetReportCaller(false)
+	log.SetLevel(log.WarnLevel)
 	if root, ok := os.LookupEnv("FLIGHT_ROOT"); ok {
 		flightRoot = root
 	}
@@ -96,37 +100,40 @@ func main() {
 }
 
 func list(ctx context.Context, cmd *cli.Command) error {
-	filenames, err := collectMarkdownFiles(howtoDir)
+	user, err := user.Current()
+	if err != nil {
+		log.Warn("Unable to determine user: including admin guides", "err", err)
+	}
+	howtos, err := loadHowtos(howtoDir, user)
 	if err != nil {
 		return err
 	}
-	return entriesTable(filenames)
+	return entriesTable(howtos)
 }
 
 func show(ctx context.Context, cmd *cli.Command) error {
-	filenames, err := collectMarkdownFiles(howtoDir)
+	user, err := user.Current()
+	if err != nil {
+		log.Warn("Unable to determine user: including admin guides", "err", err)
+	}
+	howtos, err := loadHowtos(howtoDir, user)
 	if err != nil {
 		return fmt.Errorf("collecting guide files: %w", err)
 	}
 
 	howtoIndex, err := strconv.Atoi(cmd.Args().First())
-	if err != nil || howtoIndex < 1 || howtoIndex > len(filenames) {
+	if err != nil || howtoIndex < 1 || howtoIndex > len(howtos) {
 		return fmt.Errorf(
 			"invalid input: '%s' is not a valid guide index. Use `flight howto list` to view the index for each user guide.",
 			cmd.Args().First())
 	}
 
-	howtoName := filenames[howtoIndex-1]
-	fullPath := filepath.Join(howtoDir, howtoName)
-	if !strings.HasSuffix(fullPath, ".md") {
-		fullPath = fullPath + ".md"
-	}
-
-	markdown, err := os.ReadFile(fullPath)
+	howto := howtos[howtoIndex-1]
+	markdown, err := howto.Content()
 	if err != nil {
 		if pathError, ok := errors.AsType[*fs.PathError](err); ok {
 			if pathError.Err.Error() == "no such file or directory" {
-				return UnknownHowto{Howto: howtoName}
+				return UnknownHowto{Howto: howto.Path}
 			}
 		}
 		return fmt.Errorf("reading howto: %w", err)
@@ -147,22 +154,22 @@ func show(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func collectMarkdownFiles(dirPath string) ([]string, error) {
+func loadHowtos(dirPath string, user *user.User) ([]*Howto, error) {
 	entries, err := os.ReadDir(dirPath)
 	if err != nil {
 		return nil, fmt.Errorf("reading directory: %w", err)
 	}
 
-	var filenames []string
+	var howtos []*Howto
 	for _, entry := range entries {
 		filePath := filepath.Join(dirPath, entry.Name())
 
 		if entry.IsDir() {
-			subFiles, err := collectMarkdownFiles(filePath)
+			subFiles, err := loadHowtos(filePath, user)
 			if err != nil {
 				return nil, err
 			}
-			filenames = append(filenames, subFiles...)
+			howtos = append(howtos, subFiles...)
 			continue
 		}
 
@@ -171,12 +178,14 @@ func collectMarkdownFiles(dirPath string) ([]string, error) {
 			if err != nil {
 				return nil, err
 			}
-			name := strings.TrimSuffix(relPath, ".md")
-			filenames = append(filenames, name)
+			howto := &Howto{Path: relPath}
+			if (user == nil || user.Uid == "0") || !howto.IsAdminOnly() {
+				howtos = append(howtos, howto)
+			}
 		}
 	}
-	sort.Strings(filenames)
-	return filenames, nil
+	sort.Sort(ByPath(howtos))
+	return howtos, nil
 }
 
 func prettyFilename(filename string) string {
@@ -189,7 +198,7 @@ func prettyFilename(filename string) string {
 		String(filename)
 }
 
-func entriesTable(filenames []string) error {
+func entriesTable(howtos []*Howto) error {
 	namecolWidth := 7
 	t := table.New().
 		Border(lipgloss.NormalBorder()).
@@ -212,7 +221,8 @@ func entriesTable(filenames []string) error {
 		}).
 		Width(termWidth)
 	t.Headers("Index", "Title")
-	for index, name := range filenames {
+	for index, howto := range howtos {
+		name := strings.TrimSuffix(howto.Path, ".md")
 		id := strconv.Itoa(index + 1)
 		namecolWidth = max(namecolWidth, len(id)+2)
 		titleColumn := lipgloss.JoinVertical(

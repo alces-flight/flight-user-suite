@@ -1,3 +1,6 @@
+---
+admin: true
+---
 # Managed Cluster Documentation
 
 ## User symlinks
