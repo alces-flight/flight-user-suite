@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"os/user"
 	"path/filepath"
 	"strings"
 
@@ -126,20 +127,20 @@ func newExample(isDark bool) (*example, error) {
 }
 
 func markdownContent() ([]byte, error) {
-	filenames, err := collectMarkdownFiles(howtoDir)
+	user, err := user.Current()
+	if err != nil {
+		fmt.Println("Unable to determine user: including admin guides", "err", err)
+	}
+	howtos, err := loadHowtos(howtoDir, user)
 	if err != nil {
 		return nil, fmt.Errorf("collecting guide files: %w", err)
 	}
-	howtoName := filenames[1]
-	fullPath := filepath.Join(howtoDir, howtoName)
-	if !strings.HasSuffix(fullPath, ".md") {
-		fullPath = fullPath + ".md"
-	}
-	markdown, err := os.ReadFile(fullPath)
+	howto := howtos[1]
+	markdown, err := howto.Content()
 	if err != nil {
 		if pathError, ok := errors.AsType[*fs.PathError](err); ok {
 			if pathError.Err.Error() == "no such file or directory" {
-				return nil, UnknownHowto{Howto: howtoName}
+				return nil, UnknownHowto{Howto: howto.Path}
 			}
 		}
 		return nil, fmt.Errorf("reading howto: %w", err)

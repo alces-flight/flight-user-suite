@@ -6,7 +6,7 @@ require (
 	charm.land/bubbles/v2 v2.1.0
 	charm.land/bubbletea/v2 v2.0.2
 	charm.land/glamour/v2 v2.0.0
-	charm.land/lipgloss/v2 v2.0.1
+	charm.land/lipgloss/v2 v2.0.2
 	charm.land/log/v2 v2.0.0
 	github.com/concertim/flight-user-suite/flight v0.0.0-00010101000000-000000000000
 	github.com/urfave/cli/v3 v3.8.0
