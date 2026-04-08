@@ -55,6 +55,7 @@ func main() {
 		Usage:       "View user guides for your HPC environment",
 		Description: lipgloss.Wrap("View user guides for your HPC environment", maxTextWidth, " "),
 		Copyright:   "(c) 2026 Stephen F Norledge & Concertim Ltd.",
+		Action:      runTUI,
 		Commands: []*cli.Command{
 			{
 				Name:    "list",
@@ -109,6 +110,11 @@ func list(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 	return entriesTable(howtos)
+}
+
+func runTUI(ctx context.Context, cmd *cli.Command) error {
+	tui()
+	return nil
 }
 
 func show(ctx context.Context, cmd *cli.Command) error {
