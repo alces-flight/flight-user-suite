@@ -12,6 +12,7 @@ import (
 
 	"charm.land/glamour/v2"
 	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/table"
 	"github.com/concertim/flight-user-suite/flight/pkg"
 	"github.com/urfave/cli/v3"
 	"golang.org/x/term"
@@ -133,7 +134,8 @@ func PrintDirContents(dirPath string) error {
 		return fmt.Errorf("reading directory: %w", err)
 	}
 
-	for _, entry := range entries {
+	filenames := make([]string, len(entries))
+	for i, entry := range entries {
 		name := entry.Name()
 		filePath := fmt.Sprintf("%v/%v", dirPath, name)
 
@@ -149,11 +151,49 @@ func PrintDirContents(dirPath string) error {
 			ext := filepath.Ext(relPath)
 			if ext == ".md" {
 				name, _ = strings.CutSuffix(relPath, ".md")
-				fmt.Println(name)
+				filenames[i] = name
 			}
 		}
 	}
-	return nil
+	err = entriesTable(filenames)
+	return err
+}
+
+func entriesTable(filenames []string) error {
+	namecolWidth := 8
+
+	t := table.New().
+		Border(lipgloss.NormalBorder()).
+		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Cyan)).
+		StyleFunc(func(row, col int) lipgloss.Style {
+			var style lipgloss.Style
+			switch {
+			case row == table.HeaderRow:
+				return tableHeaderStyle
+			case row%2 == 0:
+				style = tableEvenRowStyle
+			default:
+				style = tableOddRowStyle
+			}
+			switch col {
+			case 0:
+				return style.Width(namecolWidth)
+			}
+			return style
+		}).
+		Width(termWidth)
+	t.Headers("ID", "Guide")
+	for _, name := range filenames {
+		id := name
+		namecolWidth = max(namecolWidth, len(id)+2)
+		summary := lipgloss.JoinVertical(
+			lipgloss.Left,
+			id,
+		)
+		t.Row(id, summary)
+	}
+	_, err := lipgloss.Println(t)
+	return err
 }
 
 // TODO properly share these with flight-core
