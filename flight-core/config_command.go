@@ -57,6 +57,7 @@ Currently supported keys are 'autostart' which can be set to 'on' or 'off'.`, ma
 					&cli.StringArg{Name: "key", UsageText: "<key>"},
 					&cli.StringArg{Name: "value", UsageText: "<value>"},
 				},
+				Before: assertArgPresent("key", "value"),
 				Action: configSet,
 			},
 			{
@@ -74,6 +75,7 @@ Currently supported keys are 'autostart'.`, maxTextWidth),
 				Arguments: []cli.Argument{
 					&cli.StringArg{Name: "key", UsageText: "<key>"},
 				},
+				Before: assertArgPresent("key"),
 				Action: configGet,
 			},
 		},
@@ -117,8 +119,7 @@ func configGet(ctx context.Context, cmd *cli.Command) error {
 		config = loadMergedConfigs()
 	}
 	key := cmd.StringArg("key")
-	key = fmt.Sprintf("FLIGHT_%s", strings.ToUpper(key))
-	v, found := config[key]
+	v, found := config[fmt.Sprintf("FLIGHT_%s", strings.ToUpper(key))]
 	if found {
 		fmt.Println(v)
 	} else {
