@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"charm.land/lipgloss/v2"
+	"github.com/concertim/flight-user-suite/flight/pkg"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/urfave/cli/v3"
 	"github.com/yarlson/pin"
@@ -52,7 +53,7 @@ You can specify which sessions are cleaned by providing the optional <id> parame
 			timer := time.After(1 * time.Second)
 
 			var firstErr error
-			skippedStyle := lipgloss.NewStyle().Foreground(lightDark(primary, cream)).MarginLeft(1)
+			skippedStyle := lipgloss.NewStyle().Foreground(pkg.LightDark(pkg.Primary, pkg.Cream)).MarginLeft(1)
 			cleanedStyle := lipgloss.NewStyle().Foreground(lipgloss.Green).MarginLeft(1)
 			failedStyle := lipgloss.NewStyle().Foreground(lipgloss.Red).MarginLeft(1)
 			cleaned := make([]*Session, 0)
@@ -85,7 +86,7 @@ You can specify which sessions are cleaned by providing the optional <id> parame
 				}
 				out = lipgloss.JoinVertical(
 					lipgloss.Left,
-					append([]string{out, header.Render("Cleaned exited sessions")}, coloured...)...,
+					append([]string{out, pkg.Header.Render("Cleaned exited sessions")}, coloured...)...,
 				)
 			}
 			if len(failed) > 0 {
@@ -95,7 +96,7 @@ You can specify which sessions are cleaned by providing the optional <id> parame
 				}
 				out = lipgloss.JoinVertical(
 					lipgloss.Left,
-					append([]string{out, header.Render("Failed to clean")}, coloured...)...,
+					append([]string{out, pkg.Header.Render("Failed to clean")}, coloured...)...,
 				)
 			}
 			if len(skipped) > 0 {
@@ -105,7 +106,7 @@ You can specify which sessions are cleaned by providing the optional <id> parame
 				}
 				out = lipgloss.JoinVertical(
 					lipgloss.Left,
-					append([]string{out, header.Render("Skipped active/remote sessions")}, coloured...)...,
+					append([]string{out, pkg.Header.Render("Skipped active/remote sessions")}, coloured...)...,
 				)
 			}
 

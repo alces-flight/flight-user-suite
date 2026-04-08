@@ -8,21 +8,27 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 
 	"charm.land/glamour/v2"
 	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/table"
 	"github.com/concertim/flight-user-suite/flight/pkg"
 	"github.com/urfave/cli/v3"
 	"golang.org/x/term"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 var (
-	flightRoot   string = "/opt/flight"
-	howtoDir     string
-	themeDir     string
-	termWidth    int = 80
-	maxTextWidth int = 80
+	flightRoot       string = "/opt/flight"
+	howtoDir         string
+	markdownThemeDir string
+	termWidth        int = 80
+	maxTextWidth     int = 80
 )
 
 func init() {
@@ -30,7 +36,7 @@ func init() {
 		flightRoot = root
 	}
 	howtoDir = filepath.Join(flightRoot, "usr", "share", "doc", "howtos-enabled")
-	themeDir = filepath.Join(flightRoot, "usr", "lib", "flight-howto", "themes")
+	markdownThemeDir = filepath.Join(flightRoot, "usr", "lib", "flight-howto", "themes")
 	var err error
 	termWidth, _, err = term.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
@@ -56,9 +62,9 @@ func main() {
 				Name:      "show",
 				Aliases:   []string{"s"},
 				Usage:     "Open a user guide for viewing in the terminal",
-				ArgsUsage: "<guide-name>",
+				ArgsUsage: "<index>",
 				Action:    show,
-				Before:    assertArgPresent("guide-name"),
+				Before:    assertArgPresent("index"),
 			},
 		},
 	}
@@ -90,13 +96,28 @@ func main() {
 }
 
 func list(ctx context.Context, cmd *cli.Command) error {
-	return PrintDirContents(howtoDir)
+	filenames, err := collectMarkdownFiles(howtoDir)
+	if err != nil {
+		return err
+	}
+	return entriesTable(filenames)
 }
 
 func show(ctx context.Context, cmd *cli.Command) error {
-	howtoName := cmd.Args().First()
-	fullPath := filepath.Join(howtoDir, howtoName)
+	filenames, err := collectMarkdownFiles(howtoDir)
+	if err != nil {
+		return fmt.Errorf("collecting guide files: %w", err)
+	}
 
+	howtoIndex, err := strconv.Atoi(cmd.Args().First())
+	if err != nil || howtoIndex < 1 || howtoIndex > len(filenames) {
+		return fmt.Errorf(
+			"invalid input: '%s' is not a valid guide index. Use `flight howto list` to view the index for each user guide.",
+			cmd.Args().First())
+	}
+
+	howtoName := filenames[howtoIndex-1]
+	fullPath := filepath.Join(howtoDir, howtoName)
 	if !strings.HasSuffix(fullPath, ".md") {
 		fullPath = fullPath + ".md"
 	}
@@ -112,12 +133,12 @@ func show(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	isDark := lipgloss.HasDarkBackground(os.Stdin, os.Stdout)
-	theme := filepath.Join(themeDir, "flight-light.json")
+	markdownTheme := filepath.Join(markdownThemeDir, "flight-light.json")
 	if isDark {
-		theme = filepath.Join(themeDir, "flight-dark.json")
+		markdownTheme = filepath.Join(markdownThemeDir, "flight-dark.json")
 	}
 
-	rendered, err := glamour.Render(string(markdown), theme)
+	rendered, err := glamour.Render(string(markdown), markdownTheme)
 	if err != nil {
 		return fmt.Errorf("rendering howto: %w", err)
 	}
@@ -126,34 +147,82 @@ func show(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func PrintDirContents(dirPath string) error {
+func collectMarkdownFiles(dirPath string) ([]string, error) {
 	entries, err := os.ReadDir(dirPath)
-
 	if err != nil {
-		return fmt.Errorf("reading directory: %w", err)
+		return nil, fmt.Errorf("reading directory: %w", err)
 	}
 
+	var filenames []string
 	for _, entry := range entries {
-		name := entry.Name()
-		filePath := fmt.Sprintf("%v/%v", dirPath, name)
+		filePath := filepath.Join(dirPath, entry.Name())
 
 		if entry.IsDir() {
-			PrintDirContents(filePath)
-		} else {
-			relPath, err := filepath.Rel(howtoDir, filePath)
-
+			subFiles, err := collectMarkdownFiles(filePath)
 			if err != nil {
-				return fmt.Errorf("reading directory: %w", err)
+				return nil, err
 			}
+			filenames = append(filenames, subFiles...)
+			continue
+		}
 
-			ext := filepath.Ext(relPath)
-			if ext == ".md" {
-				name, _ = strings.CutSuffix(relPath, ".md")
-				fmt.Println(name)
+		if filepath.Ext(entry.Name()) == ".md" {
+			relPath, err := filepath.Rel(howtoDir, filePath)
+			if err != nil {
+				return nil, err
 			}
+			name := strings.TrimSuffix(relPath, ".md")
+			filenames = append(filenames, name)
 		}
 	}
-	return nil
+	sort.Strings(filenames)
+	return filenames, nil
+}
+
+func prettyFilename(filename string) string {
+	re := regexp.MustCompile(`^\d+-\s*`)
+	filename = re.ReplaceAllString(filename, "")
+	filename = strings.ReplaceAll(filename, "-", " ")
+	filename = strings.ReplaceAll(filename, "/", " > ")
+	return cases.
+		Title(language.English, cases.Compact).
+		String(filename)
+}
+
+func entriesTable(filenames []string) error {
+	namecolWidth := 7
+	t := table.New().
+		Border(lipgloss.NormalBorder()).
+		BorderStyle(lipgloss.NewStyle().Foreground(pkg.AlcesBlue)).
+		StyleFunc(func(row, col int) lipgloss.Style {
+			var style lipgloss.Style
+			switch {
+			case row == table.HeaderRow:
+				return pkg.TableHeaderStyle
+			case row%2 == 0:
+				style = pkg.TableEvenRowStyle
+			default:
+				style = pkg.TableOddRowStyle
+			}
+			switch col {
+			case 0:
+				return style.Width(namecolWidth)
+			}
+			return style
+		}).
+		Width(termWidth)
+	t.Headers("Index", "Title")
+	for index, name := range filenames {
+		id := strconv.Itoa(index + 1)
+		namecolWidth = max(namecolWidth, len(id)+2)
+		titleColumn := lipgloss.JoinVertical(
+			lipgloss.Left,
+			prettyFilename(name),
+		)
+		t.Row(id, titleColumn)
+	}
+	_, err := lipgloss.Println(t)
+	return err
 }
 
 // TODO properly share these with flight-core

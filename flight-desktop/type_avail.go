@@ -7,6 +7,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/table"
 	"charm.land/log/v2"
+	"github.com/concertim/flight-user-suite/flight/pkg"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/urfave/cli/v3"
 )
@@ -40,16 +41,16 @@ func typesTable(types []*Type) error {
 
 	t := table.New().
 		Border(lipgloss.NormalBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(alcesBlue)).
+		BorderStyle(lipgloss.NewStyle().Foreground(pkg.AlcesBlue)).
 		StyleFunc(func(row, col int) lipgloss.Style {
 			var style lipgloss.Style
 			switch {
 			case row == table.HeaderRow:
-				return tableHeaderStyle
+				return pkg.TableHeaderStyle
 			case row%2 == 0:
-				style = tableEvenRowStyle
+				style = pkg.TableEvenRowStyle
 			default:
-				style = tableOddRowStyle
+				style = pkg.TableOddRowStyle
 			}
 			switch col {
 			case 0:
@@ -69,7 +70,7 @@ func typesTable(types []*Type) error {
 			lipgloss.JoinHorizontal(
 				lipgloss.Top,
 				lipgloss.NewStyle().MarginRight(1).Render(">"),
-				hyperlink.MarginBottom(1).Hyperlink(typ.URL).Render(typ.URL),
+				pkg.Hyperlink.MarginBottom(1).Hyperlink(typ.URL).Render(typ.URL),
 			),
 		)
 
