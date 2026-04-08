@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"charm.land/bubbles/v2/spinner"
 	"charm.land/bubbles/v2/viewport"
@@ -24,8 +23,7 @@ import (
 type sessionState uint
 
 const (
-	defaultTime              = time.Minute
-	timerView   sessionState = iota
+	guideView sessionState = iota
 	spinnerView
 )
 
@@ -151,7 +149,7 @@ func markdownContent() ([]byte, error) {
 }
 
 func newModel() (mainModel, error) {
-	m := mainModel{state: timerView}
+	m := mainModel{state: guideView}
 	guide, err := newExample(lipgloss.HasDarkBackground(os.Stdin, os.Stdout))
 	m.guide = *guide
 	m.spinner = spinner.New()
@@ -171,16 +169,10 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		case "tab":
-			if m.state == timerView {
+			if m.state == guideView {
 				m.state = spinnerView
 			} else {
-				m.state = timerView
-			}
-		case "n":
-			if m.state == spinnerView {
-				m.Next()
-				m.resetSpinner()
-				cmds = append(cmds, m.spinner.Tick)
+				m.state = guideView
 			}
 		}
 		switch m.state {
@@ -202,7 +194,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m mainModel) View() tea.View {
 	var s strings.Builder
 	model := m.currentFocusedModel()
-	if m.state == timerView {
+	if m.state == guideView {
 		s.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, focusedModelStyle.Render(fmt.Sprintf("%4s", m.guide.viewport.View())), modelStyle.Render(m.spinner.View())))
 	} else {
 		s.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, modelStyle.Render(fmt.Sprintf("%4s", m.guide.viewport.View())), focusedModelStyle.Render(m.spinner.View())))
@@ -212,8 +204,8 @@ func (m mainModel) View() tea.View {
 }
 
 func (m mainModel) currentFocusedModel() string {
-	if m.state == timerView {
-		return "timer"
+	if m.state == guideView {
+		return "guide"
 	}
 	return "spinner"
 }
