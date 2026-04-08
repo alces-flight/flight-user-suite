@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -130,42 +131,53 @@ func show(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func PrintDirContents(dirPath string) error {
+func collectMarkdownFiles(dirPath string) ([]string, error) {
 	entries, err := os.ReadDir(dirPath)
-
 	if err != nil {
-		return fmt.Errorf("reading directory: %w", err)
+		return nil, fmt.Errorf("reading directory: %w", err)
 	}
 
-	filenames := make([]string, len(entries))
-	for i, entry := range entries {
-		name := entry.Name()
-		filePath := fmt.Sprintf("%v/%v", dirPath, name)
+	var filenames []string
+	for _, entry := range entries {
+		filePath := filepath.Join(dirPath, entry.Name())
 
 		if entry.IsDir() {
-			PrintDirContents(filePath)
-		} else {
-			relPath, err := filepath.Rel(howtoDir, filePath)
-
+			subFiles, err := collectMarkdownFiles(filePath)
 			if err != nil {
-				return fmt.Errorf("reading directory: %w", err)
+				return nil, err
 			}
+			filenames = append(filenames, subFiles...)
+			continue
+		}
 
-			ext := filepath.Ext(relPath)
-			if ext == ".md" {
-				name, _ = strings.CutSuffix(relPath, ".md")
-				filenames[i] = name
+		if filepath.Ext(entry.Name()) == ".md" {
+			relPath, err := filepath.Rel(howtoDir, filePath)
+			if err != nil {
+				return nil, err
 			}
+			name, _ := strings.CutSuffix(relPath, ".md")
+			filenames = append(filenames, name)
 		}
 	}
-	err = entriesTable(filenames)
-	return err
+
+	return filenames, nil
 }
 
-func prettyFilename(filename string) (title string) {
+func PrintDirContents(dirPath string) error {
+	filenames, err := collectMarkdownFiles(dirPath)
+	if err != nil {
+		return err
+	}
+	sort.Strings(filenames)
+	return entriesTable(filenames)
+}
+
+func prettyFilename(filename string) string {
+	filename = strings.ReplaceAll(filename, "-", " ")
+	filename = strings.ReplaceAll(filename, "/", " > ")
 	return cases.
 		Title(language.English, cases.Compact).
-		String(strings.ReplaceAll(filename, "-", " "))
+		String(filename)
 }
 
 func entriesTable(filenames []string) error {
