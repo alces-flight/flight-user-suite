@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/table"
 	"charm.land/log/v2"
 	"github.com/urfave/cli/v3"
 )
@@ -42,30 +44,71 @@ func listTools(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		return err
 	}
-	for _, tool := range tools {
-		fmt.Println(tool)
+	if len(tools) == 0 {
+		if onlyEnabled {
+			fmt.Println("No tools are enabled.")
+		} else {
+			fmt.Println("No tools found.")
+		}
+		return nil
 	}
-	return nil
+	return toolsTable(tools)
 }
 
-func getTools(onlyEnabled bool) ([]string, error) {
+func toolsTable(tools []*Tool) error {
+	namecolWidth := 8
+
+	t := table.New().
+		Border(lipgloss.NormalBorder()).
+		BorderStyle(lipgloss.NewStyle().Foreground(alcesBlue)).
+		StyleFunc(func(row, col int) lipgloss.Style {
+			var style lipgloss.Style
+			switch {
+			case row == table.HeaderRow:
+				return tableHeaderStyle
+			case row%2 == 0:
+				style = tableEvenRowStyle
+			default:
+				style = tableOddRowStyle
+			}
+			switch col {
+			case 0:
+				return style.Width(namecolWidth)
+			case 1:
+				return style.Width(13)
+			}
+			return style
+		})
+	t.Headers("Name", "Enabled")
+	for _, tool := range tools {
+		namecolWidth = max(namecolWidth, len(tool.Name)+2)
+		enabledText := "\u274c Disabled"
+		if tool.Enabled {
+			enabledText = "\u2705 Enabled"
+		}
+		t.Row(tool.Name, enabledText)
+	}
+	_, err := lipgloss.Println(t)
+	return err
+}
+
+func getTools(onlyEnabled bool) ([]*Tool, error) {
 	log.Debug("getting tools", "dir", toolDir, "onlyEnabled", onlyEnabled)
 	entries, err := os.ReadDir(toolDir)
 	if err != nil {
 		return nil, fmt.Errorf("listing tools: %w", err)
 	}
-	tools := make([]string, 0)
+	tools := make([]*Tool, 0)
 	for _, entry := range entries {
-		if tool, hasPrefix := strings.CutPrefix(entry.Name(), "flight-"); hasPrefix {
-			if onlyEnabled {
-				info, err := entry.Info()
-				if err != nil {
-					return nil, fmt.Errorf("reading tool info: %w", err)
-				}
-				if info.Mode()&0111 != 0 {
-					tools = append(tools, tool)
-				}
-			} else {
+		if toolName, hasPrefix := strings.CutPrefix(entry.Name(), "flight-"); hasPrefix {
+			info, err := entry.Info()
+			if err != nil {
+				return nil, fmt.Errorf("reading tool info: %w", err)
+			}
+			enabled := info.Mode()&0111 != 0
+			tool := &Tool{Enabled: enabled, Name: toolName}
+
+			if !onlyEnabled || tool.Enabled {
 				tools = append(tools, tool)
 			}
 		}
@@ -143,18 +186,23 @@ func removeHowtoSymlinks(tool string) error {
 	return nil
 }
 
-func runTool(tool string) func(ctx context.Context, cmd *cli.Command) error {
+func runTool(tool *Tool) func(ctx context.Context, cmd *cli.Command) error {
 	run := func(ctx context.Context, cmd *cli.Command) error {
-		tp := toolPath(tool)
-		log.Debug("Execing", "tool", tool, "path", tp, "args", cmd.Args().Slice())
+		tp := toolPath(tool.Name)
+		log.Debug("Execing", "tool", tool.Name, "path", tp, "args", cmd.Args().Slice())
 		exe := exec.CommandContext(ctx, tp, cmd.Args().Slice()...)
 		exe.Stdout = os.Stdout
 		exe.Stderr = os.Stderr
 		err := exe.Run()
-		return transformToolError(tool, err)
+		return transformToolError(tool.Name, err)
 	}
 
 	return run
+}
+
+type Tool struct {
+	Enabled bool
+	Name    string
 }
 
 type DisabledTool struct {

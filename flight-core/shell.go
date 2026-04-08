@@ -22,7 +22,11 @@ func shellGetTools(line string) []string {
 		log.Warn("Error", "err", err)
 		return nil
 	}
-	return tools
+	toolNames := make([]string, 0, len(tools))
+	for _, tool := range tools {
+		toolNames = append(toolNames, tool.Name)
+	}
+	return toolNames
 }
 
 var completer = readline.NewPrefixCompleter(

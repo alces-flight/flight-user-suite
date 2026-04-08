@@ -319,12 +319,12 @@ func addToolProxyCommands(cmd *cli.Command) {
 	}
 	for _, tool := range tools {
 		proxy := cli.Command{
-			Name:            tool,
+			Name:            tool.Name,
 			Action:          runTool(tool),
 			SkipFlagParsing: true,
 			Category:        "Available tools",
 		}
-		if synopsis, found := synopsisMap[tool]; found {
+		if synopsis, found := synopsisMap[tool.Name]; found {
 			proxy.Usage = synopsis
 		}
 		cmd.Commands = append(cmd.Commands, &proxy)
