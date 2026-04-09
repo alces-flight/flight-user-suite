@@ -65,7 +65,7 @@ func main() {
 		Usage:                  "The Flight User Suite",
 		Version:                version,
 		Suggest:                true,
-		Copyright:              "(c) 2026 Stephen F Norledge & Concertim Ltd.",
+		Copyright:              "(c) 2026 Stephen F Norledge & Alces Software Ltd & Concertim Ltd.",
 		UseShortOptionHandling: true,
 		HideHelpCommand:        true,
 		Description:            rootDescription(user, maxTextWidth),

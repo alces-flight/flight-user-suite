@@ -54,7 +54,7 @@ func main() {
 		Name:        "flight howto",
 		Usage:       "View user guides for your HPC environment",
 		Description: lipgloss.Wrap("View user guides for your HPC environment", maxTextWidth, " "),
-		Copyright:   "(c) 2026 Stephen F Norledge & Concertim Ltd.",
+		Copyright:   "(c) 2026 Stephen F Norledge & Alces Software Ltd & Concertim Ltd.",
 		Commands: []*cli.Command{
 			{
 				Name:    "list",

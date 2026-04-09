@@ -119,7 +119,7 @@ GLOBAL OPTIONS:
    --help, -h  show help
 
 COPYRIGHT:
-   (c) 2026 Stephen F Norledge & Concertim Ltd.
+   (c) 2026 Stephen F Norledge & Alces Software Ltd & Concertim Ltd.
 ```
 
 The output of `flight --help` will list all enabled tools.
@@ -170,18 +170,18 @@ Identity File: /home/ben/.ssh/id_flightcluster
 Flight environment is now active.
 ```
 
-# License
+## License
 
 Eclipse Public License 2.0, see [LICENSE.txt](LICENSE.txt) for details.
 
-Copyright (C) 2019-present Concertim Ltd.
+Copyright (C) 2026 Stephen F Norledge & Alces Software Ltd & Concertim Ltd.
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which is available at
 [https://www.eclipse.org/legal/epl-2.0](https://www.eclipse.org/legal/epl-2.0),
-or alternative license terms made available by Alces Flight Ltd -
+or alternative license terms made available by Alces Software Ltd -
 please direct inquiries about licensing to
-[licensing@alces-flight.com](mailto:licensing@alces-flight.com).
+[licensing@alces-software.com](mailto:licensing@alces-software.com).
 
 Flight User Suite is distributed in the hope that it will be
 useful, but WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, EITHER
