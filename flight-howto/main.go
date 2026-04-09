@@ -189,7 +189,6 @@ func loadHowtos(dirPath string, user *user.User) ([]*Howto, error) {
 }
 
 func prettyFilename(filename string) string {
-	fmt.Printf("filename: %v\n", filename)
 	leadingDigits := regexp.MustCompile(`^\d+-\s*`)
 	otherDigits := regexp.MustCompile(`/\d+-\s*`)
 	filename = leadingDigits.ReplaceAllString(filename, "")
