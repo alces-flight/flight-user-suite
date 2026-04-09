@@ -1,0 +1,8 @@
+NAME:
+   flight howto show - Open a user guide for viewing in the terminal
+
+USAGE:
+   flight howto show [options] <index>
+
+OPTIONS:
+   --help, -h  show help

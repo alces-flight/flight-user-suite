@@ -1,0 +1,8 @@
+NAME:
+   flight howto list - List available user guides
+
+USAGE:
+   flight howto list [options]
+
+OPTIONS:
+   --help, -h  show help
