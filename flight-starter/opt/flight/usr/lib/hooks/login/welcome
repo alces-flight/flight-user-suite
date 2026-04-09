@@ -26,6 +26,21 @@
 # https://github.com/alces-flight/flight-user-suite
 #==============================================================================
 
+# Load in any settings set by 'flight config set'. Allowing per-user settings
+# to override global settings.
+if [ -e /etc/xdg/flight/settings.config ]; then
+  source /etc/xdg/flight/settings.config
+fi
+if [ -e "${XDG_CONFIG_HOME:-$HOME/.config}"/flight/settings.config ]; then
+  source "${XDG_CONFIG_HOME:-$HOME/.config}"/flight/settings.config
+fi
+
+if [ "${FLIGHT_AUTOSTART}" == "on" ] ; then
+  # The banner shown when flight is started is welcome enough; no need to
+  # also provide a separate welcome message.
+  exit 0
+fi
+
 IFS=: read -a xdg_config <<< "${XDG_CONFIG_HOME:-$HOME/.config}:${XDG_CONFIG_DIRS:-/etc/xdg}"
 for a in "${xdg_config[@]}"; do
   if [ -e "${a}"/flight.config ]; then
