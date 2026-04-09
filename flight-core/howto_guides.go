@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -19,51 +20,73 @@ func howTosDir(name string, isTool bool) string {
 func createHowtoSymlinks(name string, isTool bool) error {
 	tgtDir := filepath.Join(flightRoot, "usr", "share", "doc", "howtos-enabled")
 	srcDir := howTosDir(name, isTool)
-	matches, err := filepath.Glob(filepath.Join(srcDir, "*.md"))
-	if err != nil {
-		return fmt.Errorf("globbing howtos: %w", err)
-	}
-	for _, oldpath := range matches {
-		newpath := filepath.Join(tgtDir, filepath.Base(oldpath))
-		log.Debug("Creating howto symlink", "target", oldpath, "linkName", newpath)
-		if err = os.Symlink(oldpath, newpath); err != nil {
-			return fmt.Errorf("creating howto symlink: %w", err)
+	err := filepath.WalkDir(srcDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
 		}
-	}
-	return nil
+		if path == srcDir {
+			return nil
+		}
+		if d.IsDir() {
+			srcRel, _ := filepath.Rel(srcDir, path)
+			dir := filepath.Join(tgtDir, srcRel)
+			log.Debug("Creating howto directory", "dir", dir)
+			err := os.MkdirAll(dir, 0o755)
+			if err != nil {
+				log.Debug("Failed to create directory", "dir", dir, "err", err)
+				return filepath.SkipDir
+			}
+		}
+		matched, _ := filepath.Match("*.md", d.Name())
+		if matched {
+			srcRel, _ := filepath.Rel(srcDir, path)
+			linkName := filepath.Join(tgtDir, srcRel)
+			log.Debug("Creating howto symlink", "target", path, "linkName", linkName)
+			if err = os.Symlink(path, linkName); err != nil {
+				return fmt.Errorf("creating howto symlink: %w", err)
+			}
+		}
+		return nil
+	})
+	return err
 }
 
 func removeHowtoSymlinks(name string, isTool bool) error {
 	symDir := filepath.Join(flightRoot, "usr", "share", "doc", "howtos-enabled")
 	srcDir := howTosDir(name, isTool)
 
-	entries, err := os.ReadDir(symDir)
-	if err != nil {
-		return err
-	}
-	var firstErr error
-	for _, entry := range entries {
-		if entry.Type()&os.ModeSymlink != 0 {
-			symTgt, err := os.Readlink(filepath.Join(symDir, entry.Name()))
+	err := filepath.WalkDir(symDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if path == srcDir {
+			return nil
+		}
+		if d.IsDir() {
+			// Nothing to do. Leaving empty directories around is OK and it
+			// might not even be empty.
+			return nil
+		}
+		matched, _ := filepath.Match("*.md", d.Name())
+		if matched {
+			symTgt, err := os.Readlink(path)
 			if err != nil {
 				return err
 			}
-			if !filepath.IsAbs(symTgt) {
-				symTgt = filepath.Join(symDir, symTgt)
-			}
 			symTgtDir := filepath.Dir(filepath.Clean(symTgt))
-			if symTgtDir == srcDir {
-				linkName := filepath.Join(symDir, entry.Name())
-				log.Debug("Removing howto symlink", "target", symTgt, "linkName", linkName)
-				err = os.Remove(filepath.Join(symDir, entry.Name()))
-				if err != nil {
-					log.Debug("Error removing symlink", "linkName", linkName, "err", err)
-					if firstErr == nil {
-						firstErr = err
-					}
-				}
+			_, err = filepath.Rel(srcDir, symTgtDir)
+			if err != nil {
+				// symTgtDir is not relative to srcDir.  We don't remove it.
+				return nil
 			}
+			log.Debug("Removing howto symlink", "target", symTgt, "linkName", path)
+			err = os.Remove(path)
+			if err != nil {
+				log.Debug("Error removing symlink", "linkName", path, "err", err)
+			}
+			return err
 		}
-	}
-	return firstErr
+		return nil
+	})
+	return err
 }
