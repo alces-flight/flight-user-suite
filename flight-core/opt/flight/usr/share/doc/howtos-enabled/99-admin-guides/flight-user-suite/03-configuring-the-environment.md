@@ -1,0 +1,1 @@
+../../../flight-user-suite/99-admin-guides/flight-user-suite/03-configuring-the-environment.md
