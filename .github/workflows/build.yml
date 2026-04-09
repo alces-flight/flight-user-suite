@@ -12,7 +12,7 @@ permissions:
 
 name: Build and test
 jobs:
-  check_and_test:
+  test:
     name: Check Go deps and run Go tests
     runs-on: ${{ matrix.os }}
     timeout-minutes: 5
@@ -52,6 +52,7 @@ jobs:
 
   build:
     name: Build
+    needs: test
     runs-on: ${{ matrix.os }}
     timeout-minutes: 5
 
