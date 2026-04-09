@@ -193,7 +193,7 @@ func loadGlobalConfig() map[string]string {
 	path, err := globalConfigPath()
 	if err != nil {
 		log.Debug("Not merging global config", "path", path, "err", err)
-		return nil
+		return make(map[string]string)
 	}
 	globalConfig, err = loadConfig(path)
 	if err != nil {
