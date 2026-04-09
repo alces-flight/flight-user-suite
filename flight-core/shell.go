@@ -12,6 +12,7 @@ import (
 
 	"charm.land/log/v2"
 	"github.com/adrg/xdg"
+	"github.com/concertim/flight-user-suite/flight/pkg"
 	"github.com/ergochat/readline"
 	"github.com/urfave/cli/v3"
 )
@@ -91,12 +92,12 @@ func shellRunTool(tool string, args []string) error {
 func runShell(ctx context.Context, cmd *cli.Command) error {
 	baseTool := cmd.StringArg("tool")
 
-	prompt := promptStyle.Render("flight» ")
+	prompt := pkg.PromptStyle.Render("flight» ")
 	if baseTool != "" {
 		if !slices.Contains(shellGetTools(""), baseTool) {
 			return UnknownTool{Tool: baseTool}
 		}
-		prompt = promptStyle.Render(fmt.Sprintf("flight %s» ", baseTool))
+		prompt = pkg.PromptStyle.Render(fmt.Sprintf("flight %s» ", baseTool))
 	}
 	historyFile, err := xdg.CacheFile(filepath.Join("flight", "shell", "history"))
 	if err != nil {
