@@ -8,8 +8,8 @@ admin: true
 When you first activate the Flight environment, the system automatically creates symbolic links (symlinks) in your home directory. These links are designed to help you navigate and use the different storage areas available on your HPC environment.
 
 * **Scratch Storage** (`~/scratch`): Points to `/scratch/<username>`.
-  * **Purpose**: Designed for high-performance storage of large datasets and temporary job files.
-  * **Scope**: This directory is shared across the cluster, ensuring your jobs can access data from any node.
+* **Purpose**: Designed for high-performance storage of large datasets and temporary job files.
+* **Scope**: This directory is shared across the cluster, ensuring your jobs can access data from any node.
 
 ## Administration & Setup
 

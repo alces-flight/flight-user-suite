@@ -14,27 +14,6 @@ various environment types. Key features include:
 - **Collaboration**: If session details are shared, multiple users can connect
   to the same session simultaneously, enabling training and collaborative work.
 
-## System configuration recommendations
-
-Flight desktop is ideal for running in closed HPC environments. This ensures
-that access security is strictly controlled by network and authentication
-policies.
-
-Before using Flight Desktop, verify that your system meets the following
-criteria:
-
-- SELinux is disabled or appropriately configured to allow remote connections
-- The system, network and platform firewalls are configured to allow in a range
-  of VNC ports (a range starting at `5901`)
-
-You will also need to ensure that certain dependencies are installed on your
-system. Flight desktop can provide a report highlighting any missing
-dependencies, by running:
-
-```bash
-flight desktop doctor
-```
-
 ## Desktop environment support
 
 Flight Desktop comes with support for running sessions in the following
@@ -112,18 +91,24 @@ it is possible to tunnel the VNC ports to your local system for connection.
 1. Use your preferred SSH client to tunnel to the VNC port:
 
    ```bash
-   ssh -L 5901:localhost:5901 USERNAME@HPC_ENVIRONMENT_LOGIN
+   ssh -L 1234:localhost:5901 USERNAME@HPC_ENVIRONMENT_LOGIN
    ```
 
-   - Replace `5901` with the VNC port, `USERNAME` with your username and
-   `HPC_ENVIRONMENT_LOGIN` with the hostname/IP you usually use to connect to
-   your HPC environment.
+   - `1234` is the port on your local machine that you will be connecting to
+   - `5901` is the port of your Flight Desktop session
+   - `USERNAME` is the name you access the HPC Environment with
+   - `HPC_ENVIRONMENT_LOGIN` is the hostname/IP you usually use to to connect to
+     the HPC environment
+
 1. Launch your VNC viewer application and connect to `localhost:5901` (or the
    port you used above).
 
 The above example will work if the `HPC_ENVIRONMENT_LOGIN` system is where the
 desktop session is running. Further tunnelling will be required if a different
-system within the HPC environment is running the session.
+system within the HPC environment is running the session. In which case, use the
+"local machine" port (`1234` in the example above) for the first tunnel into
+the HPC environment and use the VNC port on the subsequent login to the system
+running the session.
 
 ## Troubleshooting
 
