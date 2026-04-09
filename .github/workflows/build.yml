@@ -12,6 +12,40 @@ permissions:
 
 name: Build and test
 jobs:
+  check:
+    name: Check Go source code
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+
+    strategy:
+      fail-fast: true
+      matrix:
+        go: ['1.26.x']
+        os: [ubuntu-latest]
+        subdir: ["flight-core", "flight-desktop", "flight-howto"]
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - name: Install Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ matrix.go }}
+          check-latest: true
+
+      - name: Go Tidy
+        run: go mod tidy && git diff --exit-code
+        working-directory: ${{ matrix.subdir }}
+
+      - name: Go Mod
+        run: go mod download
+        working-directory: ${{ matrix.subdir }}
+
+      - name: Go Mod Verify
+        run: go mod verify
+        working-directory: ${{ matrix.subdir }}
+
   build:
     name: Build
     runs-on: ${{ matrix.os }}
@@ -33,18 +67,6 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
           check-latest: true
-
-      - name: Go Tidy
-        run: go mod tidy && git diff --exit-code
-        working-directory: flight-core
-
-      - name: Go Mod
-        run: go mod download
-        working-directory: flight-core
-
-      - name: Go Mod Verify
-        run: go mod verify
-        working-directory: flight-core
 
       - name: Build
         run: make
