@@ -51,7 +51,7 @@ func main() {
 		Usage:                  "Manage interactive GUI desktop sessions",
 		Version:                version,
 		Suggest:                true,
-		Copyright:              "(c) 2026 Stephen F Norledge & Concertim Ltd.",
+		Copyright:              "(c) 2026 Stephen F Norledge & Alces Software Ltd & Concertim Ltd.",
 		UseShortOptionHandling: true,
 		HideHelpCommand:        true,
 		Description:            wordwrap.String("Manage interactive GUI desktop sessions", maxTextWidth),

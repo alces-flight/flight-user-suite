@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #==============================================================================
-# Copyright (C) 2026-present Concertim Ltd
+# Copyright (C) 2026 Stephen F Norledge & Alces Software Ltd & Concertim Ltd.
 #
 # This file/package is part of Flight User Suite.
 #
@@ -8,6 +8,7 @@
 # https://github.com/alces-flight/flight-user-suite
 #==============================================================================
 #
+#  Copyright (C) 2026 Stephen F Norledge & Alces Software Ltd & Concertim Ltd.
 #  Copyright (C) 2019 Stephen F. Norledge and Alces Flight Ltd.
 #  Copyright (C) 2015 Stephen F. Norledge and Alces Software Ltd.
 #  Copyright (C) 2009-2010 D. R. Commander.  All Rights Reserved.
