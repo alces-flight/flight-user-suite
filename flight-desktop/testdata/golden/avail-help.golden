@@ -1,0 +1,17 @@
+NAME:
+   flight desktop avail - Show available desktop types
+
+USAGE:
+   flight desktop avail [options]
+
+CATEGORY:
+   Desktop types
+
+DESCRIPTION:
+   Display a list of available desktop types.
+
+OPTIONS:
+   --help, -h  show help
+
+GLOBAL OPTIONS:
+   --log-level LEVEL  set the log LEVEL (debug, info, warn, error, fatal). Default: warn

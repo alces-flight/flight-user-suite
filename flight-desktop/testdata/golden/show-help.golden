@@ -1,0 +1,17 @@
+NAME:
+   flight desktop show - Show information about a desktop session
+
+USAGE:
+   flight desktop show [options] <name> 
+
+CATEGORY:
+   Sessions
+
+DESCRIPTION:
+   Display the connection information for a desktop session.
+
+OPTIONS:
+   --help, -h  show help
+
+GLOBAL OPTIONS:
+   --log-level LEVEL  set the log LEVEL (debug, info, warn, error, fatal). Default: warn

@@ -1,0 +1,4 @@
+- type: exe
+  description: "Deliberately met dependency"
+  paths:
+    - "/bin/true"

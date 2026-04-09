@@ -1,0 +1,9 @@
+- type: exe
+  description: "Deliberately met dependency"
+  paths:
+    - "/bin/true"
+
+- type: exe
+  description: "Deliberately unmet dependency"
+  paths:
+    - "/this/path/should/not/exist"

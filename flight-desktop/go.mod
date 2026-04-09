@@ -6,6 +6,7 @@ require (
 	charm.land/log/v2 v2.0.0
 	github.com/concertim/flight-user-suite/flight v0.0.0-00010101000000-000000000000
 	github.com/muesli/reflow v0.3.0
+	github.com/sergi/go-diff v1.4.0
 	github.com/urfave/cli/v3 v3.8.0
 	golang.org/x/term v0.41.0
 	gopkg.in/yaml.v3 v3.0.1

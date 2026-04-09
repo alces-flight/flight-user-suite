@@ -1,0 +1,27 @@
+NAME:
+   flight desktop clean - Clean up one or more exited desktop sessions
+
+USAGE:
+   flight desktop clean [options] [<id>...] 
+
+CATEGORY:
+   Sessions
+
+DESCRIPTION:
+   Remove one or more desktop session directories for exited or broken desktop
+   sessions.
+
+   Depending on how cleanly desktop sessions exit, the session directory may be
+   retained and require manual cleaning.  Desktops that are cleanly exited or
+   manually terminated using the 'kill' command are automatically cleaned when the
+   exit.
+
+   You can specify which sessions are cleaned by providing the optional <id>
+   parameter one or more times. If no <id>s are specified, data for all sessions
+   that are marked as 'exited' or 'broken' will be removed.
+
+OPTIONS:
+   --help, -h  show help
+
+GLOBAL OPTIONS:
+   --log-level LEVEL  set the log LEVEL (debug, info, warn, error, fatal). Default: warn

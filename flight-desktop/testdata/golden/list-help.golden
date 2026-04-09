@@ -1,0 +1,17 @@
+NAME:
+   flight desktop list - List interactive desktop sessions
+
+USAGE:
+   flight desktop list [options]
+
+CATEGORY:
+   Sessions
+
+DESCRIPTION:
+   Display all known desktop sessions and their states.
+
+OPTIONS:
+   --help, -h  show help
+
+GLOBAL OPTIONS:
+   --log-level LEVEL  set the log LEVEL (debug, info, warn, error, fatal). Default: warn

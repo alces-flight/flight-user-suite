@@ -1,0 +1,47 @@
+#!/bin/bash
+
+SESSION_DIR=
+
+main() {
+	parse_arguments "$@"
+	echo "Fake log entry" > "${SESSION_DIR}/session.log"
+	touch "${SESSION_DIR}/vncserver.pid"
+
+	cat <<EOF
+<YAML>
+host: "localhost"
+display: "1"
+log: "${SESSION_DIR}/session.log"
+pidfile: "${SESSION_DIR}/vncserver.pid"
+</YAML>
+EOF
+}
+
+parse_arguments() {
+    while [[ $# > 0 ]] ; do
+        key="$1"
+
+        case $key in
+            -autokill)
+				shift
+				;;
+
+            -sessiondir)
+                SESSION_DIR=$2
+                shift
+                shift
+                ;;
+
+            -*)
+				shift
+				shift
+                ;;
+
+            *)
+                shift
+                ;;
+        esac
+    done
+}
+
+main "$@"
