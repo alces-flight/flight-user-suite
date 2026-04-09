@@ -28,6 +28,10 @@
 set -euo pipefail
 
 main() {
+    if [ $(id -u) = 0 ]; then
+        # Don't create symlinks for root
+        exit 0
+    fi
     echo "Creating symlinks"
     local target link_name config
     config="$( cat "${FLIGHT_ROOT}"/etc/user-symlinks.config | sed -e '/^#/d' -e '/^\s*$/d' )"
@@ -37,7 +41,7 @@ main() {
         link_name="$(eval echo ${link_desc[0]})"
         target="$(eval echo ${link_desc[1]})"
 
-        if [ -e "${link_name}" ] ; then
+        if [ -L "${link_name}" ] ; then
             echo "  ${link_name} : already exists"
             return 0
         fi
