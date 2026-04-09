@@ -24,6 +24,8 @@ var (
 	Bullet    = lipgloss.NewStyle().PaddingLeft(1).PaddingRight(2).Bold(true)
 	Hyperlink = lipgloss.NewStyle().Foreground(LightBlue)
 
+	PromptStyle = lipgloss.NewStyle().Foreground(AlcesBlue)
+
 	TableHeaderStyle  = lipgloss.NewStyle().Foreground(LightBlue).Bold(true).Align(lipgloss.Center)
 	TableCellStyle    = lipgloss.NewStyle().Padding(0, 1)
 	TableOddRowStyle  = TableCellStyle.Foreground(LightDark(Black, Grey))
