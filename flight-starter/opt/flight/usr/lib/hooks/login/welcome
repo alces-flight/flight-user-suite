@@ -26,6 +26,15 @@
 # https://github.com/alces-flight/flight-user-suite
 #==============================================================================
 
+IFS=: read -a xdg_config <<< "${XDG_CONFIG_HOME:-$HOME/.config}:${XDG_CONFIG_DIRS:-/etc/xdg}"
+for a in "${xdg_config[@]}"; do
+  if [ -e "${a}"/flight.config ]; then
+    source "${a}"/flight.config
+    break
+  fi
+done
+FLIGHT_ROOT="${FLIGHT_ROOT:-/opt/flight}"
+
 # Load in any settings set by 'flight config set'. Allowing per-user settings
 # to override global settings.
 if [ -e /etc/xdg/flight/settings.config ]; then
@@ -40,15 +49,6 @@ if [ "${FLIGHT_AUTOSTART}" == "on" ] ; then
   # also provide a separate welcome message.
   exit 0
 fi
-
-IFS=: read -a xdg_config <<< "${XDG_CONFIG_HOME:-$HOME/.config}:${XDG_CONFIG_DIRS:-/etc/xdg}"
-for a in "${xdg_config[@]}"; do
-  if [ -e "${a}"/flight.config ]; then
-    source "${a}"/flight.config
-    break
-  fi
-done
-FLIGHT_ROOT="${FLIGHT_ROOT:-/opt/flight}"
 
 if [ -f "${FLIGHT_ROOT}"/etc/flight-starter.config ]; then
   . "${FLIGHT_ROOT}"/etc/flight-starter.config
