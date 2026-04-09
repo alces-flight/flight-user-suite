@@ -15,6 +15,8 @@ import (
 )
 
 var update = flag.Bool("update", false, "update golden files")
+var keepTmpDir = flag.Bool("keep-tmpdir", false, "keep temporary director for later inspection")
+
 var entryPoint = "./..."
 var goRoot = ""
 var testdataPath = ""
@@ -37,7 +39,9 @@ func TestMain(m *testing.M) {
 	installThemeFile()
 
 	exitCode := m.Run()
-	// _ = os.RemoveAll(tmpDir)
+	if !*keepTmpDir {
+		_ = os.RemoveAll(tmpDir)
+	}
 	os.Exit(exitCode)
 }
 
@@ -93,15 +97,8 @@ func Test_golden_tests(t *testing.T) {
 			if *update {
 				writeFixture(t, tt.fixture, output)
 			}
-			actual := string(output)
 			expected := loadFixture(t, tt.fixture)
-			if !reflect.DeepEqual(actual, expected) {
-				t.Logf("expected\n%s\n  got\n%s", expected, actual)
-				dmp := diffmatchpatch.New()
-				diffs := dmp.DiffMain(expected, actual, false)
-				t.Log(dmp.DiffPrettyText(diffs))
-				t.FailNow()
-			}
+			assertOutput(t, expected, output)
 		})
 	}
 }
@@ -146,6 +143,19 @@ func assertExitCode(t *testing.T, expectedExitCode int, output []byte, err error
 		} else {
 			t.Fatalf("output:\n%s\nerror:\n%s\n", output, err)
 		}
+	}
+}
+
+func assertOutput(t *testing.T, expectedOutput string, output []byte) {
+	t.Helper()
+	actual := string(output)
+	expected := expectedOutput
+	if !reflect.DeepEqual(actual, expected) {
+		t.Logf("expected\n%s\n  got\n%s", expected, actual)
+		dmp := diffmatchpatch.New()
+		diffs := dmp.DiffMain(expected, actual, false)
+		t.Log(dmp.DiffPrettyText(diffs))
+		t.FailNow()
 	}
 }
 
