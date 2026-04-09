@@ -11,8 +11,10 @@ import (
 	"slices"
 	"strings"
 
+	"charm.land/lipgloss/v2"
 	"charm.land/log/v2"
 	"github.com/adrg/xdg"
+	"github.com/concertim/flight-user-suite/flight/pkg"
 	"github.com/hashicorp/go-envparse"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/urfave/cli/v3"
@@ -21,12 +23,40 @@ import (
 var (
 	permittedKeys   = []string{"autostart"}
 	permittedValues = []string{"on", "off"}
+	// There must be an entry here for each entry in `permittedKeys`.
+	permittedKeyDescriptions = []string{"If set to 'on', the Flight environment is automatically started when logging in."}
 )
 
 func configCommand() *cli.Command {
+	settings := make([]string, 0)
+	for i, key := range permittedKeys {
+		var b strings.Builder
+		for j, v := range permittedValues {
+			b.WriteString("'")
+			b.WriteString(v)
+			b.WriteString("'")
+			if j == len(permittedValues)-2 {
+				b.WriteString(" or ")
+			} else if j == len(permittedValues)-1 {
+			} else {
+				b.WriteString(", ")
+			}
+		}
+		values := fmt.Sprintf("%s. ", b.String())
+
+		setting := lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			pkg.Bullet.Render(fmt.Sprintf("* %s:", key)),
+			values,
+			permittedKeyDescriptions[i],
+		)
+		settings = append(settings, setting)
+	}
+	settingsList := lipgloss.JoinVertical(lipgloss.Left, settings...)
+
 	return &cli.Command{
 		Name:        "config",
-		Description: wordwrap.String("Manage Flight User Suite settings.", maxTextWidth),
+		Description: wordwrap.String(fmt.Sprintf("Manage Flight User Suite settings. Available settings are shown below:\n\n%s", settingsList), maxTextWidth),
 		Category:    "Configuration",
 		Commands: []*cli.Command{
 			{
@@ -44,9 +74,9 @@ func configCommand() *cli.Command {
 			{
 				Name:  "set",
 				Usage: "Set a Flight User Suite setting",
-				Description: wordwrap.String(`Set a Flight User Suite setting.
+				Description: wordwrap.String(fmt.Sprintf(`Set a Flight User Suite setting. Available settings are shown below:
 
-Currently supported keys are 'autostart' which can be set to 'on' or 'off'.`, maxTextWidth),
+%s`, settingsList), maxTextWidth),
 				Flags: []cli.Flag{
 					&cli.BoolFlag{
 						Name:  "global",
@@ -89,8 +119,11 @@ func configList(ctx context.Context, cmd *cli.Command) error {
 	} else {
 		config = loadMergedConfigs()
 	}
-	if len(config) == 0 {
-		fmt.Println("No config settings have been set.")
+	for _, key := range permittedKeys {
+		key = strings.ToUpper(fmt.Sprintf("FLIGHT_%s", key))
+		if _, found := config[key]; !found {
+			config[key] = "(unset)"
+		}
 	}
 	for k, v := range config {
 		k = strings.ToLower(strings.TrimPrefix(k, "FLIGHT_"))
@@ -119,11 +152,15 @@ func configGet(ctx context.Context, cmd *cli.Command) error {
 		config = loadMergedConfigs()
 	}
 	key := cmd.StringArg("key")
+	if !slices.Contains(permittedKeys, key) {
+		return cli.Exit(fmt.Sprintf("Key '%s' is not known.\n", key), 1)
+	}
+
 	v, found := config[fmt.Sprintf("FLIGHT_%s", strings.ToUpper(key))]
 	if found {
 		fmt.Println(v)
 	} else {
-		return cli.Exit(fmt.Sprintf("Key '%s' is not known.\n", key), 1)
+		fmt.Println("(unset)")
 	}
 	return nil
 }
@@ -143,12 +180,7 @@ func loadMergedConfigs() map[string]string {
 		}
 	}
 
-	var config map[string]string
-	if globalConfig == nil {
-		config = make(map[string]string)
-	} else {
-		config = globalConfig
-	}
+	config := globalConfig
 	if userConfig != nil {
 		maps.Copy(config, userConfig)
 	}
@@ -166,6 +198,9 @@ func loadGlobalConfig() map[string]string {
 	globalConfig, err = loadConfig(path)
 	if err != nil {
 		log.Debug("Not merging global config", "path", path, "err", err)
+	}
+	if globalConfig == nil {
+		globalConfig = make(map[string]string)
 	}
 	return globalConfig
 }
