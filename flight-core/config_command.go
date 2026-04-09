@@ -152,11 +152,15 @@ func configGet(ctx context.Context, cmd *cli.Command) error {
 		config = loadMergedConfigs()
 	}
 	key := cmd.StringArg("key")
+	if !slices.Contains(permittedKeys, key) {
+		return cli.Exit(fmt.Sprintf("Key '%s' is not known.\n", key), 1)
+	}
+
 	v, found := config[fmt.Sprintf("FLIGHT_%s", strings.ToUpper(key))]
 	if found {
 		fmt.Println(v)
 	} else {
-		return cli.Exit(fmt.Sprintf("Key '%s' is not known.\n", key), 1)
+		fmt.Println("(unset)")
 	}
 	return nil
 }
@@ -176,12 +180,7 @@ func loadMergedConfigs() map[string]string {
 		}
 	}
 
-	var config map[string]string
-	if globalConfig == nil {
-		config = make(map[string]string)
-	} else {
-		config = globalConfig
-	}
+	config := globalConfig
 	if userConfig != nil {
 		maps.Copy(config, userConfig)
 	}
@@ -199,6 +198,9 @@ func loadGlobalConfig() map[string]string {
 	globalConfig, err = loadConfig(path)
 	if err != nil {
 		log.Debug("Not merging global config", "path", path, "err", err)
+	}
+	if globalConfig == nil {
+		globalConfig = make(map[string]string)
 	}
 	return globalConfig
 }
