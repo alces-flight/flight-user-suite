@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"charm.land/log/v2"
 )
@@ -53,7 +54,7 @@ func createHowtoSymlinks(name string, isTool bool) error {
 
 func removeHowtoSymlinks(name string, isTool bool) error {
 	symDir := filepath.Join(flightRoot, "usr", "share", "doc", "howtos-enabled")
-	srcDir := howTosDir(name, isTool)
+	srcDir := filepath.Clean(howTosDir(name, isTool))
 
 	err := filepath.WalkDir(symDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -73,18 +74,15 @@ func removeHowtoSymlinks(name string, isTool bool) error {
 			if err != nil {
 				return err
 			}
-			symTgtDir := filepath.Dir(filepath.Clean(symTgt))
-			_, err = filepath.Rel(srcDir, symTgtDir)
-			if err != nil {
-				// symTgtDir is not relative to srcDir.  We don't remove it.
-				return nil
+			symTgt = filepath.Clean(symTgt)
+			if strings.HasPrefix(symTgt, srcDir) {
+				log.Debug("Removing howto symlink", "target", symTgt, "linkName", path)
+				err = os.Remove(path)
+				if err != nil {
+					log.Debug("Error removing symlink", "linkName", path, "err", err)
+				}
+				return err
 			}
-			log.Debug("Removing howto symlink", "target", symTgt, "linkName", path)
-			err = os.Remove(path)
-			if err != nil {
-				log.Debug("Error removing symlink", "linkName", path, "err", err)
-			}
-			return err
 		}
 		return nil
 	})
