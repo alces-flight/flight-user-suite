@@ -121,7 +121,6 @@ func assertTypeValid(argName string, argIndex int) cli.BeforeFunc {
 }
 
 func checkDependencies(ctx context.Context, sessionType string) (bool, error) {
-	config, err := loadConfig()
 	p := createPin("Checking system dependencies...")
 	cancel := p.Start(ctx)
 	defer cancel()

@@ -1,14 +1,18 @@
 package main
 
 import (
+	_ "embed"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
 
-type config struct {
+type desktopConfig struct {
 	NameGenerator nameGeneratorConfig `yaml:"name_generator"`
 	Dependencies  []dependency        `yaml:"dependencies"`
 	EnvWhitelist  []string            `yaml:"environment_whitelist"`
@@ -48,19 +52,40 @@ func optionalDependencies(deps []dependency) []dependency {
 	return opt
 }
 
-func loadConfig() (*config, error) {
+//go:embed opt/flight/etc/desktop.yml
+var defaultConfig []byte
+
+func loadConfig() (desktopConfig, error) {
 	path := filepath.Join(flightRoot, "etc", "desktop.yml")
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("loading config: %w", err)
+		if pathError, ok := errors.AsType[*fs.PathError](err); ok && pathError.Err.Error() == "no such file or directory" {
+			data = defaultConfig
+		} else {
+			return desktopConfig{}, fmt.Errorf("loading config: %w", err)
+		}
 	}
-	var config config
+	var config desktopConfig
 	err = yaml.Unmarshal(data, &config)
 	if err != nil {
-		return nil, fmt.Errorf("loading config from %s: %w", path, err)
+		return desktopConfig{}, fmt.Errorf("loading config from %s: %w", path, err)
 	}
+
 	if config.NameGenerator.Strategy == "" {
 		config.NameGenerator.Strategy = "absurd"
 	}
-	return &config, nil
+	if len(config.EnvWhitelist) == 0 {
+		config.EnvWhitelist = []string{"PWD", "HOME", "LANG", "USER", "UID", "PATH", "VNCDESKTOP", "DISPLAY", "FLIGHT_ROOT"}
+	} else {
+		whitelist := make([]string, 0, len(config.EnvWhitelist))
+		for _, item := range config.EnvWhitelist {
+			whitelist = append(whitelist, strings.TrimSpace(item))
+		}
+		config.EnvWhitelist = whitelist
+	}
+	if config.VncPasswd == "" {
+		config.VncPasswd = "/usr/bin/vncpasswd"
+	}
+
+	return config, nil
 }

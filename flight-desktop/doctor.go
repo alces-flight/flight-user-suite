@@ -24,10 +24,6 @@ func doctorCommand() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			greenText := lipgloss.NewStyle().Foreground(lipgloss.Green)
 			redText := lipgloss.NewStyle().Foreground(lipgloss.Red)
-			config, err := loadConfig()
-			if err != nil {
-				return err
-			}
 			fmt.Println()
 			allOK := checkRequiredDeps(
 				ctx,

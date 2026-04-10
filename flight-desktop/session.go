@@ -23,20 +23,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func envWhitelist() []string {
-	config, err := loadConfig()
-	if err != nil {
-		whitelist := []string{"PWD", "HOME", "LANG", "USER", "UID", "PATH", "VNCDESKTOP", "DISPLAY", "FLIGHT_ROOT"}
-		log.Debug("Loading config failed: using default environment whitelist", "err", err)
-		return whitelist
-	}
-	whitelist := make([]string, 0, len(config.EnvWhitelist))
-	for _, item := range config.EnvWhitelist {
-		whitelist = append(whitelist, strings.TrimSpace(item))
-	}
-	return whitelist
-}
-
 type sessionState string
 
 var (
@@ -262,15 +248,7 @@ func (s *Session) createPassword() error {
 	log.Debug("creating password", "file", s.passwordFile())
 	// TODO: Support alternative password generation, e.g., apg.
 	s.Password = rand.Text()[0:8]
-	var vncpasswd string
-	config, err := loadConfig()
-	if err != nil {
-		vncpasswd = "/usr/bin/vncpasswd"
-		log.Debug("Loading config failed: using default vncpasswd", "err", err)
-	} else {
-		vncpasswd = config.VncPasswd
-	}
-	cmd := exec.Command(vncpasswd, "-f")
+	cmd := exec.Command(config.VncPasswd, "-f")
 	cmd.Stdin = bytes.NewReader([]byte(s.Password))
 	output, err := cmd.Output()
 	if err != nil {
@@ -309,13 +287,12 @@ func (s *Session) installSessionScript() error {
 
 // Return a copy of the current environment with only whitelisted items remaining.
 func (s *Session) cleanEnvironment() []string {
-	whitelist := envWhitelist()
-	log.Debug("Sanitising environment", "whitelist", whitelist)
+	log.Debug("Sanitising environment", "whitelist", config.EnvWhitelist)
 	clean := make([]string, 0, len(os.Environ()))
 	for _, kv := range os.Environ() {
 		parts := strings.SplitN(kv, "=", 2)
 		key := parts[0]
-		if slices.Contains(whitelist, key) {
+		if slices.Contains(config.EnvWhitelist, key) {
 			clean = append(clean, kv)
 		}
 	}
