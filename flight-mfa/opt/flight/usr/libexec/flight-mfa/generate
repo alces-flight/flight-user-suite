@@ -1,0 +1,149 @@
+#!/bin/bash
+#==============================================================================
+# Copyright (C) 2020-present Alces Flight Ltd.
+#
+# This file is part of Flight User Suite.
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which is available at
+# <https://www.eclipse.org/legal/epl-2.0>, or alternative license
+# terms made available by Alces Flight Ltd - please direct inquiries
+# about licensing to licensing@alces-flight.com.
+#
+# Flight MFA is distributed in the hope that it will be useful, but
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR
+# IMPLIED INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OR CONDITIONS
+# OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR A
+# PARTICULAR PURPOSE. See the Eclipse Public License 2.0 for more
+# details.
+#
+# You should have received a copy of the Eclipse Public License 2.0
+# along with Flight MFA. If not, see:
+#
+#  https://opensource.org/licenses/EPL-2.0
+#
+# For more information on Flight MFA, please visit:
+# https://github.com/alces-flight/flight-user-suite
+#==============================================================================
+_ARGS=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -h|--help)
+      cat <<EOF
+SYNOPSIS:
+
+  ${FLIGHT_PROGRAM_NAME:-mfa} generate [-f|--force]
+
+DESCRIPTION:
+
+Generate a new multi-factor authentication code.
+
+OPTIONS:
+
+  --force
+    Force the authentication code to be regenerated.
+
+EOF
+      exit 0
+      ;;
+    -f|--force)
+      _flightmfa_FORCE=true
+      shift
+      ;;
+    *)
+      _ARGS+=($1)
+      shift
+      ;;
+  esac
+done
+
+FLIGHT_ROOT=${FLIGHT_ROOT:-/opt/flight}
+if [ -f "${FLIGHT_ROOT}"/etc/mfa.config ]; then
+    . "${FLIGHT_ROOT}"/etc/mfa.config
+else
+    echo "${FLIGHT_PROGRAM_NAME:-mfa}: could not find configuration file"
+    exit 1
+fi
+
+if [ -z "${FLIGHT_MFA_SERVICE}" ]; then
+    echo "${FLIGHT_PROGRAM_NAME:-mfa}: service not set within configuration file"
+    exit 1
+fi
+
+if [ -z "${FLIGHT_MFA_ISSUER}" ]; then
+    echo "${FLIGHT_PROGRAM_NAME:-mfa}: issuer not set within configuration file"
+    exit 1
+fi
+
+FLIGHT_MFA_ENGINE=${FLIGHT_MFA_ENGINE:-googleauthenticator}
+
+if ! type -p qrencode > /dev/null ; then
+    echo "${FLIGHT_PROGRAM_NAME:-mfa}: qrencode executable not found"
+    exit 1
+fi
+
+if [ "${FLIGHT_MFA_ENGINE}" == "googleauthenticator" ] && ! type -p google-authenticator > /dev/null ; then
+    echo "${FLIGHT_PROGRAM_NAME:-mfa}: google-authenticator executable not found"
+    exit 1
+fi
+
+if [ "${FLIGHT_MFA_ENGINE}" == "ipa" ] && ! type -p ipa > /dev/null ; then
+    echo "${FLIGHT_PROGRAM_NAME:-mfa}: ipa executable not found"
+    exit 1
+fi
+
+_flightmfa_SECRETFILE="${HOME}/${FLIGHT_MFA_SECRETFILE:-.config/flight/mfa.dat}"
+
+_generate_ipa() {
+    local _doc
+    _doc=$(ipa otptoken-add --vendor="${FLIGHT_MFA_ISSUER}" --no-qrcode --all --raw 2>/dev/null)
+    if [ $? -gt 0 ]; then
+	echo "${FLIGHT_PROGRAM_NAME:-mfa}: error: unable to generate OTP token with IPA backend"
+	exit 1
+    fi
+    _flightmfa_URI=$(echo "$_doc" | grep 'uri:' |  awk 'BEGIN { ORS=" " }; {print $2}')
+    _flightmfa_KEY="$(echo "${_flightmfa_URI}" | sed 's/.*secret=\([^&]*\).*/\1/g')"
+    touch "${_flightmfa_SECRETFILE}"
+    chmod 0600 "${_flightmfa_SECRETFILE}"
+    cat <<EOF > "${_flightmfa_SECRETFILE}"
+${_flightmfa_KEY}
+" WINDOW_SIZE 3
+" TOTP_AUTH
+" URI ${_flightmfa_URI}
+EOF
+    chmod 0400 "${_flightmfa_SECRETFILE}"
+}
+
+_generate_googleauthenticator() {
+    google-authenticator -f -u \
+			 -l "${FLIGHT_MFA_SERVICE}" \
+			 -i "${FLIGHT_MFA_ISSUER}" \
+			 -t -D -e 1 -w 3 -q \
+			 -s "${_flightmfa_SECRETFILE}"
+    _flightmfa_KEY="$(head -n 1 ${_flightmfa_SECRETFILE})"
+    _flightmfa_URI="otpauth://totp/${FLIGHT_MFA_SERVICE}?secret=${_flightmfa_KEY}&issuer=${FLIGHT_MFA_ISSUER}"
+}
+
+if [ ! -e "${_flightmfa_SECRETFILE}" -o -n "${_flightmfa_FORCE}" ]; then
+    _flightmfa_SECRETFILEDIR=$(dirname "${_flightmfa_SECRETFILE}")
+    if [ ! -d "${_flightmfa_SECRETFILEDIR}" ]; then
+	mkdir -p "${_flightmfa_SECRETFILEDIR}"
+    fi
+    _generate_${FLIGHT_MFA_ENGINE}
+    if [ "$(tput cols)" -lt 90 ]; then
+	if [ "$(tput cols)" -lt 78 ]; then
+	    echo "WARNING: unable to display QR code (insufficient terminal width)."
+	    echo "Use key: ${_flightmfa_KEY}"
+	    exit 0
+	else
+	    _flightmfa_MARGIN=1
+	fi
+    fi
+    qrencode -o - \
+	-t ANSIUTF8 "${_flightmfa_URI}" \
+	-m "${_flightmfa_MARGIN:-4}"
+    echo "Or use key: ${_flightmfa_KEY}"
+else
+    echo "${FLIGHT_PROGRAM_NAME:-mfa}: already generated; regenerate with 'generate --force'"
+    exit 1
+fi
