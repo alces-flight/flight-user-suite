@@ -91,6 +91,9 @@ func toolsTable(tools []*Tool) error {
 
 func getTools(onlyEnabled bool) ([]*Tool, error) {
 	log.Debug("getting tools", "dir", toolDir, "onlyEnabled", onlyEnabled)
+
+	toolSynopsisDir := filepath.Join(flightRoot, "usr", "share", "doc", "tools")
+
 	entries, err := os.ReadDir(toolDir)
 	if err != nil {
 		return nil, fmt.Errorf("listing tools: %w", err)
@@ -103,7 +106,11 @@ func getTools(onlyEnabled bool) ([]*Tool, error) {
 				return nil, fmt.Errorf("reading tool info: %w", err)
 			}
 			enabled := info.Mode()&0111 != 0
-			tool := &Tool{Enabled: enabled, Name: toolName}
+
+			synopsisFile := filepath.Join(toolSynopsisDir, entry.Name())
+			synopsis, _ := os.ReadFile(synopsisFile)
+
+			tool := &Tool{Enabled: enabled, Name: toolName, Synopsis: string(synopsis)}
 
 			if !onlyEnabled || tool.Enabled {
 				tools = append(tools, tool)
@@ -156,8 +163,9 @@ func runTool(tool *Tool) func(ctx context.Context, cmd *cli.Command) error {
 }
 
 type Tool struct {
-	Enabled bool
-	Name    string
+	Enabled  bool
+	Name     string
+	Synopsis string
 }
 
 type DisabledTool struct {

@@ -302,16 +302,7 @@ Valid events are %s.`,
 	cmd.Commands = append(cmd.Commands, cmds...)
 }
 
-//go:embed tool_synopsis.txt
-var toolSynopsisString string
-
 func addToolProxyCommands(cmd *cli.Command) {
-	synopsisMap := make(map[string]string)
-	for line := range strings.Lines(toolSynopsisString) {
-		parts := strings.SplitN(line, ":", 2)
-		synopsisMap[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
-	}
-
 	tools, err := getTools(true)
 	if err != nil {
 		log.Warn("Unable to add tool proxy commands", "err", err)
@@ -324,8 +315,8 @@ func addToolProxyCommands(cmd *cli.Command) {
 			SkipFlagParsing: true,
 			Category:        "Available tools",
 		}
-		if synopsis, found := synopsisMap[tool.Name]; found {
-			proxy.Usage = synopsis
+		if tool.Synopsis != "" {
+			proxy.Usage = tool.Synopsis
 		}
 		cmd.Commands = append(cmd.Commands, &proxy)
 	}

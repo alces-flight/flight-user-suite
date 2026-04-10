@@ -1,2 +1,0 @@
-desktop:Launch and manage virtual desktop sessions.
-howto:View user guides for your HPC environment.
