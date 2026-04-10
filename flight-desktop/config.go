@@ -12,6 +12,7 @@ type config struct {
 	NameGenerator nameGeneratorConfig `yaml:"name_generator"`
 	Dependencies  []dependency        `yaml:"dependencies"`
 	EnvWhitelist  []string            `yaml:"environment_whitelist"`
+	VncPasswd     string              `yaml:"vncpasswd"`
 }
 
 type nameGeneratorConfig struct {

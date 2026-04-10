@@ -262,7 +262,14 @@ func (s *Session) createPassword() error {
 	log.Debug("creating password", "file", s.passwordFile())
 	// TODO: Support alternative password generation, e.g., apg.
 	s.Password = rand.Text()[0:8]
-	vncpasswd := "/usr/bin/vncpasswd"
+	var vncpasswd string
+	config, err := loadConfig()
+	if err != nil {
+		vncpasswd = "/usr/bin/vncpasswd"
+		log.Debug("Loading config failed: using default vncpasswd", "err", err)
+	} else {
+		vncpasswd = config.VncPasswd
+	}
 	cmd := exec.Command(vncpasswd, "-f")
 	cmd.Stdin = bytes.NewReader([]byte(s.Password))
 	output, err := cmd.Output()

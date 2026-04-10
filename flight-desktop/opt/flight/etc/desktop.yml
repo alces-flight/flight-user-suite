@@ -3,6 +3,9 @@ name_generator:
   # Either "absurd" or "meaningless". Default "absurd".
   strategy: "absurd"
 
+# NOTE: Keep this in sync with the dependencies entry below.
+vncpasswd: "/usr/bin/vncpasswd"
+
 dependencies:
   - type: exe
     description: "X VNC server"

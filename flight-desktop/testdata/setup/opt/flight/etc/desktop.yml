@@ -3,6 +3,9 @@ name_generator:
   # Either "absurd" or "meaningless". Default "absurd".
   strategy: "meaningless"
 
+# We don't want our tests to rely on a real vncpasswd program.
+vncpasswd: "/bin/true"
+
 dependencies:
   - type: exe
     description: "/bin/true"
