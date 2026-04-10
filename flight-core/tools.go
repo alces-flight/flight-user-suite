@@ -71,19 +71,19 @@ func toolsTable(tools []*Tool) error {
 			switch col {
 			case 0:
 				return style.Width(namecolWidth)
-			case 1:
+			case 2:
 				return style.Width(13)
 			}
 			return style
 		})
-	t.Headers("Name", "Enabled")
+	t.Headers("Name", "Description", "Enabled")
 	for _, tool := range tools {
 		namecolWidth = max(namecolWidth, len(tool.Name)+2)
 		enabledText := "\u274c Disabled"
 		if tool.Enabled {
 			enabledText = "\u2705 Enabled"
 		}
-		t.Row(tool.Name, enabledText)
+		t.Row(tool.Name, tool.Synopsis, enabledText)
 	}
 	_, err := lipgloss.Println(t)
 	return err
