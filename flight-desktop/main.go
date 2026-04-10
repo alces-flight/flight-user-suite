@@ -90,6 +90,7 @@ func main() {
 			startSessionCommand(),
 			listSessionsCommand(),
 			showSessionCommand(),
+			showSessionLogsCommand(),
 			killSessionCommand(),
 			cleanSessionCommand(),
 		},
