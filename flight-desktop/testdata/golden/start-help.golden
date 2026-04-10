@@ -1,0 +1,22 @@
+NAME:
+   flight desktop start - Start an interactive desktop session
+
+USAGE:
+   flight desktop start [options] <type> 
+
+CATEGORY:
+   Sessions
+
+DESCRIPTION:
+   Start a new interactive desktop session and display details about the new
+   session.
+
+   Available desktop types can be shown using the 'avail' command.
+
+OPTIONS:
+   --name NAME, -n NAME                      Name the desktop session NAME so it can be more easily identified. (default: random)
+   --geometry WIDTHxHEIGHT, -g WIDTHxHEIGHT  Set the desktop geometry to WIDTHxHEIGHT. (default: "1024x768")
+   --help, -h                                show help
+
+GLOBAL OPTIONS:
+   --log-level LEVEL  set the log LEVEL (debug, info, warn, error, fatal). Default: warn

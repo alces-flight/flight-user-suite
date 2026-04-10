@@ -24,6 +24,7 @@ var (
 	flightRoot   string = "/opt/flight"
 	termWidth    int    = 80
 	maxTextWidth int    = 80
+	config       desktopConfig
 )
 
 func init() {
@@ -42,6 +43,13 @@ func init() {
 }
 
 func main() {
+	// Load config here rather than `init` to prevent errors from breaking
+	// tests.
+	var err error
+	config, err = loadConfig()
+	if err != nil {
+		log.Fatalf("Error %s", err)
+	}
 
 	cli.VersionPrinter = func(cmd *cli.Command) {
 		fmt.Printf("version=%s revision=%s date=%s\n", version, commit, date)

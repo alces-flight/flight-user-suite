@@ -1,0 +1,3 @@
+invalid input: '0' is not a valid guide index. Use `flight howto list` to view the index for each user guide.
+
+exit status 1

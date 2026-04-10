@@ -1,0 +1,17 @@
+NAME:
+   flight desktop doctor - System health check
+
+USAGE:
+   flight desktop doctor [options]
+
+CATEGORY:
+   Desktop types
+
+DESCRIPTION:
+   Perform a health check on the system to check that all dependencies are present.
+
+OPTIONS:
+   --help, -h  show help
+
+GLOBAL OPTIONS:
+   --log-level LEVEL  set the log LEVEL (debug, info, warn, error, fatal). Default: warn

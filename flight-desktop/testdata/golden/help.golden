@@ -1,0 +1,33 @@
+NAME:
+   flight desktop - Manage interactive GUI desktop sessions
+
+USAGE:
+   flight desktop [global options] [command [command options]]
+
+VERSION:
+   dev
+
+DESCRIPTION:
+   Manage interactive GUI desktop sessions
+
+COMMANDS:
+
+   Desktop types:
+     avail   Show available desktop types
+     doctor  System health check
+
+   Sessions:
+     start  Start an interactive desktop session
+     list   List interactive desktop sessions
+     show   Show information about a desktop session
+     logs   Show desktop session logs
+     kill   Terminate an interactive desktop session
+     clean  Clean up one or more exited desktop sessions
+
+GLOBAL OPTIONS:
+   --log-level LEVEL  set the log LEVEL (debug, info, warn, error, fatal). Default: warn
+   --help, -h         show help
+   --version, -v      print the version
+
+COPYRIGHT:
+   (c) 2026 Stephen F Norledge & Alces Software Ltd & Concertim Ltd.

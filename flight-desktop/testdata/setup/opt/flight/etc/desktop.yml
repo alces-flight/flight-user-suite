@@ -1,0 +1,31 @@
+# Configuration for generating default session names.
+name_generator:
+  # Either "absurd" or "meaningless". Default "absurd".
+  strategy: "meaningless"
+
+# We don't want our tests to rely on a real vncpasswd program.
+vncpasswd: "/bin/true"
+
+dependencies:
+  - type: exe
+    description: "/bin/true"
+    paths:
+      - "/bin/true"
+
+  - type: exe
+    description: "false"
+    paths:
+      - "false"
+
+# Everything not included in this list is removed from the environment when
+# launching a new session.
+environment_whitelist:
+  - DISPLAY
+  - FLIGHT_ROOT
+  - HOME
+  - LANG
+  - PATH
+  - PWD
+  - UID
+  - USER
+  - VNCDESKTOP

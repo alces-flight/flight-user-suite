@@ -1,0 +1,21 @@
+
+Checking critical dependencies...
+Critical dependencies
+
+ > ✅ /bin/true : /bin/true     
+ > ✅ false     : /usr/bin/false
+
+Checking required dependencies for gnome desktop type.
+Missing required dependencies for gnome desktop type
+
+ > ✅ Deliberately met dependency   : /bin/true                                                                                       
+ > ❌ Deliberately unmet dependency : exec: "/this/path/should/not/exist": stat /this/path/should/not/exist: no such file or directory
+
+Checking required dependencies for xterm desktop type.
+Required dependencies for xterm desktop type
+
+ > ✅ Deliberately met dependency : /bin/true
+
+❌ Required dependencies not satisfied
+
+exit status 1

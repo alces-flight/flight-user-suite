@@ -1,0 +1,20 @@
+NAME:
+   flight desktop kill - Terminate an interactive desktop session
+
+USAGE:
+   flight desktop kill [options] <name> 
+
+CATEGORY:
+   Sessions
+
+DESCRIPTION:
+   Instruct an active interactive desktop session to terminate.
+
+   The <name> parameter should specify the session's name, use 'flight desktop
+   list' to see a list of your sessions.
+
+OPTIONS:
+   --help, -h  show help
+
+GLOBAL OPTIONS:
+   --log-level LEVEL  set the log LEVEL (debug, info, warn, error, fatal). Default: warn

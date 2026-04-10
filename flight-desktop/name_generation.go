@@ -25,12 +25,7 @@ type nameGenerator struct {
 
 func newNameGenerator(sessionType string) *nameGenerator {
 	ng := nameGenerator{sessionType: sessionType}
-	c, err := loadConfig()
-	if err != nil {
-		ng.err = err
-		return &ng
-	}
-	ng.config = c.NameGenerator
+	ng.config = config.NameGenerator
 	if ng.config.Strategy == "absurd" {
 		ng.loadCombinations()
 		ng.loadFileList("adjectives", &ng.adjectives)

@@ -1,0 +1,14 @@
+┌────────┬─────────────────────────────────────────────────────┬───────────────┐
+│  Name  │                       Summary                       │ Dependencies  │
+├────────┼─────────────────────────────────────────────────────┼───────────────┤
+│ gnome  │ GNOME v3, a free and open-source desktop            │ ❌ Missing    │
+│        │ environment for Unix-like operating systems.        │               │
+│        │                                                     │               │
+│        │ > https://www.gnome.org/                            │               │
+│        │                                                     │               │
+│ xterm  │ Minimal desktop environment with an xterm terminal  │ ✅ OK         │
+│        │ window.                                             │               │
+│        │                                                     │               │
+│        │ > https://invisible-island.net/xterm/xterm.html     │               │
+│        │                                                     │               │
+└────────┴─────────────────────────────────────────────────────┴───────────────┘
