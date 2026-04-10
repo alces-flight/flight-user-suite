@@ -20,6 +20,7 @@ COMMANDS:
      start  Start an interactive desktop session
      list   List interactive desktop sessions
      show   Show information about a desktop session
+     logs   Show desktop session logs
      kill   Terminate an interactive desktop session
      clean  Clean up one or more exited desktop sessions
 
