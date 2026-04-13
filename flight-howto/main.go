@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -20,8 +19,6 @@ import (
 	"github.com/concertim/flight-user-suite/flight/pkg"
 	"github.com/urfave/cli/v3"
 	"golang.org/x/term"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 )
 
 var (
@@ -188,18 +185,6 @@ func loadHowtos(dirPath string, user *user.User) ([]*Howto, error) {
 	return howtos, nil
 }
 
-func prettyFilename(filename string) string {
-	leadingDigits := regexp.MustCompile(`^\d+-\s*`)
-	otherDigits := regexp.MustCompile(`/\d+-\s*`)
-	filename = leadingDigits.ReplaceAllString(filename, "")
-	filename = otherDigits.ReplaceAllString(filename, "/")
-	filename = strings.ReplaceAll(filename, "-", " ")
-	filename = strings.ReplaceAll(filename, "/", " > ")
-	return cases.
-		Title(language.English, cases.Compact).
-		String(filename)
-}
-
 func entriesTable(howtos []*Howto) error {
 	namecolWidth := 7
 	t := table.New().
@@ -224,12 +209,11 @@ func entriesTable(howtos []*Howto) error {
 		Width(termWidth)
 	t.Headers("Index", "Title")
 	for index, howto := range howtos {
-		name := strings.TrimSuffix(howto.Path, ".md")
 		id := strconv.Itoa(index + 1)
 		namecolWidth = max(namecolWidth, len(id)+2)
 		titleColumn := lipgloss.JoinVertical(
 			lipgloss.Left,
-			prettyFilename(name),
+			howto.Name(),
 		)
 		t.Row(id, titleColumn)
 	}

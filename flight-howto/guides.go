@@ -4,8 +4,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 
 	"charm.land/log/v2"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"gopkg.in/yaml.v3"
 )
 
@@ -16,7 +20,8 @@ type Howto struct {
 }
 
 type FrontMatter struct {
-	Admin bool `yaml:"admin"`
+	Admin bool   `yaml:"admin"`
+	Name  string `yaml:"name"`
 }
 
 func (h *Howto) FullPath() string {
@@ -68,6 +73,31 @@ func (h *Howto) IsAdminOnly() bool {
 		return false
 	}
 	return h.frontMatter.Admin
+}
+
+func (h *Howto) Name() string {
+	err := h.Read()
+	if err != nil {
+		return h.nameFromPath()
+	}
+	if h.frontMatter != nil && h.frontMatter.Name != "" {
+		return h.frontMatter.Name
+	}
+	return h.nameFromPath()
+}
+
+func (h *Howto) nameFromPath() string {
+	leadingDigits := regexp.MustCompile(`^\d+-\s*`)
+	otherDigits := regexp.MustCompile(`/\d+-\s*`)
+	name := strings.TrimSuffix(h.Path, ".md")
+
+	name = leadingDigits.ReplaceAllString(name, "")
+	name = otherDigits.ReplaceAllString(name, "/")
+	name = strings.ReplaceAll(name, "-", " ")
+	name = strings.ReplaceAll(name, "/", " > ")
+	return cases.
+		Title(language.English, cases.Compact).
+		String(name)
 }
 
 // Interface for sorting by howto path.
