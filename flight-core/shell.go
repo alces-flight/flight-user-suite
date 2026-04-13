@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	"charm.land/log/v2"
 	"github.com/adrg/xdg"
@@ -17,7 +18,21 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-func shellGetTools(line string) []string {
+// Return list of tool names, if the first word in the line is not yet
+// complete.
+func toolCompletions(line string) []string {
+	// The command is complete, if there is more than one word on the line, or
+	// there is a single word followed by a space.
+	var cmdComplete bool
+	if strings.TrimSpace(line) == "" {
+		cmdComplete = false
+		// TODO: Support quotes. AKA shellwords.
+	} else if len(strings.Split(strings.TrimSpace(line), " ")) > 1 {
+		cmdComplete = true
+	} else if strings.HasSuffix(line, " ") {
+		cmdComplete = true
+	}
+
 	tools, err := getTools(true)
 	if err != nil {
 		log.Warn("Error", "err", err)
@@ -27,11 +42,66 @@ func shellGetTools(line string) []string {
 	for _, tool := range tools {
 		toolNames = append(toolNames, tool.Name)
 	}
-	return toolNames
+
+	if !cmdComplete {
+		return toolNames
+	}
+
+	finalWordComplete := strings.HasSuffix(line, " ")
+	line = strings.TrimSpace(line)
+	// TODO: Support quotes. AKA shellwords.
+	words := strings.Split(line, " ")
+	cmd := words[0]
+
+	if !slices.Contains(toolNames, cmd) {
+		// The commmand is not one of the tools (perhaps its a builtin such as
+		// "help"), we offer no completions.
+		return nil
+	}
+	tool := &Tool{Name: cmd}
+
+	// Request completion from tool. Omit the final word if incomplete.
+	var toolArgs []string
+	if finalWordComplete {
+		toolArgs = make([]string, len(words)-1)
+	} else {
+		toolArgs = make([]string, len(words)-2)
+	}
+	copy(toolArgs, words[1:])
+	toolArgs = append(toolArgs, "--generate-shell-completion")
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+	bytes, err := runToolWithOutput(ctx, tool, toolArgs)
+	out := string(bytes)
+	if err != nil {
+		log.Warn("Error", "err", err)
+		return nil
+	}
+
+	lastWord := words[len(words)-1]
+	comps := make([]string, 0)
+	for comp := range strings.SplitSeq(out, "\n") {
+		if comp == "" {
+			continue
+		}
+		// Filter the completions offered by the tool. If the final word of the
+		// line is complete, we want all completions offered; otherwise, we
+		// want only those with a prefix matching the incomplete last word.
+		if finalWordComplete || strings.HasPrefix(comp, lastWord) {
+			var prefix string
+			if finalWordComplete {
+				prefix = line
+			} else if len(words) >= 2 {
+				prefix = strings.Join(words[0:len(words)-1], " ")
+			}
+			comps = append(comps, fmt.Sprintf("%s %s", prefix, comp))
+		}
+	}
+	return comps
 }
 
 var completer = readline.NewPrefixCompleter(
-	readline.PcItemDynamic(shellGetTools),
+	readline.PcItemDynamic(toolCompletions),
 	readline.PcItem("help"),
 	readline.PcItem("clear"),
 	readline.PcItem("exit"),
@@ -39,7 +109,7 @@ var completer = readline.NewPrefixCompleter(
 
 func shellUsage(w io.Writer) {
 	io.WriteString(w, "Available Flight tools:\n")
-	tools := shellGetTools("")
+	tools := toolCompletions("")
 	for _, tool := range tools {
 		// TODO: Add tool synopsis here.
 		fmt.Fprintf(w, "    %s\n", tool)
@@ -51,7 +121,7 @@ func shellUsage(w io.Writer) {
 
 func execInput(baseTool, input string, rl *readline.Instance) error {
 	input = strings.TrimSpace(input)
-	// TODO: Support quotes.
+	// TODO: Support quotes. AKA shellwords.
 	args := strings.Split(input, " ")
 
 	if baseTool != "" {
@@ -94,7 +164,7 @@ func runShell(ctx context.Context, cmd *cli.Command) error {
 
 	prompt := pkg.PromptStyle.Render("flight» ")
 	if baseTool != "" {
-		if !slices.Contains(shellGetTools(""), baseTool) {
+		if !slices.Contains(toolCompletions(""), baseTool) {
 			return UnknownTool{Tool: baseTool}
 		}
 		prompt = pkg.PromptStyle.Render(fmt.Sprintf("flight %s» ", baseTool))
