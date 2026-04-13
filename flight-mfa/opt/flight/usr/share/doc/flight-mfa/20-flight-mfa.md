@@ -1,3 +1,6 @@
+---
+name: "Flight MFA"
+---
 # Flight MFA
 
 Flight MFA lets you set up a time-based one-time password (TOTP) for your

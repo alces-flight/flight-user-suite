@@ -1,5 +1,6 @@
 ---
 admin: true
+name: "Admin Guides > Flight MFA"
 ---
 # Flight MFA
 
