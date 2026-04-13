@@ -1,0 +1,105 @@
+#!/bin/bash
+#==============================================================================
+# Copyright (C) 2026 Stephen F Norledge & Alces Software Ltd & Concertim Ltd
+#
+# This file is part of Flight User Suite.
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which is available at
+# <https://www.eclipse.org/legal/epl-2.0>, or alternative license
+# terms made available by Alces Software Ltd - please direct inquiries
+# about licensing to licensing@alces-software.com.
+#
+# Flight MFA is distributed in the hope that it will be useful, but
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR
+# IMPLIED INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OR CONDITIONS
+# OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR A
+# PARTICULAR PURPOSE. See the Eclipse Public License 2.0 for more
+# details.
+#
+# You should have received a copy of the Eclipse Public License 2.0
+# along with Flight MFA. If not, see:
+#
+#  https://opensource.org/licenses/EPL-2.0
+#
+# For more information on Flight MFA, please visit:
+# https://github.com/alces-flight/flight-user-suite
+#==============================================================================
+_ARGS=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -h|--help)
+      cat <<EOF
+SYNOPSIS:
+
+  ${FLIGHT_PROGRAM_NAME:-mfa} show
+
+DESCRIPTION:
+
+Display existing multi-factor authentication code.
+
+EOF
+      exit 0
+      ;;
+    *)
+      _ARGS+=($1)
+      shift
+      ;;
+  esac
+done
+
+FLIGHT_ROOT=${FLIGHT_ROOT:-/opt/flight}
+if [ -f "${FLIGHT_ROOT}"/etc/mfa.config ]; then
+    . "${FLIGHT_ROOT}"/etc/mfa.config
+else
+    echo "${FLIGHT_PROGRAM_NAME:-mfa}: could not find configuration file"
+    exit 1
+fi
+
+if [ -z "${FLIGHT_MFA_SERVICE}" ]; then
+    echo "${FLIGHT_PROGRAM_NAME:-mfa}: service not set within configuration file"
+    exit 1
+fi
+
+if [ -z "${FLIGHT_MFA_ISSUER}" ]; then
+    echo "${FLIGHT_PROGRAM_NAME:-mfa}: issuer not set within configuration file"
+    exit 1
+fi
+
+_flightmfa_SECRETFILE="${HOME}/${FLIGHT_MFA_SECRETFILE:-.config/flight/mfa.dat}"
+
+flight_MFA_engine=${flight_MFA_engine:-googleauthenticator}
+
+_uri_googleauthenticator() {
+    echo "otpauth://totp/${FLIGHT_MFA_SERVICE}?secret=${_flightmfa_KEY}&issuer=${FLIGHT_MFA_ISSUER}"
+}
+
+_uri_ipa() {
+    local _uri
+    _uri=$(grep "^\" URI " "${_flightmfa_SECRETFILE}" | awk 'BEGIN { ORS=" " }; {print $3}')
+    if [ -z "$_uri" ]; then
+	echo "otpauth://totp/${FLIGHT_MFA_SERVICE}?secret=${_flightmfa_KEY}&issuer=${FLIGHT_MFA_ISSUER}"
+    else
+	echo "${_uri}"
+    fi
+}
+
+if [ ! -e "${_flightmfa_SECRETFILE}" ]; then
+    echo "${FLIGHT_PROGRAM_NAME:-mfa}: not generated; generate with 'generate'"
+    exit 1			       
+else
+    _flightmfa_KEY="$(head -n 1 "${_flightmfa_SECRETFILE}")"
+    if [ "$(tput cols)" -lt 90 ]; then
+	if [ "$(tput cols)" -lt 78 ]; then
+	    echo "WARNING: unable to display QR code (insufficient terminal width)."
+	    echo "Use key: ${_flightmfa_KEY}"
+	    exit 0
+	else
+	    _flightmfa_MARGIN=1
+	fi
+    fi
+    qrencode -o - \
+	-t ANSIUTF8 "$(_uri_${flight_MFA_engine})" \
+	-m "${_flightmfa_MARGIN:-4}"
+    echo "Or use key: ${_flightmfa_KEY}"
+fi

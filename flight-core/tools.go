@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"charm.land/lipgloss/v2"
@@ -155,6 +156,8 @@ func runTool(tool *Tool) func(ctx context.Context, cmd *cli.Command) error {
 		exe := exec.CommandContext(ctx, tp, cmd.Args().Slice()...)
 		exe.Stdout = os.Stdout
 		exe.Stderr = os.Stderr
+		exe.Env = slices.Clone(os.Environ())
+		exe.Env = append(exe.Env, fmt.Sprintf("FLIGHT_PROGRAM_NAME=flight %s", tool.Name))
 		err := exe.Run()
 		return transformToolError(tool.Name, err)
 	}
