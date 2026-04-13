@@ -27,6 +27,14 @@
 #==============================================================================
 
 _flightmfa_main() {
+  if [[ $* == *--generate-shell-completion* ]] ; then
+    if [ $# -lt 2 ] ; then
+      echo generate
+      echo show
+    fi
+    return 0
+  fi
+
   case $1 in
     generate)
       shift
