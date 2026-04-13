@@ -46,11 +46,6 @@ Commands:
 EOF
       printf "  %-22s  %s\n" "$binname generate" "Generate a MFA code."
       printf "  %-22s  %s\n" "$binname show" "Show existing MFA code."
-      cat <<EOF
-
-Please report bugs to <flight@openflighthpc.org>
-OpenFlight home page: <https://openflighthpc.org/>
-EOF
       ;;
   esac
 }
