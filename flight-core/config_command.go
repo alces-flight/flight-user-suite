@@ -88,6 +88,18 @@ func configCommand() *cli.Command {
 					&cli.StringArg{Name: "value", UsageText: "<value>"},
 				},
 				Before: assertArgPresent("key", "value"),
+				ShellComplete: func(ctx context.Context, cmd *cli.Command) {
+					switch cmd.NArg() {
+					case 0:
+						for _, key := range permittedKeys {
+							fmt.Println(key)
+						}
+					case 1:
+						for _, value := range permittedValues {
+							fmt.Println(value)
+						}
+					}
+				},
 				Action: configSet,
 			},
 			{
@@ -106,6 +118,14 @@ Currently supported keys are 'autostart'.`, maxTextWidth),
 					&cli.StringArg{Name: "key", UsageText: "<key>"},
 				},
 				Before: assertArgPresent("key"),
+				ShellComplete: func(ctx context.Context, cmd *cli.Command) {
+					switch cmd.NArg() {
+					case 0:
+						for _, key := range permittedKeys {
+							fmt.Println(key)
+						}
+					}
+				},
 				Action: configGet,
 			},
 		},
