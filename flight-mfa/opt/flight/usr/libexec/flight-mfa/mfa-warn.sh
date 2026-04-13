@@ -1,14 +1,14 @@
 #!/bin/bash
 #==============================================================================
-# Copyright (C) 2026-present Alces Flight Ltd.
+# Copyright (C) 2026 Stephen F Norledge & Alces Software Ltd & Concertim Ltd
 #
 # This file is part of Flight User Suite.
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which is available at
 # <https://www.eclipse.org/legal/epl-2.0>, or alternative license
-# terms made available by Alces Flight Ltd - please direct inquiries
-# about licensing to licensing@alces-flight.com.
+# terms made available by Alces Software Ltd - please direct inquiries
+# about licensing to licensing@alces-software.com.
 #
 # Flight MFA is distributed in the hope that it will be useful, but
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR
