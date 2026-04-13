@@ -26,6 +26,11 @@
 # https://github.com/alces-flight/flight-user-suite
 #==============================================================================
 
+if [ "${TERM}" == "" -o "${TERM}" == "dumb" ] ; then
+  # We don't have a TERM set. Calls to 'tput' will fail, so let's abort early.
+  exit 0
+fi
+
 IFS=: read -a xdg_config <<< "${XDG_CONFIG_HOME:-$HOME/.config}:${XDG_CONFIG_DIRS:-/etc/xdg}"
 for a in "${xdg_config[@]}"; do
   if [ -e "${a}"/flight.config ]; then
