@@ -63,6 +63,7 @@ func main() {
 		UseShortOptionHandling: true,
 		HideHelpCommand:        true,
 		Description:            wordwrap.String("Manage interactive GUI desktop sessions", maxTextWidth),
+		EnableShellCompletion:  true,
 		CommandNotFound: func(ctx context.Context, cmd *cli.Command, command string) {
 			fmt.Fprintf(
 				cmd.Root().Writer,

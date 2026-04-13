@@ -19,7 +19,8 @@ func killSessionCommand() *cli.Command {
 		Arguments: []cli.Argument{
 			&cli.StringArg{Name: "name", UsageText: "<name>"},
 		},
-		Before: assertArgPresent("name"),
+		Before:        assertArgPresent("name"),
+		ShellComplete: completeActiveSessionNames,
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			name := cmd.StringArg("name")
 			session, err := loadSession(name)
@@ -54,6 +55,21 @@ func killSessionCommand() *cli.Command {
 			fmt.Printf("Desktop session '%s' has been terminated.\n", session.Name)
 			return nil
 		},
+	}
+}
+
+func completeActiveSessionNames(ctx context.Context, cmd *cli.Command) {
+	switch cmd.NArg() {
+	case 0:
+		sessions, err := loadAllSessions()
+		if err != nil {
+			return
+		}
+		for _, session := range sessions {
+			if session.SessionState() == Active {
+				fmt.Println(session.Name)
+			}
+		}
 	}
 }
 
