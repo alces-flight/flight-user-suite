@@ -28,8 +28,8 @@ if [ -z "$BASH_VERSION" ]; then
   return
 fi
 
+FLIGHT_ROOT_ORIG="${FLIGHT_ROOT}"
 export FLIGHT_ROOT=${FLIGHT_ROOT:-/opt/flight}
-FLIGHT_ROOT_ORIG=${FLIGHT_ROOT}
 
 if [ "${-#*u}" != "$-" ]; then
   set +u
@@ -42,8 +42,10 @@ for a in "${xdg_config[@]}"; do
     break
   fi
 done
-# Honour the FLIGHT_ROOT setting initially set.
-FLIGHT_ROOT=${FLIGHT_ROOT_ORIG}
+if [ "${FLIGHT_ROOT_ORIG}" != "" ] ; then
+  # Honour the FLIGHT_ROOT setting initially set.
+  FLIGHT_ROOT=${FLIGHT_ROOT_ORIG}
+fi
 unset FLIGHT_ROOT_ORIG
 
 if [ "$(type -t flight-start)" != "function" ]; then
