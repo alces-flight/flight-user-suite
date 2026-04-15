@@ -155,16 +155,28 @@ func runToolAction(tool *Tool) func(ctx context.Context, cmd *cli.Command) error
 	}
 }
 
-func runTool(ctx context.Context, tool *Tool, args []string) error {
+func buildToolExecCmd(ctx context.Context, tool *Tool, args []string) *exec.Cmd {
 	tp := toolPath(tool.Name)
 	log.Debug("Execing", "tool", tool.Name, "path", tp, "args", args)
 	exe := exec.CommandContext(ctx, tp, args...)
-	exe.Stdout = os.Stdout
-	exe.Stderr = os.Stderr
 	exe.Env = slices.Clone(os.Environ())
 	exe.Env = append(exe.Env, fmt.Sprintf("FLIGHT_PROGRAM_NAME=flight %s", tool.Name))
+	return exe
+}
+
+func runTool(ctx context.Context, tool *Tool, args []string) error {
+	exe := buildToolExecCmd(ctx, tool, args)
+	exe.Stdout = os.Stdout
+	exe.Stderr = os.Stderr
 	err := exe.Run()
 	return transformToolError(tool.Name, err)
+}
+
+// Run the specified tool and return its Stdout.
+func runToolWithOutput(ctx context.Context, tool *Tool, args []string) ([]byte, error) {
+	exe := buildToolExecCmd(ctx, tool, args)
+	output, err := exe.Output()
+	return output, transformToolError(tool.Name, err)
 }
 
 type Tool struct {
