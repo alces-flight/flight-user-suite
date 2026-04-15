@@ -17,9 +17,9 @@ $(EXE):
 assets:
 	rsync -rlptgo --exclude .gitkeep $(ASSET_DIRS) $(DIST)/
 
-shell_completions: $(DIST)/etc/bash_completions.d/flight
+shell_completions: $(DIST)/usr/share/bash-completion/completions/flight
 
-$(DIST)/etc/bash_completions.d/flight: $(EXE)
+$(DIST)/usr/share/bash-completion/completions/flight: $(EXE)
 	mkdir -p $(dir $@)
 	$(EXE) completion bash > $@
 
