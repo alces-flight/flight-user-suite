@@ -75,16 +75,21 @@ func main() {
 	log.Printf("Starting Web Suite on %s\n", address)
 
 	e := echo.New()
+	e.Pre(MethodOverrideMiddleware())
 	e.Use(middleware.RequestLogger())
+	e.Use(NewSessionMiddleware())
+
 	e.Renderer = &echo.TemplateRenderer{
 		Template: template.Must(template.ParseGlob(getDirectory("views") + "/*.html")),
 	}
+
 	e.Static("/assets", getDirectory("assets"))
 	e.Static("/static", getDirectory("static"))
-
 	e.GET("/", func(c *echo.Context) error {
 		return c.Render(http.StatusOK, "home", indexData())
 	})
+	e.POST("/sessions", createSessionHandler)
+	e.DELETE("/sessions", destroySessionHandler)
 
 	if err := e.Start(address); err != nil {
 		e.Logger.Error("failed to start server", "error", err)

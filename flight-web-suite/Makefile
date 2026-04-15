@@ -1,4 +1,5 @@
 DIST := dist
+OPT := opt
 ASSET_DIRS := assets views static
 EXE := $(DIST)/opt/flight/usr/libexec/web-suite/service
 
@@ -7,9 +8,9 @@ COMMIT := $(shell git rev-parse HEAD)
 DATE := $(shell date --rfc-3339=seconds)
 LD_FLAGS := -ldflags="-X 'main.version=$(VERSION)' -X 'main.commit=$(COMMIT)' -X 'main.date=$(DATE)'"
 
-.PHONY: all $(EXE) clean distclean
+.PHONY: all $(EXE) assets clean distclean
 
-all: $(EXE)
+all: assets $(EXE)
 
 $(EXE): assets
 	CGO_ENABLED=0 go build -v $(LD_FLAGS) -o $(EXE)
@@ -17,6 +18,7 @@ $(EXE): assets
 assets: build-css
 	mkdir -p $(DIST)/opt/flight/var/web-suite/
 	rsync -rlptgo --exclude .gitkeep $(ASSET_DIRS) $(DIST)/opt/flight/var/web-suite/
+	rsync -rlptgo --exclude .gitkeep $(OPT) $(DIST)/
 
 build-css:
 	./bin/tailwind/tailwindcss \
