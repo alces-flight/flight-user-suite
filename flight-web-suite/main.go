@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -62,9 +63,13 @@ func main() {
 
 	e := echo.New()
 	e.Use(middleware.RequestLogger())
+	e.Renderer = &echo.TemplateRenderer{
+		Template: template.Must(template.ParseGlob("views/*.html")),
+	}
+	e.Static("/images", "assets/images")
 
 	e.GET("/", func(c *echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!")
+		return c.Render(http.StatusOK, "index", "My Cluster")
 	})
 
 	if err := e.Start(address); err != nil {
