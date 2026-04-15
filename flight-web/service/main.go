@@ -51,7 +51,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if pidfile != nil {
+	if *pidfile != "" {
 		err := writePidfile(*pidfile, os.Getpid())
 		if err != nil {
 			w := flag.CommandLine.Output()
