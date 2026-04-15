@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"charm.land/lipgloss/v2"
@@ -25,6 +26,7 @@ You can specify which sessions are cleaned by providing the optional <id> parame
 		Arguments: []cli.Argument{
 			&cli.StringArgs{Name: "id", UsageText: "[<id>...]", Min: 0, Max: -1},
 		},
+		ShellComplete: completeExitedSessionNames,
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			ids := cmd.StringArgs("id")
 			var sessions []*Session
@@ -118,5 +120,20 @@ You can specify which sessions are cleaned by providing the optional <id> parame
 			lipgloss.Println(out)
 			return firstErr
 		},
+	}
+}
+
+func completeExitedSessionNames(ctx context.Context, cmd *cli.Command) {
+	switch cmd.NArg() {
+	case 0:
+		sessions, err := loadAllSessions()
+		if err != nil {
+			return
+		}
+		for _, session := range sessions {
+			if session.SessionState() == Exited {
+				fmt.Println(session.Name)
+			}
+		}
 	}
 }

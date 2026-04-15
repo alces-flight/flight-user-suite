@@ -58,6 +58,19 @@ func startSessionCommand() *cli.Command {
 			&cli.StringArg{Name: "type", UsageText: "<type>"},
 		},
 		Before: composeBeforeFuncs(assertArgPresent("type"), assertTypeValid("type", 0)),
+		ShellComplete: func(ctx context.Context, cmd *cli.Command) {
+			cli.DefaultCompleteWithFlags(ctx, cmd)
+			switch cmd.NArg() {
+			case 0:
+				types, err := loadAllTypes()
+				if err != nil {
+					return
+				}
+				for _, t := range types {
+					fmt.Println(t.ID)
+				}
+			}
+		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			sessionType := cmd.StringArg("type")
 			name := cmd.String("name")

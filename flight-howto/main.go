@@ -48,10 +48,11 @@ func init() {
 
 func main() {
 	cmd := &cli.Command{
-		Name:        "flight howto",
-		Usage:       "View user guides for your HPC environment",
-		Description: lipgloss.Wrap("View user guides for your HPC environment", maxTextWidth, " "),
-		Copyright:   "(c) 2026 Stephen F Norledge & Alces Software Ltd & Concertim Ltd.",
+		Name:                  "flight howto",
+		Usage:                 "View user guides for your HPC environment",
+		Description:           lipgloss.Wrap("View user guides for your HPC environment", maxTextWidth, " "),
+		Copyright:             "(c) 2026 Stephen F Norledge & Alces Software Ltd & Concertim Ltd.",
+		EnableShellCompletion: true,
 		Commands: []*cli.Command{
 			{
 				Name:    "list",

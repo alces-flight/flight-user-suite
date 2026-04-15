@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"charm.land/log/v2"
 	"github.com/muesli/reflow/wordwrap"
@@ -17,7 +18,8 @@ func showSessionCommand() *cli.Command {
 		Arguments: []cli.Argument{
 			&cli.StringArg{Name: "name", UsageText: "<name>"},
 		},
-		Before: assertArgPresent("name"),
+		Before:        assertArgPresent("name"),
+		ShellComplete: completeSessionNames,
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			name := cmd.StringArg("name")
 			session, err := loadSession(name)
@@ -34,5 +36,18 @@ func showSessionCommand() *cli.Command {
 			managementInfo(session)
 			return nil
 		},
+	}
+}
+
+func completeSessionNames(ctx context.Context, cmd *cli.Command) {
+	switch cmd.NArg() {
+	case 0:
+		sessions, err := loadAllSessions()
+		if err != nil {
+			return
+		}
+		for _, session := range sessions {
+			fmt.Println(session.Name)
+		}
 	}
 }

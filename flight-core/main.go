@@ -69,6 +69,20 @@ func main() {
 		UseShortOptionHandling: true,
 		HideHelpCommand:        true,
 		Description:            rootDescription(user, maxTextWidth),
+		EnableShellCompletion:  true,
+		ShellComplete: func(ctx context.Context, cmd *cli.Command) {
+			cli.DefaultCompleteWithFlags(ctx, cmd)
+			switch cmd.NArg() {
+			case 0:
+				tools, err := getTools(true)
+				if err != nil {
+					return
+				}
+				for _, tool := range tools {
+					fmt.Println(tool.Name)
+				}
+			}
+		},
 		CommandNotFound: func(ctx context.Context, cmd *cli.Command, command string) {
 			fmt.Fprintf(
 				cmd.Root().Writer,
@@ -200,6 +214,20 @@ func addAdminCommands(cmd *cli.Command, maxTextWidth int) {
 						&cli.StringArg{Name: "tool", UsageText: "<tool>"},
 					},
 					Before: assertArgPresent("tool"),
+					ShellComplete: func(ctx context.Context, cmd *cli.Command) {
+						switch cmd.NArg() {
+						case 0:
+							tools, err := getTools(false)
+							if err != nil {
+								return
+							}
+							for _, tool := range tools {
+								if !tool.Enabled {
+									fmt.Println(tool.Name)
+								}
+							}
+						}
+					},
 					Action: enableTool,
 				},
 				{
@@ -216,6 +244,18 @@ func addAdminCommands(cmd *cli.Command, maxTextWidth int) {
 						&cli.StringArg{Name: "tool", UsageText: "<tool>"},
 					},
 					Before: assertArgPresent("tool"),
+					ShellComplete: func(ctx context.Context, cmd *cli.Command) {
+						switch cmd.NArg() {
+						case 0:
+							tools, err := getTools(true)
+							if err != nil {
+								return
+							}
+							for _, tool := range tools {
+								fmt.Println(tool.Name)
+							}
+						}
+					},
 					Action: disableTool,
 				},
 			},
@@ -277,6 +317,24 @@ Valid events are %s.`,
 						&cli.StringArg{Name: "hook", UsageText: "<hook>"},
 					},
 					Before: composeBeforeFuncs(assertArgPresent("event", "hook"), assertEventValid("event", 0)),
+					ShellComplete: func(ctx context.Context, cmd *cli.Command) {
+						switch cmd.NArg() {
+						case 0:
+							for _, event := range validEvents {
+								fmt.Println(event)
+							}
+						case 1:
+							hooks, err := getEventHooks(cmd.Args().First(), false)
+							if err != nil {
+								return
+							}
+							for _, hook := range hooks {
+								if !hook.Enabled {
+									fmt.Println(hook.Name)
+								}
+							}
+						}
+					},
 					Action: enableHook,
 				},
 				{
@@ -294,6 +352,22 @@ Valid events are %s.`,
 						&cli.StringArg{Name: "hook", UsageText: "<hook>"},
 					},
 					Before: composeBeforeFuncs(assertArgPresent("event", "hook"), assertEventValid("event", 0)),
+					ShellComplete: func(ctx context.Context, cmd *cli.Command) {
+						switch cmd.NArg() {
+						case 0:
+							for _, event := range validEvents {
+								fmt.Println(event)
+							}
+						case 1:
+							hooks, err := getEventHooks(cmd.Args().First(), true)
+							if err != nil {
+								return
+							}
+							for _, hook := range hooks {
+								fmt.Println(hook.Name)
+							}
+						}
+					},
 					Action: disableHook,
 				},
 			},
@@ -311,9 +385,14 @@ func addToolProxyCommands(cmd *cli.Command) {
 	for _, tool := range tools {
 		proxy := cli.Command{
 			Name:            tool.Name,
-			Action:          runTool(tool),
+			Action:          runToolAction(tool),
 			SkipFlagParsing: true,
 			Category:        "Available tools",
+			ShellComplete: func(ctx context.Context, cmd *cli.Command) {
+				args := cmd.Args().Slice()
+				args = append(args, "--generate-shell-completion")
+				_ = runTool(ctx, tool, args)
+			},
 		}
 		if tool.Synopsis != "" {
 			proxy.Usage = tool.Synopsis

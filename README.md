@@ -8,8 +8,8 @@ HPC environments.
 1. Download the latest release from [the releases page](https://github.com/concertim/flight-user-suite/releases).
 2. Copy the release tarball to the target system.
 3. Untar the release to `/`: it will install Flight User Suite to `/opt/flight`
-   along with configuration files `/etc/xdg/flight.config` and
-   `/etc/profile.d/zz-flight-starter.sh`.
+   along with a handful of configuration files outside of `/opt/flight`. You
+   can list the contents of the tarball to see those files.
 
 Once Flight User Suite has been installed, you can enable the hooks and tooling
 that you wish to make available.

@@ -20,7 +20,8 @@ func showSessionLogsCommand() *cli.Command {
 		Arguments: []cli.Argument{
 			&cli.StringArg{Name: "name", UsageText: "<name>"},
 		},
-		Before: assertArgPresent("name"),
+		Before:        assertArgPresent("name"),
+		ShellComplete: completeSessionNames,
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			name := cmd.StringArg("name")
 			session, err := loadSession(name)

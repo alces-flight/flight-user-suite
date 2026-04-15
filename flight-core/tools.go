@@ -149,20 +149,22 @@ func disableTool(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func runTool(tool *Tool) func(ctx context.Context, cmd *cli.Command) error {
-	run := func(ctx context.Context, cmd *cli.Command) error {
-		tp := toolPath(tool.Name)
-		log.Debug("Execing", "tool", tool.Name, "path", tp, "args", cmd.Args().Slice())
-		exe := exec.CommandContext(ctx, tp, cmd.Args().Slice()...)
-		exe.Stdout = os.Stdout
-		exe.Stderr = os.Stderr
-		exe.Env = slices.Clone(os.Environ())
-		exe.Env = append(exe.Env, fmt.Sprintf("FLIGHT_PROGRAM_NAME=flight %s", tool.Name))
-		err := exe.Run()
-		return transformToolError(tool.Name, err)
+func runToolAction(tool *Tool) func(ctx context.Context, cmd *cli.Command) error {
+	return func(ctx context.Context, cmd *cli.Command) error {
+		return runTool(ctx, tool, cmd.Args().Slice())
 	}
+}
 
-	return run
+func runTool(ctx context.Context, tool *Tool, args []string) error {
+	tp := toolPath(tool.Name)
+	log.Debug("Execing", "tool", tool.Name, "path", tp, "args", args)
+	exe := exec.CommandContext(ctx, tp, args...)
+	exe.Stdout = os.Stdout
+	exe.Stderr = os.Stderr
+	exe.Env = slices.Clone(os.Environ())
+	exe.Env = append(exe.Env, fmt.Sprintf("FLIGHT_PROGRAM_NAME=flight %s", tool.Name))
+	err := exe.Run()
+	return transformToolError(tool.Name, err)
 }
 
 type Tool struct {
