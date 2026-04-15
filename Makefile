@@ -1,5 +1,12 @@
 DIST := dist
-MODULES := flight-starter flight-core flight-desktop flight-howto ssh-keypair-generation managed-cluster flight-mfa
+MODULES := flight-starter \
+		   flight-core \
+		   flight-desktop \
+		   flight-howto \
+		   ssh-keypair-generation \
+		   managed-cluster \
+		   flight-mfa \
+		   flight-web
 VERSION := $(shell git describe --tags --dirty --always)
 KERNEL := $(shell uname -s)
 ARCH := $(shell uname -p)
