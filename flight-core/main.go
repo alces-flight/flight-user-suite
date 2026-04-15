@@ -210,6 +210,12 @@ func addAdminCommands(cmd *cli.Command, maxTextWidth int) {
 						),
 						maxTextWidth,
 					),
+					Flags: []cli.Flag{
+						&cli.BoolFlag{
+							Name:  "admin-only",
+							Usage: "enable the tool only for admin users",
+						},
+					},
 					Arguments: []cli.Argument{
 						&cli.StringArg{Name: "tool", UsageText: "<tool>"},
 					},

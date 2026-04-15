@@ -13,7 +13,7 @@ TBC.
 
 * **Enable:** as `root` run
   ```bash
-  flight tools enable web
+  flight tools enable --admin-only web
   ```
 * **Start:** as `root` run
   ```bash

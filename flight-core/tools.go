@@ -16,6 +16,7 @@ import (
 	"charm.land/log/v2"
 	"github.com/concertim/flight-user-suite/flight/pkg"
 	"github.com/urfave/cli/v3"
+	userpermissions "github.com/wneessen/go-fileperm"
 )
 
 func toolPath(tool string) string {
@@ -73,7 +74,7 @@ func toolsTable(tools []*Tool) error {
 			case 0:
 				return style.Width(namecolWidth)
 			case 2:
-				return style.Width(13)
+				return style.Width(15)
 			}
 			return style
 		})
@@ -81,7 +82,9 @@ func toolsTable(tools []*Tool) error {
 	for _, tool := range tools {
 		namecolWidth = max(namecolWidth, len(tool.Name)+2)
 		enabledText := "\u274c Disabled"
-		if tool.Enabled {
+		if tool.Enabled && tool.AdminOnly {
+			enabledText = "\u2705 Admin only"
+		} else if tool.Enabled {
 			enabledText = "\u2705 Enabled"
 		}
 		t.Row(tool.Name, tool.Synopsis, enabledText)
@@ -102,17 +105,16 @@ func getTools(onlyEnabled bool) ([]*Tool, error) {
 	tools := make([]*Tool, 0)
 	for _, entry := range entries {
 		if toolName, hasPrefix := strings.CutPrefix(entry.Name(), "flight-"); hasPrefix {
-			info, err := entry.Info()
-			if err != nil {
-				return nil, fmt.Errorf("reading tool info: %w", err)
-			}
-			enabled := info.Mode()&0111 != 0
-
+			enabled := isUserExecutable(filepath.Join(toolDir, entry.Name()))
+			adminOnly := isAdminOnly(entry)
 			synopsisFile := filepath.Join(toolSynopsisDir, entry.Name())
 			synopsis, _ := os.ReadFile(synopsisFile)
-
-			tool := &Tool{Enabled: enabled, Name: toolName, Synopsis: strings.TrimSpace(string(synopsis))}
-
+			tool := &Tool{
+				AdminOnly: adminOnly,
+				Enabled:   enabled,
+				Name:      toolName,
+				Synopsis:  strings.TrimSpace(string(synopsis)),
+			}
 			if !onlyEnabled || tool.Enabled {
 				tools = append(tools, tool)
 			}
@@ -121,11 +123,43 @@ func getTools(onlyEnabled bool) ([]*Tool, error) {
 	return tools, nil
 }
 
+// Return true if the current user can execute the file at the given path.
+func isUserExecutable(path string) bool {
+	up, err := userpermissions.New(path)
+	if err != nil {
+		log.Debug("Error checking file permissions", "path", path, "err", err)
+		return false
+	}
+	return up.UserExecutable()
+}
+
+// Return true if the file at the given path is executable only for admin
+// users.
+func isAdminOnly(entry os.DirEntry) bool {
+	// We make the assumption here that all tools are owned by root:root, and
+	// that a tool is admin only if only the user executable permission bit is
+	// set.  This currently matches our build process and the behaviour of
+	// [enableTool].
+	info, err := entry.Info()
+	if err != nil {
+		log.Debug("Error checking file permissions", "path", entry, "err", err)
+		return false
+	}
+	enabled := info.Mode()&0111 != 0
+	enabledForOthers := info.Mode()&0011 != 0
+	return enabled && !enabledForOthers
+}
+
 func enableTool(ctx context.Context, cmd *cli.Command) error {
+	adminOnly := cmd.Bool("admin-only")
 	tool := cmd.StringArg("tool")
 	tp := toolPath(tool)
-	log.Debug("Enabling", "tool", tool, "path", tp)
-	if err := os.Chmod(tp, 0555); err != nil {
+	permissions := os.FileMode(0o555)
+	if adminOnly {
+		permissions = os.FileMode(0o544)
+	}
+	log.Debug("Enabling", "tool", tool, "path", tp, "adminOnly", adminOnly, "perms", permissions)
+	if err := os.Chmod(tp, permissions); err != nil {
 		return transformToolError(tool, err)
 	}
 	if err := createHowtoSymlinks(tool, true); err != nil {
@@ -180,9 +214,10 @@ func runToolWithOutput(ctx context.Context, tool *Tool, args []string) ([]byte, 
 }
 
 type Tool struct {
-	Enabled  bool
-	Name     string
-	Synopsis string
+	AdminOnly bool
+	Enabled   bool
+	Name      string
+	Synopsis  string
 }
 
 type DisabledTool struct {
