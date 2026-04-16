@@ -372,6 +372,23 @@ Valid events are %s.`,
 				},
 			},
 		},
+		{
+			Name:      "web",
+			Usage:     "Manage the Flight Web Suite service",
+			UsageText: fmt.Sprintf("%s hooks command [command options]", progName),
+			Description: wordwrap.String(
+				`Manage the Flight Web Suite service.
+
+The Flight Web Suite provides in-browser access to the Flight User Suite tools.`,
+				maxTextWidth,
+			),
+			Category: "Web Suite",
+			Commands: []*cli.Command{
+				startCommand(),
+				stopCommand(),
+				statusCommand(),
+			},
+		},
 	}
 	cmd.Commands = append(cmd.Commands, cmds...)
 }
