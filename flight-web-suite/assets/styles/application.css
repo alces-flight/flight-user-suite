@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+@theme {
+  --color-alces-blue: #2794d8;
+  --color-alces-blue-light: #DCEEF5;
+}
+
+h1 {
+  @apply font-normal text-zinc-600 text-3xl mt-20;
+}

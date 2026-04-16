@@ -10,7 +10,7 @@ LD_FLAGS := -ldflags="-X 'main.version=$(VERSION)' -X 'main.commit=$(COMMIT)' -X
 
 all: $(EXE)
 
-$(EXE):
+$(EXE): build-css
 	CGO_ENABLED=0 go build -v $(LD_FLAGS) -o $(EXE)
 
 clean:
@@ -18,3 +18,9 @@ clean:
 
 distclean: clean
 	rm -rf $(DIST)
+
+build-css:
+	./bin/tailwind/tailwindcss \
+        --config ./tailwind.config.js \
+	-i ./assets/styles/application.css \
+	-o ./static/styles.css \

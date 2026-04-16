@@ -2,4 +2,5 @@
 /*/dist
 flight-user-suite*.tar.gz
 flight-web-suite/tmp/*
+flight-web-suite/static/*
 *.DS_Store*

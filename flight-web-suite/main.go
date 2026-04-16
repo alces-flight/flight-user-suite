@@ -66,7 +66,8 @@ func main() {
 	e.Renderer = &echo.TemplateRenderer{
 		Template: template.Must(template.ParseGlob("views/*.html")),
 	}
-	e.Static("/images", "assets/images")
+	e.Static("/assets", "assets")
+	e.Static("/static", "static")
 
 	e.GET("/", func(c *echo.Context) error {
 		return c.Render(http.StatusOK, "index", "My Cluster")
