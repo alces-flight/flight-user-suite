@@ -56,6 +56,7 @@ func configCommand() *cli.Command {
 
 	return &cli.Command{
 		Name:        "config",
+		Usage:       "Manage Flight User Suite settings",
 		Description: wordwrap.String(fmt.Sprintf("Manage Flight User Suite settings. Available settings are shown below:\n\n%s", settingsList), maxTextWidth),
 		Category:    "Configuration",
 		Commands: []*cli.Command{

@@ -111,7 +111,7 @@ func getTools(onlyEnabled bool) ([]*Tool, error) {
 			synopsisFile := filepath.Join(toolSynopsisDir, entry.Name())
 			synopsis, _ := os.ReadFile(synopsisFile)
 
-			tool := &Tool{Enabled: enabled, Name: toolName, Synopsis: string(synopsis)}
+			tool := &Tool{Enabled: enabled, Name: toolName, Synopsis: strings.TrimSpace(string(synopsis))}
 
 			if !onlyEnabled || tool.Enabled {
 				tools = append(tools, tool)
