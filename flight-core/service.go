@@ -1,17 +1,15 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
-	"syscall"
 
 	"charm.land/log/v2"
+	"github.com/concertim/flight-user-suite/flight/pkg"
 )
 
 type Service struct {
@@ -44,7 +42,7 @@ func (s *Service) Start(ctx context.Context) error {
 
 func (s *Service) Kill() error {
 	log.Debug("Killing service process", "pidfile", s.PidfilePath(), "name", s.ID)
-	pid, err := readPidfile(s.PidfilePath())
+	pid, err := pkg.ReadPidfile(s.PidfilePath())
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
@@ -68,7 +66,7 @@ func (s *Service) Kill() error {
 }
 
 func (s *Service) State() string {
-	pid, _ := readPidfile(s.PidfilePath())
+	pid, _ := pkg.ReadPidfile(s.PidfilePath())
 	if pid == 0 {
 		return "Stopped"
 	}
@@ -79,29 +77,4 @@ func (s *Service) mkPidfileDir() error {
 	dir := filepath.Dir(s.PidfilePath())
 	log.Debug("Creating pidfile directory", "path", dir)
 	return os.MkdirAll(dir, 0o755)
-}
-
-// Read the PID file at path. Return the PID contained in the file if it
-// contains a valid PID for a running process.  Otherwise return 0.
-func readPidfile(path string) (int, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return 0, fmt.Errorf("reading pidfile: %w", err)
-	}
-	pid, err := strconv.Atoi(string(bytes.TrimSpace(data)))
-	if err != nil {
-		return 0, fmt.Errorf("invalid content: %w", err)
-	}
-	if pid == 0 {
-		return 0, fmt.Errorf("invalid content: pid=0")
-	}
-	process, err := os.FindProcess(pid)
-	if err != nil {
-		return 0, nil
-	}
-	err = process.Signal(syscall.Signal(0))
-	if err != nil {
-		return 0, nil
-	}
-	return pid, nil
 }

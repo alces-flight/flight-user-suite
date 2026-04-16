@@ -6,7 +6,7 @@ MODULES := flight-starter \
 		   ssh-keypair-generation \
 		   managed-cluster \
 		   flight-mfa \
-		   flight-web
+		   flight-web-suite
 VERSION := $(shell git describe --tags --dirty --always)
 KERNEL := $(shell uname -s)
 ARCH := $(shell uname -p)

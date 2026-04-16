@@ -11,10 +11,6 @@ TBC.
 
 ## Usage
 
-* **Enable:** as `root` run
-  ```bash
-  flight tools enable --admin-only web
-  ```
 * **Start:** as `root` run
   ```bash
   flight web start
