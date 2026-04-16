@@ -26,6 +26,13 @@ var (
 	printVersion = flag.Bool("version", false, "print the version")
 )
 
+type Tool struct {
+	Name        string
+	Description string
+	URL         string
+	IconPath    string
+}
+
 func init() {
 	// TODO: Setup log/slog. Save logs to file/stdout?
 
@@ -70,10 +77,30 @@ func main() {
 	e.Static("/static", "static")
 
 	e.GET("/", func(c *echo.Context) error {
-		return c.Render(http.StatusOK, "index", "My Cluster")
+		return c.Render(http.StatusOK, "home", indexData())
 	})
 
 	if err := e.Start(address); err != nil {
 		e.Logger.Error("failed to start server", "error", err)
+	}
+}
+
+func indexData() map[string]any {
+	return map[string]any{
+		"EnvName": "My Cluster",
+		"Tools": []Tool{
+			{
+				Name:        "Flight Desktop",
+				Description: "Access interactive desktop sessions",
+				URL:         "/desktop",
+				IconPath:    "/assets/images/desktop.png",
+			},
+			{
+				Name:        "Flight Howto",
+				Description: "Learn about the Flight User Suite and using your cluster",
+				URL:         "/howto",
+				IconPath:    "/assets/images/howto.png",
+			},
+		},
 	}
 }
