@@ -4,15 +4,14 @@ import pam
 import sys
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: {} <username> </path/to/fifo>".format(sys.argv[0]))
+    if len(sys.argv) != 2:
+        print("Usage: {} <username>".format(sys.argv[0]))
+        print("  Password is read from standard input")
         sys.exit(1)
     username = sys.argv[1]
-    fifo_path = sys.argv[2]
-    with open(fifo_path) as fifo:
-        password = fifo.read()
-        success = pam.authenticate(username, password, service="login")
-        if success:
-            sys.exit(0)
-        else:
-            sys.exit(1)
+    password = sys.stdin.read().strip()
+    success = pam.authenticate(username, password, service="login")
+    if success:
+        sys.exit(0)
+    else:
+        sys.exit(1)
