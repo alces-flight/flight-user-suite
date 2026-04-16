@@ -7,10 +7,31 @@ import (
 	"net/http"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v5"
 )
+
+func flashes(c *echo.Context, flavour string) []string {
+	sess, err := GetSession(c, "session")
+	if err != nil {
+		return nil
+	}
+	var errorFlashes []string
+	for _, ef := range sess.Flashes(flavour) {
+		switch ef := ef.(type) {
+		case string:
+			errorFlashes = append(errorFlashes, ef)
+		case fmt.Stringer:
+			errorFlashes = append(errorFlashes, ef.String())
+		}
+	}
+	if err := sess.Save(c.Request(), c.Response()); err != nil {
+		return errorFlashes
+	}
+	return errorFlashes
+}
 
 func newSessionHandler(c *echo.Context) error {
 	sess, err := GetSession(c, "session")
@@ -19,13 +40,13 @@ func newSessionHandler(c *echo.Context) error {
 	}
 	username, ok := sess.Values["username"].(string)
 	if !ok || username == "" {
-		fmt.Printf("err: %v\n", err)
 		return c.HTML(
 			http.StatusOK,
-			`
+			fmt.Sprintf(`
 <html>
 <head></head>
 <body>
+    <div>%s</div>
 	<form action="sessions" method="post">
 		<input name="username" id="username" type="text" placeholder="Enter cluster username" />
 		<input name="password" id="password" type="password" placeholder="Enter cluster password" />
@@ -34,6 +55,8 @@ func newSessionHandler(c *echo.Context) error {
 </body>
 </html>
 `,
+				strings.Join(flashes(c, "error"), ", "),
+			),
 		)
 	}
 
