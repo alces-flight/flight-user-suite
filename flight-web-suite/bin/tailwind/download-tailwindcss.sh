@@ -21,5 +21,5 @@ fi
 echo "Setting the file as executable..."
 chmod +x "$TAILWIND_BIN_PATH"
 
-echo "Tailwind CSS CLI is Installed!"
+echo "Tailwind CSS CLI is installed!"
 echo "Executable path: $TAILWIND_BIN_PATH"
