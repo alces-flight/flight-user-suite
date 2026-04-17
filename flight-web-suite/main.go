@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"html/template"
@@ -19,6 +20,8 @@ var (
 	commit  string = "unknown"
 	date    string = "unknown"
 
+	flightRoot string = "/opt/flight"
+
 	// Flags
 	port         = flag.Int("port", 8080, "port to listen on")
 	pidfile      = flag.String("pidfile", "", "pidfile")
@@ -34,6 +37,10 @@ type Tool struct {
 
 func init() {
 	// TODO: Setup log/slog. Save logs to file/stdout?
+
+	if root, ok := os.LookupEnv("FLIGHT_ROOT"); ok {
+		flightRoot = root
+	}
 
 	flag.Usage = func() {
 		cmd := path.Base(os.Args[0])
@@ -70,10 +77,10 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.RequestLogger())
 	e.Renderer = &echo.TemplateRenderer{
-		Template: template.Must(template.ParseGlob("views/*.html")),
+		Template: template.Must(template.ParseGlob(getDirectory("views") + "/*.html")),
 	}
-	e.Static("/assets", "assets")
-	e.Static("/static", "static")
+	e.Static("/assets", getDirectory("assets"))
+	e.Static("/static", getDirectory("static"))
 
 	e.GET("/", func(c *echo.Context) error {
 		return c.Render(http.StatusOK, "home", indexData())
@@ -102,4 +109,16 @@ func indexData() map[string]any {
 			},
 		},
 	}
+}
+
+func getDirectory(dirName string) string {
+	// If the named directory exists in our CWD, use that; otherwise use the
+	// expected locations in a deployed Flight User Suite installation.
+	// Net effect is running from "local" files in development, and as expected
+	// in production.
+	_, err := os.Stat(dirName)
+	if errors.Is(err, os.ErrNotExist) {
+		return path.Join(flightRoot, "var", "web-suite", dirName)
+	}
+	return dirName
 }
