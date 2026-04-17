@@ -9,7 +9,6 @@ import (
 	"os"
 	"path"
 
-	"github.com/concertim/flight-user-suite/flight/pkg"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
 )
@@ -57,7 +56,7 @@ func main() {
 	}
 
 	if *pidfile != "" {
-		err := pkg.WritePidfile(*pidfile, os.Getpid())
+		err := writePidfile(*pidfile, os.Getpid())
 		if err != nil {
 			w := flag.CommandLine.Output()
 			fmt.Fprintf(w, "Unable to write pidfile: %s", err.Error()) // nolint:errcheck

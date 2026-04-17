@@ -3,4 +3,5 @@
 flight-user-suite*.tar.gz
 flight-web-suite/tmp/*
 flight-web-suite/static/*
+flight-web-suite/bin/tailwind/tailwindcss
 *.DS_Store*
