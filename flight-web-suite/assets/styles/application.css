@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@theme {
+  --color-alces-blue: #2794d8;
+  --color-alces-blue-light: #DCEEF5;
+}
+
+@font-face {
+  font-family: Lexend;
+  font-style: normal;
+  font-weight: 300;
+  src: url("/assets/fonts/Lexend-Light.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: Lexend;
+  font-style: bold;
+  font-weight: 700;
+  src: url("/assets/fonts/Lexend-Bold.ttf") format("truetype");
+}
+
+body {
+  @apply font-[Lexend] text-slate-700;
+}
+
+h1 {
+  @apply font-normal text-slate-500 text-3xl;
+}
+
+h2 {
+  @apply font-normal text-slate-500 text-2xl;
+}

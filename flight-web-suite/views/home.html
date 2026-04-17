@@ -1,0 +1,51 @@
+{{define "home"}}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Flight Web Suite</title>
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png">
+    <link rel="stylesheet" href="/static/styles.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  </head>
+  <body class="flex flex-col h-screen m-0 p-0 font-sans">
+    <div class="flex items-center w-full h-[3.6rem] bg-black py-2 px-3 box-border border-b-4 border-alces-blue">
+      <img
+        src="/assets/images/logo.png"
+        alt="Flight Web Suite Logo"
+        class="h-full"
+      >
+    </div>
+    <div class="grow overflow-y-auto px-[15%] bg-linear-to-b from-alces-blue-light to-white">
+      <div class="bg-white p-4 text-center h-min min-h-full">
+        <h1 class="mt-20 mb-15">
+          Welcome to the <span class="text-alces-blue">{{ .EnvName }}</span> compute environment.
+        </h1>
+        <p class="mb-8">Select a tool to access your cluster from within your browser.</p>
+        <div class="flex flex-wrap justify-center gap-x-4">
+          {{range .Tools}}
+            <div class="
+              flex flex-col items-center gap-y-1 justify-center
+              border border-alces-blue-light
+              w-70 p-9 px-8
+              hover:shadow hover:border-alces-blue transition-colors duration-200 cursor-pointer group
+            ">
+              <div class="size-25 mb-2">
+                <img
+                  src="{{ .IconPath }}"
+                  alt="{{ .Name }} logo"
+                  class="h-full"
+                >
+              </div>
+              <h2 class="group-hover:text-alces-blue!">{{ .Name }}</h2>
+              <p>{{ .Description }}</p>
+            </div>
+          {{end}}
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+{{end}}

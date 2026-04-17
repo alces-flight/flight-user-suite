@@ -1,14 +1,15 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
 	"path"
 
-	"github.com/concertim/flight-user-suite/flight/pkg"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
 )
@@ -19,14 +20,27 @@ var (
 	commit  string = "unknown"
 	date    string = "unknown"
 
+	flightRoot string = "/opt/flight"
+
 	// Flags
 	port         = flag.Int("port", 8080, "port to listen on")
 	pidfile      = flag.String("pidfile", "", "pidfile")
 	printVersion = flag.Bool("version", false, "print the version")
 )
 
+type Tool struct {
+	Name        string
+	Description string
+	URL         string
+	IconPath    string
+}
+
 func init() {
 	// TODO: Setup log/slog. Save logs to file/stdout?
+
+	if root, ok := os.LookupEnv("FLIGHT_ROOT"); ok {
+		flightRoot = root
+	}
 
 	flag.Usage = func() {
 		cmd := path.Base(os.Args[0])
@@ -49,7 +63,7 @@ func main() {
 	}
 
 	if *pidfile != "" {
-		err := pkg.WritePidfile(*pidfile, os.Getpid())
+		err := writePidfile(*pidfile, os.Getpid())
 		if err != nil {
 			w := flag.CommandLine.Output()
 			fmt.Fprintf(w, "Unable to write pidfile: %s", err.Error()) // nolint:errcheck
@@ -62,12 +76,49 @@ func main() {
 
 	e := echo.New()
 	e.Use(middleware.RequestLogger())
+	e.Renderer = &echo.TemplateRenderer{
+		Template: template.Must(template.ParseGlob(getDirectory("views") + "/*.html")),
+	}
+	e.Static("/assets", getDirectory("assets"))
+	e.Static("/static", getDirectory("static"))
 
 	e.GET("/", func(c *echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!")
+		return c.Render(http.StatusOK, "home", indexData())
 	})
 
 	if err := e.Start(address); err != nil {
 		e.Logger.Error("failed to start server", "error", err)
 	}
+}
+
+func indexData() map[string]any {
+	return map[string]any{
+		"EnvName": "My Cluster",
+		"Tools": []Tool{
+			{
+				Name:        "Flight Desktop",
+				Description: "Access interactive desktop sessions",
+				URL:         "/desktop",
+				IconPath:    "/assets/images/desktop.png",
+			},
+			{
+				Name:        "Flight Howto",
+				Description: "Learn about the Flight User Suite and using your cluster",
+				URL:         "/howto",
+				IconPath:    "/assets/images/howto.png",
+			},
+		},
+	}
+}
+
+func getDirectory(dirName string) string {
+	// If the named directory exists in our CWD, use that; otherwise use the
+	// expected locations in a deployed Flight User Suite installation.
+	// Net effect is running from "local" files in development, and as expected
+	// in production.
+	_, err := os.Stat(dirName)
+	if errors.Is(err, os.ErrNotExist) {
+		return path.Join(flightRoot, "var", "web-suite", dirName)
+	}
+	return dirName
 }
