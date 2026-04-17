@@ -1,0 +1,27 @@
+{{define "sessions/new"}}
+{{template "layouts.application.start" . }}
+<h1 class="mt-20 mb-15">
+    Log in to <span class="text-alces-blue">OpenFlight</span>
+</h1>
+<p class="text-zinc-500 text-sm mb-15">
+    Sign in to your Flight Solo environment. You'll need your
+    account username and password. Contact your HPC administrator
+    if you don't have these details or need a reminder.
+</p>
+
+<form class="form" action="sessions" method="post">
+    <div class="field text-field">
+        <label for="username">Cluster username</label><br>
+        <input name="username" id="username" type="text" autofocus value="{{ .username }}" />
+    </div>
+    <div class="field text-field">
+        <label for="username">Cluster password</label><br>
+        <input name="password" id="password" type="password" />
+    </div>
+    <div class="actions w-full">
+        <input class="submit-button" type="submit" value="Log in" />
+    </div>
+</form>
+
+{{template "layouts.application.end" . }}
+{{end}}

@@ -79,15 +79,20 @@ func main() {
 	e.Use(middleware.RequestLogger())
 	e.Use(NewSessionMiddleware())
 
-	e.Renderer = &echo.TemplateRenderer{
-		Template: template.Must(template.ParseGlob(getDirectory("views") + "/*.html")),
-	}
+	// TODO: Standardise on extension for Go html/template files.
+	t := template.Must(template.ParseGlob(getDirectory("views") + "/*.html"))
+	// t = template.Must(t.ParseGlob(getDirectory("views") + "/*/*.html"))
+	// t = template.Must(t.ParseGlob(getDirectory("views") + "/*.gohtml"))
+	t = template.Must(t.ParseGlob(getDirectory("views") + "/*/*.gohtml"))
+	e.Renderer = &echo.TemplateRenderer{Template: t}
 
 	e.Static("/assets", getDirectory("assets"))
 	e.Static("/static", getDirectory("static"))
 	e.GET("/", func(c *echo.Context) error {
-		return c.Render(http.StatusOK, "home", indexData())
+		data := indexData()
+		return c.Render(http.StatusOK, "home", AddCommonData(c, data))
 	})
+	e.GET("/sessions", newSessionHandler)
 	e.POST("/sessions", createSessionHandler)
 	e.DELETE("/sessions", destroySessionHandler)
 

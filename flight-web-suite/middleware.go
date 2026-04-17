@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/sessions"
@@ -22,7 +21,7 @@ func NewSessionMiddleware() echo.MiddlewareFunc {
 	sessionStore.Options = &sessions.Options{
 		Path:     "/",
 		MaxAge:   86400 * 7,
-		Secure:   true,
+		Secure:   false,
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
 	}
@@ -33,24 +32,4 @@ func NewSessionMiddleware() echo.MiddlewareFunc {
 			return next(c)
 		}
 	}
-}
-
-func GetSession(c *echo.Context, name string) (*sessions.Session, error) {
-	store, err := echo.ContextGet[sessions.Store](c, "_session_store")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get session store: %w", err)
-	}
-	return store.Get(c.Request(), name)
-}
-
-func DeleteSession(c *echo.Context, name string) error {
-	sess, err := GetSession(c, "session")
-	if err != nil {
-		return err
-	}
-	sess.Options.MaxAge = -1
-	if err := sess.Save(c.Request(), c.Response()); err != nil {
-		return err
-	}
-	return nil
 }

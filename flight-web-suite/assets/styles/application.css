@@ -3,6 +3,7 @@
 @theme {
   --color-alces-blue: #2794d8;
   --color-alces-blue-light: #DCEEF5;
+  --color-alces-blue-dark: #0E68A0;
 }
 
 @font-face {
@@ -30,3 +31,46 @@ h1 {
 h2 {
   @apply font-normal text-slate-500 text-2xl;
 }
+
+.flash {
+  @apply absolute top-15 right-5 border rounded-lg p-1 ;
+
+  &.alert {
+    @apply text-red-500 border-red-400 bg-red-50;
+  }
+
+  &.notice {
+    @apply text-alces-blue bg-sky-50;
+    border-color: #3BB6E3;
+  }
+}
+
+.form {
+  @apply flex flex-col gap-y-4 items-start w-full mx-auto;
+}
+
+.text-field {
+  @apply w-full text-start;
+
+  input {
+    @apply border-b border-alces-blue w-full py-2 px-2;
+
+    &:focus {
+      @apply outline-none bg-alces-blue-light;
+    }
+  }
+
+  label, em {
+    @apply text-zinc-500 text-xs;
+  }
+
+  .field-help {
+    @apply text-zinc-500 text-xs italic;
+  }
+
+}
+
+.submit-button {
+  @apply w-full bg-alces-blue text-white py-1 mb-4 rounded-lg hover:bg-alces-blue-dark cursor-pointer;
+}
+
