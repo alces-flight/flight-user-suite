@@ -15,7 +15,7 @@ func newSessionHandler(c *echo.Context) error {
 	if LoggedIn(c) {
 		return c.Redirect(http.StatusSeeOther, "/")
 	}
-	return c.Render(http.StatusOK, "sessions/new", map[string]string{})
+	return c.Render(http.StatusOK, "sessions/new", AddCommonData(c, nil))
 }
 
 func createSessionHandler(c *echo.Context) error {
