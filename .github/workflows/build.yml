@@ -22,7 +22,7 @@ jobs:
       matrix:
         go: ['1.26.x']
         os: [ubuntu-latest]
-        subdir: ["flight-core", "flight-desktop", "flight-howto"]
+        subdir: ["flight-core", "flight-desktop", "flight-howto", "flight-web-suite"]
 
     steps:
       - name: Check out code
