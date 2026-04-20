@@ -31,3 +31,10 @@ func RenderPage(t *testing.T, e *echo.Echo, method, target string, body io.Reade
 	responseBody := rec.Body.String()
 	return rec.Result(), responseBody
 }
+
+func WithContentType(contentType string) RequestOption {
+	return func(t *testing.T, req *http.Request) {
+		t.Helper()
+		req.Header.Set("content-type", contentType)
+	}
+}

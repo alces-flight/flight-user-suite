@@ -5,8 +5,6 @@ import (
 	"errors"
 	"net/http"
 	"os/exec"
-	"path/filepath"
-	"time"
 
 	"github.com/labstack/echo/v5"
 )
@@ -29,7 +27,7 @@ func createSessionHandler(c *echo.Context) error {
 	if username == "" || password == "" {
 		sess.AddFlash("Username and/or password not provided", "alert")
 		SaveSession(c, sess)
-		return c.Redirect(http.StatusFound, "/")
+		return c.Render(http.StatusOK, "sessions/new", AddCommonData(c, nil))
 	}
 	ok, err := authenticate(c.Request().Context(), username, password)
 	if err != nil {
@@ -40,7 +38,7 @@ func createSessionHandler(c *echo.Context) error {
 		sess.Values["username"] = username
 		sess.AddFlash("Successfully signed in", "notice")
 		SaveSession(c, sess)
-		return c.Redirect(http.StatusFound, "/")
+		return c.Redirect(http.StatusSeeOther, "/")
 	} else {
 		sess.AddFlash("Invalid username or password", "alert")
 		SaveSession(c, sess)
@@ -54,14 +52,13 @@ func destroySessionHandler(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
-	return c.Redirect(http.StatusFound, "/")
+	return c.Redirect(http.StatusSeeOther, "/")
 }
 
 func authenticate(ctx context.Context, username, password string) (bool, error) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, authenticatorTimeout)
 	defer cancel()
-	authenticator := filepath.Join(flightRoot, "usr", "libexec", "web-suite", "authenticate.py")
-	cmd := exec.CommandContext(ctx, authenticator, username)
+	cmd := exec.CommandContext(ctx, authenticatorPath, username)
 	pipe, err := cmd.StdinPipe()
 	if err != nil {
 		return false, err
@@ -75,6 +72,9 @@ func authenticate(ctx context.Context, username, password string) (bool, error) 
 	}
 	pipe.Close() // nolint:errcheck
 	err = cmd.Wait()
+	if ctx.Err() != nil {
+		return false, ctx.Err()
+	}
 	if err != nil {
 		if _, ok := errors.AsType[*exec.ExitError](err); !ok {
 			return false, err

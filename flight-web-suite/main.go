@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
+	"time"
 
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
@@ -20,7 +22,9 @@ var (
 	commit  string = "unknown"
 	date    string = "unknown"
 
-	flightRoot string = "/opt/flight"
+	flightRoot           string = "/opt/flight"
+	authenticatorPath    string
+	authenticatorTimeout = 10 * time.Second
 
 	// Flags
 	port         = flag.Int("port", 8080, "port to listen on")
@@ -41,6 +45,7 @@ func init() {
 	if root, ok := os.LookupEnv("FLIGHT_ROOT"); ok {
 		flightRoot = root
 	}
+	authenticatorPath = filepath.Join(flightRoot, "usr", "libexec", "web-suite", "authenticate.py")
 
 	flag.Usage = func() {
 		cmd := path.Base(os.Args[0])

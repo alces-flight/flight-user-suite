@@ -56,6 +56,19 @@ func HasAttr(name, want string) Expectation {
 	}
 }
 
+func HasNoAttr(name string) Expectation {
+	return expectationFunc{
+		desc: fmt.Sprintf("not have attr %q", name),
+		fn: func(sel *goquery.Selection) error {
+			got, ok := sel.Attr(name)
+			if !ok {
+				return nil
+			}
+			return fmt.Errorf("expected not to have attr %q, but got %q=%q", name, name, got)
+		},
+	}
+}
+
 // Fail if the selector is not in body or in body more than once.
 // Run each expectation on the selected node, fail if any of them return an error.
 func AssertSelection(t *testing.T, body, selector string, exps ...Expectation) {
