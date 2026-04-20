@@ -74,6 +74,13 @@ func main() {
 	address := fmt.Sprintf("0.0.0.0:%d", *port)
 	log.Printf("Starting Web Suite on %s\n", address)
 
+	e := newApp()
+	if err := e.Start(address); err != nil {
+		e.Logger.Error("failed to start server", "error", err)
+	}
+}
+
+func newApp() *echo.Echo {
 	e := echo.New()
 	e.Pre(MethodOverrideMiddleware())
 	e.Use(middleware.RequestLogger())
@@ -95,10 +102,7 @@ func main() {
 	e.GET("/sessions", newSessionHandler)
 	e.POST("/sessions", createSessionHandler)
 	e.DELETE("/sessions", destroySessionHandler)
-
-	if err := e.Start(address); err != nil {
-		e.Logger.Error("failed to start server", "error", err)
-	}
+	return e
 }
 
 func indexData() map[string]any {
