@@ -78,6 +78,9 @@ func CurrentUser(c *echo.Context) string {
 }
 
 func AddCommonData(c *echo.Context, data map[string]any) map[string]any {
+	if data == nil {
+		data = make(map[string]any)
+	}
 	data["CurrentUser"] = CurrentUser(c)
 	data["flashes"] = map[string]string{
 		"notice": strings.Join(Flashes(c, "notice"), ", "),
