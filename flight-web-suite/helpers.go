@@ -55,7 +55,7 @@ func SaveSession(c *echo.Context, sess *sessions.Session) {
 	}
 }
 
-func LoggedIn(c *echo.Context) bool {
+func IsLoggedIn(c *echo.Context) bool {
 	sess, err := GetSession(c)
 	if err != nil {
 		return false
@@ -66,7 +66,7 @@ func LoggedIn(c *echo.Context) bool {
 	return false
 }
 
-func CurrentUser(c *echo.Context) string {
+func CurrentUserName(c *echo.Context) string {
 	sess, err := GetSession(c)
 	if err != nil {
 		return ""
@@ -81,7 +81,7 @@ func AddCommonData(c *echo.Context, data map[string]any) map[string]any {
 	if data == nil {
 		data = make(map[string]any)
 	}
-	data["CurrentUser"] = CurrentUser(c)
+	data["CurrentUserName"] = CurrentUserName(c)
 	data["flashes"] = map[string]string{
 		"notice": strings.Join(Flashes(c, "notice"), ", "),
 		"alert":  strings.Join(Flashes(c, "alert"), ", "),

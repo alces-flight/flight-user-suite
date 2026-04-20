@@ -10,7 +10,7 @@ import (
 )
 
 func newSessionHandler(c *echo.Context) error {
-	if LoggedIn(c) {
+	if IsLoggedIn(c) {
 		return c.Redirect(http.StatusSeeOther, "/")
 	}
 	return c.Render(http.StatusOK, "sessions/new", AddCommonData(c, nil))

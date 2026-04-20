@@ -91,10 +91,7 @@ func newApp() *echo.Echo {
 	e.Use(middleware.RequestLogger())
 	e.Use(NewSessionMiddleware())
 
-	// TODO: Standardise on extension for Go html/template files.
-	t := template.Must(template.ParseGlob(getDirectory("views") + "/*.html"))
-	// t = template.Must(t.ParseGlob(getDirectory("views") + "/*/*.html"))
-	// t = template.Must(t.ParseGlob(getDirectory("views") + "/*.gohtml"))
+	t := template.Must(template.ParseGlob(getDirectory("views") + "/*.gohtml"))
 	t = template.Must(t.ParseGlob(getDirectory("views") + "/*/*.gohtml"))
 	e.Renderer = &echo.TemplateRenderer{Template: t}
 
