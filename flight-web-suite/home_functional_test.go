@@ -1,11 +1,27 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
+	"os"
 	"testing"
+	"time"
 
 	"github.com/concertim/flight-user-suite/flight-web-suite/internal/testutil"
 )
+
+// Setup/teardown logic.
+func TestMain(m *testing.M) {
+	var err error
+	config, err = loadConfig()
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+	config.Authenticator.Timeout = 1 * time.Second
+	exitCode := m.Run()
+	os.Exit(exitCode)
+}
 
 func TestHomepageAnonymous(t *testing.T) {
 	_, body := testutil.RenderPage(t, newApp(), http.MethodGet, "/", nil, http.StatusOK)
@@ -17,7 +33,7 @@ func TestHomepageAnonymous(t *testing.T) {
 
 func TestHomepageAuthenticated(t *testing.T) {
 	setFlightRootForTest(t, "./testdata/flight_root") // Fake FLIGHT_ROOT with dummy tools enabled
-	_, body := testutil.RenderPage(t, newApp(), http.MethodGet, "/", nil, http.StatusOK, testutil.WithSessionCookie("ben"))
+	_, body := testutil.RenderPage(t, newApp(), http.MethodGet, "/", nil, http.StatusOK, testutil.WithSessionCookie("ben", config.Session.Secret))
 
 	assertAuthenticated(t, body, "ben")
 	assertToolCardPresentHTML(t, body, "Flight Desktop", "/assets/images/desktop.png", "Access interactive desktop sessions")

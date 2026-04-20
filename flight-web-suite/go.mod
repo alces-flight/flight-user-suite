@@ -8,6 +8,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.10.3
 	github.com/gorilla/sessions v1.4.0
 	github.com/labstack/echo/v5 v5.1.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

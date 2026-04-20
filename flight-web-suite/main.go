@@ -10,7 +10,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"time"
 
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
@@ -22,12 +21,11 @@ var (
 	commit  string = "unknown"
 	date    string = "unknown"
 
-	flightRoot           string = "/opt/flight"
-	authenticatorPath    string
-	authenticatorTimeout = 10 * time.Second
+	flightRoot        string = "/opt/flight"
+	authenticatorPath string
+	config            webSuiteConfig
 
 	// Flags
-	port         = flag.Int("port", 8080, "port to listen on")
 	pidfile      = flag.String("pidfile", "", "pidfile")
 	printVersion = flag.Bool("version", false, "print the version")
 )
@@ -60,8 +58,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	var err error
+	config, err = loadConfig()
+	if err != nil {
+		w := flag.CommandLine.Output()
+		fmt.Fprintf(w, "Unable to load config: %s\n", err) // nolint:errcheck
+		os.Exit(1)
+	}
+
 	if *pidfile != "" {
-		err := writePidfile(*pidfile, os.Getpid())
+		err = writePidfile(*pidfile, os.Getpid())
 		if err != nil {
 			w := flag.CommandLine.Output()
 			fmt.Fprintf(w, "Unable to write pidfile: %s", err.Error()) // nolint:errcheck
@@ -69,7 +75,7 @@ func main() {
 		}
 	}
 
-	address := fmt.Sprintf("0.0.0.0:%d", *port)
+	address := fmt.Sprintf("0.0.0.0:%d", config.Port)
 	log.Printf("Starting Web Suite on %s\n", address)
 
 	e := newApp()

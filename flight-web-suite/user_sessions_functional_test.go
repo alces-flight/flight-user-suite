@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/concertim/flight-user-suite/flight-web-suite/internal/testutil"
 )
@@ -23,7 +22,7 @@ func TestNewSessionPageDisplaysFormForAnonymous(t *testing.T) {
 }
 
 func TestNewSessionPageRedirectsForAuthenticated(t *testing.T) {
-	resp, _ := testutil.RenderPage(t, newApp(), http.MethodGet, "/sessions", nil, http.StatusSeeOther, testutil.WithSessionCookie("ben"))
+	resp, _ := testutil.RenderPage(t, newApp(), http.MethodGet, "/sessions", nil, http.StatusSeeOther, testutil.WithSessionCookie("ben", config.Session.Secret))
 
 	if resp.Header.Get("location") != "/" {
 		t.Errorf("Expected new sessions page to redirect to '/' for authenticated users")
@@ -106,11 +105,8 @@ func setAuthenticatorPathForTest(t *testing.T, path string) {
 	t.Helper()
 
 	origPath := authenticatorPath
-	origTimeout := authenticatorTimeout
 	authenticatorPath = path
-	authenticatorTimeout = 1 * time.Second
 	t.Cleanup(func() {
 		authenticatorPath = origPath
-		authenticatorTimeout = origTimeout
 	})
 }

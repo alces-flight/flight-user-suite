@@ -14,10 +14,11 @@ Requires:
 
 ## Configuration
 
-* Edit config file directly.
-  * Where is it?
+* Edit config file at `/opt/flight/etc/web-suite.yml` directly.
   * What do the different values mean?
   * What are the permitted values for each setting?
+* If `session.secret` has not been changed from its default value when `flight
+  web` is started a random value will be configured for you.
 
 ## Usage
 

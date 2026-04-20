@@ -16,8 +16,7 @@ func MethodOverrideMiddleware() echo.MiddlewareFunc {
 }
 
 func NewSessionMiddleware() echo.MiddlewareFunc {
-	// TODO: Use a secret secret.
-	sessionStore := sessions.NewCookieStore([]byte("totally-not-a-secret"))
+	sessionStore := sessions.NewCookieStore([]byte(config.Session.Secret))
 	sessionStore.Options = &sessions.Options{
 		Path:     "/",
 		MaxAge:   86400 * 7,
