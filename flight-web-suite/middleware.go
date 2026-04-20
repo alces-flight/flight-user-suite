@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v5"
@@ -32,4 +33,18 @@ func NewSessionMiddleware() echo.MiddlewareFunc {
 			return next(c)
 		}
 	}
+}
+
+func NewWSProxyMiddleware() echo.MiddlewareFunc {
+	upstream, _ := url.Parse("http://localhost:6080")
+	return middleware.ProxyWithConfig(middleware.ProxyConfig{
+		Balancer: middleware.NewRandomBalancer(
+			[]*middleware.ProxyTarget{
+				{
+					URL: upstream,
+				},
+			},
+		),
+		Skipper: middleware.DefaultSkipper,
+	})
 }
