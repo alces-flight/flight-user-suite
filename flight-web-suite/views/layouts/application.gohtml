@@ -1,0 +1,41 @@
+{{define "layouts.application.start"}}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Flight Web Suite</title>
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png">
+    <link rel="stylesheet" href="/static/styles.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+</head>
+
+<body class="flex flex-col h-screen m-0 p-0 font-sans">
+    <div
+        class="flex items-center w-full h-[3.6rem] bg-black py-2 px-3 box-border border-b-4 border-alces-blue justify-between">
+        <img src="/assets/images/logo.png" alt="Flight Web Suite Logo" class="h-full">
+        {{ if eq .CurrentUserName "" }}
+        <a href="/sessions" class="text-white" data-testid="sign-in-link">Login</a>
+        {{ else }}
+        <div class="text-white flex justify-end gap-x-3">
+            <span data-testid="signed-in-message">You are signed in as {{ .CurrentUserName }}</span>
+            <form action="sessions" method="post" data-testid="logout-form">
+                <input type="hidden" name="_method" value="DELETE" />
+                <button class="text-white cursor-pointer" type="submit">Logout</button>
+            </form>
+        </div>
+        {{ end }}
+    </div>
+    {{ template "flashes" .flashes }}
+    <div class="grow overflow-y-auto px-[15%] bg-linear-to-b from-alces-blue-light to-white">
+        <div class="bg-white p-4 text-center h-min min-h-full">
+
+            {{end}}
+            {{define "layouts.application.end"}}
+
+        </div>
+    </div>
+</body>
+
+</html>
+{{end}}

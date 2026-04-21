@@ -5,9 +5,19 @@ admin: true
 
 * Provides browser access to the Flight User Suite, including desktop and howto guides.
 
-## Configuring Flight Web
+## Setup
 
-TBC.
+Requires:
+
+* Python3
+* The [python-pam](https://pypi.org/project/python-pam/) library. Known as `python3-pampy` on Ubuntu. Known as `python3-pam` on Rocky 9 available from EPEL.
+
+## Configuration
+
+* Edit config file directly.
+  * Where is it?
+  * What do the different values mean?
+  * What are the permitted values for each setting?
 
 ## Usage
 

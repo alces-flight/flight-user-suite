@@ -22,7 +22,7 @@ jobs:
       matrix:
         go: ['1.26.x']
         os: [ubuntu-latest]
-        subdir: ["flight-core", "flight-desktop", "flight-howto"]
+        subdir: ["flight-core", "flight-desktop", "flight-howto", "flight-web-suite"]
 
     steps:
       - name: Check out code
@@ -72,9 +72,6 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
           check-latest: true
-
-      - name: Install Tailwind
-        run: ./flight-web-suite/bin/tailwind/download-tailwindcss.sh
 
       - name: Build
         run: make

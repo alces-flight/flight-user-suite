@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
+	"time"
 
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
@@ -20,7 +22,9 @@ var (
 	commit  string = "unknown"
 	date    string = "unknown"
 
-	flightRoot string = "/opt/flight"
+	flightRoot           string = "/opt/flight"
+	authenticatorPath    string
+	authenticatorTimeout = 10 * time.Second
 
 	// Flags
 	port         = flag.Int("port", 8080, "port to listen on")
@@ -41,6 +45,7 @@ func init() {
 	if root, ok := os.LookupEnv("FLIGHT_ROOT"); ok {
 		flightRoot = root
 	}
+	authenticatorPath = filepath.Join(flightRoot, "usr", "libexec", "web-suite", "authenticate.py")
 
 	flag.Usage = func() {
 		cmd := path.Base(os.Args[0])
@@ -74,21 +79,32 @@ func main() {
 	address := fmt.Sprintf("0.0.0.0:%d", *port)
 	log.Printf("Starting Web Suite on %s\n", address)
 
-	e := echo.New()
-	e.Use(middleware.RequestLogger())
-	e.Renderer = &echo.TemplateRenderer{
-		Template: template.Must(template.ParseGlob(getDirectory("views") + "/*.html")),
-	}
-	e.Static("/assets", getDirectory("assets"))
-	e.Static("/static", getDirectory("static"))
-
-	e.GET("/", func(c *echo.Context) error {
-		return c.Render(http.StatusOK, "home", indexData())
-	})
-
+	e := newApp()
 	if err := e.Start(address); err != nil {
 		e.Logger.Error("failed to start server", "error", err)
 	}
+}
+
+func newApp() *echo.Echo {
+	e := echo.New()
+	e.Pre(MethodOverrideMiddleware())
+	e.Use(middleware.RequestLogger())
+	e.Use(NewSessionMiddleware())
+
+	t := template.Must(template.ParseGlob(getDirectory("views") + "/*.gohtml"))
+	t = template.Must(t.ParseGlob(getDirectory("views") + "/*/*.gohtml"))
+	e.Renderer = &echo.TemplateRenderer{Template: t}
+
+	e.Static("/assets", getDirectory("assets"))
+	e.Static("/static", getDirectory("static"))
+	e.GET("/", func(c *echo.Context) error {
+		data := indexData()
+		return c.Render(http.StatusOK, "home", AddCommonData(c, data))
+	})
+	e.GET("/sessions", newSessionHandler)
+	e.POST("/sessions", createSessionHandler)
+	e.DELETE("/sessions", destroySessionHandler)
+	return e
 }
 
 func indexData() map[string]any {

@@ -1,6 +1,6 @@
 export default {
   content: [
-    "./views/**/*.html"
+    "./views/*.gohtml", "./views/**/*.gohtml"
   ]
 }
 

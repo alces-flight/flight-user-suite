@@ -1,0 +1,8 @@
+{{define "flashes"}}
+{{ if .notice }}
+<div class="flash notice">{{ .notice }}</div>
+{{ end }}
+{{ if .alert }}
+<div class="flash alert">{{ .alert }}</div>
+{{ end }}
+{{end}}
