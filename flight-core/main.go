@@ -13,7 +13,6 @@ import (
 
 	"charm.land/log/v2"
 	"github.com/concertim/flight-user-suite/flight/pkg"
-	"github.com/concertim/flight-user-suite/flight/tools"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/urfave/cli/v3"
 	"golang.org/x/term"
@@ -75,7 +74,7 @@ func main() {
 			cli.DefaultCompleteWithFlags(ctx, cmd)
 			switch cmd.NArg() {
 			case 0:
-				tools, err := tools.GetTools(true)
+				tools, err := getTools(true)
 				if err != nil {
 					return
 				}
@@ -151,7 +150,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		if exitError, ok := errors.AsType[tools.SilentExitError](err); ok {
+		if exitError, ok := errors.AsType[SilentExitError](err); ok {
 			os.Exit(exitError.ExitCode)
 		} else {
 			log.Printf("%s\n", err)
@@ -199,7 +198,7 @@ func addAdminCommands(cmd *cli.Command, maxTextWidth int) {
 							Usage: "list only enabled tools",
 						},
 					},
-					Action: tools.ListTools,
+					Action: listTools,
 				},
 				{
 					Name:  "enable",
@@ -218,7 +217,7 @@ func addAdminCommands(cmd *cli.Command, maxTextWidth int) {
 					ShellComplete: func(ctx context.Context, cmd *cli.Command) {
 						switch cmd.NArg() {
 						case 0:
-							tools, err := tools.GetTools(false)
+							tools, err := getTools(false)
 							if err != nil {
 								return
 							}
@@ -229,7 +228,7 @@ func addAdminCommands(cmd *cli.Command, maxTextWidth int) {
 							}
 						}
 					},
-					Action: tools.EnableTool,
+					Action: enableTool,
 				},
 				{
 					Name:  "disable",
@@ -248,7 +247,7 @@ func addAdminCommands(cmd *cli.Command, maxTextWidth int) {
 					ShellComplete: func(ctx context.Context, cmd *cli.Command) {
 						switch cmd.NArg() {
 						case 0:
-							tools, err := tools.GetTools(true)
+							tools, err := getTools(true)
 							if err != nil {
 								return
 							}
@@ -257,7 +256,7 @@ func addAdminCommands(cmd *cli.Command, maxTextWidth int) {
 							}
 						}
 					},
-					Action: tools.DisableTool,
+					Action: disableTool,
 				},
 			},
 		},
@@ -395,21 +394,21 @@ The Flight Web Suite provides in-browser access to the Flight User Suite tools.`
 }
 
 func addToolProxyCommands(cmd *cli.Command) {
-	toolsList, err := tools.GetTools(true)
+	tools, err := getTools(true)
 	if err != nil {
 		log.Warn("Unable to add tool proxy commands", "err", err)
 		return
 	}
-	for _, tool := range toolsList {
+	for _, tool := range tools {
 		proxy := cli.Command{
 			Name:            tool.Name,
-			Action:          tools.RunToolAction(tool),
+			Action:          runToolAction(tool),
 			SkipFlagParsing: true,
 			Category:        "Available tools",
 			ShellComplete: func(ctx context.Context, cmd *cli.Command) {
 				args := cmd.Args().Slice()
 				args = append(args, "--generate-shell-completion")
-				_ = tools.RunTool(ctx, tool, args)
+				_ = runTool(ctx, tool, args)
 			},
 		}
 		if tool.Synopsis != "" {

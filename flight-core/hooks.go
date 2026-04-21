@@ -12,7 +12,6 @@ import (
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/table"
 	"charm.land/log/v2"
-	"github.com/concertim/flight-user-suite/flight/howto_guides"
 	"github.com/concertim/flight-user-suite/flight/pkg"
 	"github.com/urfave/cli/v3"
 )
@@ -143,7 +142,7 @@ func enableHook(ctx context.Context, cmd *cli.Command) error {
 	if err := os.Chmod(hp, 0755); err != nil {
 		return transformHookError(event, hook, err)
 	}
-	if err := howto_guides.CreateHowtoSymlinks(hook, false); err != nil {
+	if err := createHowtoSymlinks(hook, false); err != nil {
 		log.Debug("Error installing howtos", "hook", hook, "err", err)
 	}
 	log.Printf("Enabled %s hook", hook)
@@ -161,7 +160,7 @@ func disableHook(ctx context.Context, cmd *cli.Command) error {
 	if err := os.Chmod(hp, 0444); err != nil {
 		return transformHookError(event, hook, err)
 	}
-	if err := howto_guides.RemoveHowtoSymlinks(hook, false); err != nil {
+	if err := removeHowtoSymlinks(hook, false); err != nil {
 		return fmt.Errorf("removing howto symlinks: %w", err)
 	}
 	log.Printf("Disabled flight %s hook", hook)
