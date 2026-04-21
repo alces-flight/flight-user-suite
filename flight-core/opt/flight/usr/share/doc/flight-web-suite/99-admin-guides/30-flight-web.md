@@ -17,8 +17,11 @@ Requires:
 * Edit config file at `/opt/flight/etc/web-suite.yml` directly.
   * What do the different values mean?
   * What are the permitted values for each setting?
-* If `session.secret` has not been changed from its default value when `flight
-  web` is started a random value will be configured for you.
+
+The session secret is stored in at
+`/opt/flight/var/lib/web-suite/session-secret`. It will be created
+automatically when web suite starts for the first time.  Changing it will
+invalidate all sessions.
 
 ## Usage
 
