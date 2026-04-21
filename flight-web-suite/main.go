@@ -22,6 +22,7 @@ var (
 	date    string = "unknown"
 
 	flightRoot        string = "/opt/flight"
+	flightStateRoot   string
 	authenticatorPath string
 	config            webSuiteConfig
 
@@ -35,6 +36,11 @@ func init() {
 
 	if root, ok := os.LookupEnv("FLIGHT_ROOT"); ok {
 		flightRoot = root
+	}
+	if fsr, ok := os.LookupEnv("FLIGHT_STATE_ROOT"); ok {
+		flightStateRoot = fsr
+	} else {
+		flightStateRoot = filepath.Join(flightRoot, "var", "lib")
 	}
 	authenticatorPath = filepath.Join(flightRoot, "usr", "libexec", "web-suite", "authenticate.py")
 

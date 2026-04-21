@@ -3,10 +3,6 @@
 # The TCP port the web server listens on. Default 8080.
 port: 8080
 
-session:
-  # Secret used to sign the session cookie.
-  secret: "change-me"
-
 authenticator:
   # Maximum time allowed for the authenticator helper to complete.
   timeout: "10s"

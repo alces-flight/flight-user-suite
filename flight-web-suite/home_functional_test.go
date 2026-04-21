@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -12,15 +13,36 @@ import (
 
 // Setup/teardown logic.
 func TestMain(m *testing.M) {
-	var err error
-	config, err = loadConfig()
+	stateRoot, err := os.MkdirTemp("", "flight-web-suite-state-")
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
+	flightStateRoot = stateRoot
+	if err := os.Setenv("FLIGHT_STATE_ROOT", stateRoot); err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+	config, err = loadConfig()
+	if err != nil {
+		fmt.Println(err.Error())
+		_ = os.RemoveAll(stateRoot)
+		os.Exit(1)
+	}
 	config.Authenticator.Timeout = 1 * time.Second
 	exitCode := m.Run()
+	if !isRepoLocalStateRoot(stateRoot) {
+		_ = os.RemoveAll(stateRoot)
+	}
 	os.Exit(exitCode)
+}
+
+func isRepoLocalStateRoot(path string) bool {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return false
+	}
+	return path == filepath.Join(cwd, "tmp")
 }
 
 func TestHomepageAnonymous(t *testing.T) {

@@ -17,12 +17,12 @@ import (
 
 type webSuiteConfig struct {
 	Port          int                 `yaml:"port"`
-	Session       sessionConfig       `yaml:"session"`
+	Session       sessionConfig       `yaml:"-"`
 	Authenticator authenticatorConfig `yaml:"authenticator"`
 }
 
 type sessionConfig struct {
-	Secret string `yaml:"secret"`
+	Secret string `yaml:"-"`
 }
 
 type authenticatorConfig struct {
@@ -42,8 +42,8 @@ func defaultConfig() webSuiteConfig {
 }
 
 func loadConfig() (webSuiteConfig, error) {
-	path := filepath.Join(flightRoot, "etc", "web-suite.yml")
-	data, err := os.ReadFile(path)
+	configPath := filepath.Join(flightRoot, "etc", "web-suite.yml")
+	data, err := os.ReadFile(configPath)
 	if err != nil {
 		if pathError, ok := errors.AsType[*fs.PathError](err); ok && pathError.Err.Error() == "no such file or directory" {
 			data = _defaultConfig
@@ -54,10 +54,9 @@ func loadConfig() (webSuiteConfig, error) {
 
 	var config webSuiteConfig
 	if err := yaml.Unmarshal(data, &config); err != nil {
-		return webSuiteConfig{}, fmt.Errorf("loading config from %s: %w", path, err)
+		return webSuiteConfig{}, fmt.Errorf("loading config from %s: %w", configPath, err)
 	}
 
-	config.Session.Secret = strings.TrimSpace(config.Session.Secret)
 	config.Authenticator.PAMService = strings.TrimSpace(config.Authenticator.PAMService)
 
 	// Merge defaults
@@ -72,31 +71,39 @@ func loadConfig() (webSuiteConfig, error) {
 	if config.Authenticator.Timeout == 0 {
 		config.Authenticator.Timeout = defaultConfig.Authenticator.Timeout
 	}
-	// NOTE: Check session secret last as we may write the config file. If we
-	// write too soon, we risk saving zero values into the config file, better
-	// instead to save the default values.
-	if config.Session.Secret == "" || config.Session.Secret == defaultConfig.Session.Secret {
-		secret := rand.Text()
-		config.Session.Secret = secret
-		err := writeConfig(config, path)
-		if err != nil {
-			return webSuiteConfig{}, fmt.Errorf("saving session secret: %w", err)
-		}
+	config.Session.Secret, err = loadSessionSecret()
+	if err != nil {
+		return webSuiteConfig{}, err
 	}
 
 	return config, nil
 }
 
-func writeConfig(config webSuiteConfig, path string) error {
-	data, err := yaml.Marshal(config)
+func loadSessionSecret() (string, error) {
+	path := filepath.Join(flightStateRoot, "web-suite", "session-secret")
+	data, err := os.ReadFile(path)
+
+	// The file can't be read, for some reason other than it not existing. This
+	// is a genuine error that should be returned.
 	if err != nil {
-		return err
+		if pathError, ok := errors.AsType[*fs.PathError](err); !ok || pathError.Err.Error() != "no such file or directory" {
+			return "", fmt.Errorf("loading session secret: %w", err)
+		}
+	}
+
+	secret := strings.TrimSpace(string(data))
+	if secret != "" {
+		return secret, nil
+	}
+
+	secret = rand.Text()
+	parent := filepath.Dir(path)
+	if err := os.MkdirAll(parent, 0o700); err != nil {
+		return "", fmt.Errorf("creating session directory: %w", err)
 	}
 	log.Printf("saving session secret path=%s\n", path)
-	parent := filepath.Dir(path)
-	err = os.MkdirAll(parent, 0o700)
-	if err != nil {
-		return fmt.Errorf("creating session directory: %w", err)
+	if err := os.WriteFile(path, []byte(secret), 0o600); err != nil {
+		return "", fmt.Errorf("saving session secret: %w", err)
 	}
-	return os.WriteFile(path, data, 0o600)
+	return secret, nil
 }

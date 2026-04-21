@@ -41,6 +41,11 @@ func init() {
 	if root, ok := os.LookupEnv("FLIGHT_ROOT"); ok {
 		flightRoot = root
 	}
+	if _, ok := os.LookupEnv("FLIGHT_STATE_ROOT"); !ok {
+		if err := os.Setenv("FLIGHT_STATE_ROOT", filepath.Join(flightRoot, "var", "lib")); err != nil {
+			panic(fmt.Errorf("setting FLIGHT_STATE_ROOT: %w", err))
+		}
+	}
 	var err error
 	termWidth, _, err = term.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
