@@ -1,4 +1,4 @@
-package main
+package tools
 
 import (
 	"context"
@@ -14,15 +14,28 @@ import (
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/table"
 	"charm.land/log/v2"
+	"github.com/concertim/flight-user-suite/flight/howto_guides"
 	"github.com/concertim/flight-user-suite/flight/pkg"
 	"github.com/urfave/cli/v3"
 )
 
-func toolPath(tool string) string {
+var (
+	flightRoot string = "/opt/flight"
+	toolDir    string
+)
+
+func init() {
+	if root, ok := os.LookupEnv("FLIGHT_ROOT"); ok {
+		flightRoot = root
+	}
+	toolDir = filepath.Join(flightRoot, "usr", "lib", "flight-core")
+}
+
+func ToolPath(tool string) string {
 	return filepath.Join(toolDir, fmt.Sprintf("flight-%s", tool))
 }
 
-func transformToolError(tool string, err error) error {
+func TransformToolError(tool string, err error) error {
 	if pathError, ok := errors.AsType[*fs.PathError](err); ok {
 		if pathError.Err.Error() == "no such file or directory" {
 			return UnknownTool{Tool: tool}
@@ -36,9 +49,9 @@ func transformToolError(tool string, err error) error {
 	return err
 }
 
-func listTools(ctx context.Context, cmd *cli.Command) error {
+func ListTools(ctx context.Context, cmd *cli.Command) error {
 	onlyEnabled := cmd.Bool("enabled")
-	tools, err := getTools(onlyEnabled)
+	tools, err := GetTools(onlyEnabled)
 	if err != nil {
 		return err
 	}
@@ -90,7 +103,7 @@ func toolsTable(tools []*Tool) error {
 	return err
 }
 
-func getTools(onlyEnabled bool) ([]*Tool, error) {
+func GetTools(onlyEnabled bool) ([]*Tool, error) {
 	log.Debug("getting tools", "dir", toolDir, "onlyEnabled", onlyEnabled)
 
 	toolSynopsisDir := filepath.Join(flightRoot, "usr", "share", "doc", "tools")
@@ -121,42 +134,42 @@ func getTools(onlyEnabled bool) ([]*Tool, error) {
 	return tools, nil
 }
 
-func enableTool(ctx context.Context, cmd *cli.Command) error {
+func EnableTool(ctx context.Context, cmd *cli.Command) error {
 	tool := cmd.StringArg("tool")
-	tp := toolPath(tool)
+	tp := ToolPath(tool)
 	log.Debug("Enabling", "tool", tool, "path", tp)
 	if err := os.Chmod(tp, 0555); err != nil {
-		return transformToolError(tool, err)
+		return TransformToolError(tool, err)
 	}
-	if err := createHowtoSymlinks(tool, true); err != nil {
+	if err := howto_guides.CreateHowtoSymlinks(tool, true); err != nil {
 		log.Debug("Error installing howtos", "tool", tool, "err", err)
 	}
 	log.Printf("Enabled flight %s tool", tool)
 	return nil
 }
 
-func disableTool(ctx context.Context, cmd *cli.Command) error {
+func DisableTool(ctx context.Context, cmd *cli.Command) error {
 	tool := cmd.StringArg("tool")
-	tp := toolPath(tool)
+	tp := ToolPath(tool)
 	log.Debug("Disabling", "tool", tool, "path", tp)
 	if err := os.Chmod(tp, 0444); err != nil {
-		return transformToolError(tool, err)
+		return TransformToolError(tool, err)
 	}
-	if err := removeHowtoSymlinks(tool, true); err != nil {
+	if err := howto_guides.RemoveHowtoSymlinks(tool, true); err != nil {
 		return fmt.Errorf("removing howto symlinks: %w", err)
 	}
 	log.Printf("Disabled flight %s tool", tool)
 	return nil
 }
 
-func runToolAction(tool *Tool) func(ctx context.Context, cmd *cli.Command) error {
+func RunToolAction(tool *Tool) func(ctx context.Context, cmd *cli.Command) error {
 	return func(ctx context.Context, cmd *cli.Command) error {
-		return runTool(ctx, tool, cmd.Args().Slice())
+		return RunTool(ctx, tool, cmd.Args().Slice())
 	}
 }
 
 func buildToolExecCmd(ctx context.Context, tool *Tool, args []string) *exec.Cmd {
-	tp := toolPath(tool.Name)
+	tp := ToolPath(tool.Name)
 	log.Debug("Execing", "tool", tool.Name, "path", tp, "args", args)
 	exe := exec.CommandContext(ctx, tp, args...)
 	exe.Env = slices.Clone(os.Environ())
@@ -164,19 +177,19 @@ func buildToolExecCmd(ctx context.Context, tool *Tool, args []string) *exec.Cmd 
 	return exe
 }
 
-func runTool(ctx context.Context, tool *Tool, args []string) error {
+func RunTool(ctx context.Context, tool *Tool, args []string) error {
 	exe := buildToolExecCmd(ctx, tool, args)
 	exe.Stdout = os.Stdout
 	exe.Stderr = os.Stderr
 	err := exe.Run()
-	return transformToolError(tool.Name, err)
+	return TransformToolError(tool.Name, err)
 }
 
 // Run the specified tool and return its Stdout.
-func runToolWithOutput(ctx context.Context, tool *Tool, args []string) ([]byte, error) {
+func RunToolWithOutput(ctx context.Context, tool *Tool, args []string) ([]byte, error) {
 	exe := buildToolExecCmd(ctx, tool, args)
 	output, err := exe.Output()
-	return output, transformToolError(tool.Name, err)
+	return output, TransformToolError(tool.Name, err)
 }
 
 type Tool struct {

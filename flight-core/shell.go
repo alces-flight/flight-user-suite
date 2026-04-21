@@ -14,6 +14,7 @@ import (
 	"charm.land/log/v2"
 	"github.com/adrg/xdg"
 	"github.com/concertim/flight-user-suite/flight/pkg"
+	"github.com/concertim/flight-user-suite/flight/tools"
 	"github.com/ergochat/readline"
 	"github.com/urfave/cli/v3"
 )
@@ -33,13 +34,13 @@ func toolCompletions(line string) []string {
 		cmdComplete = true
 	}
 
-	tools, err := getTools(true)
+	toolsList, err := tools.GetTools(true)
 	if err != nil {
 		log.Warn("Error", "err", err)
 		return nil
 	}
-	toolNames := make([]string, 0, len(tools))
-	for _, tool := range tools {
+	toolNames := make([]string, 0, len(toolsList))
+	for _, tool := range toolsList {
 		toolNames = append(toolNames, tool.Name)
 	}
 
@@ -58,7 +59,7 @@ func toolCompletions(line string) []string {
 		// "help"), we offer no completions.
 		return nil
 	}
-	tool := &Tool{Name: cmd}
+	tool := &tools.Tool{Name: cmd}
 
 	// Request completion from tool. Omit the final word if incomplete.
 	var toolArgs []string
@@ -71,7 +72,7 @@ func toolCompletions(line string) []string {
 	toolArgs = append(toolArgs, "--generate-shell-completion")
 	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 	defer cancel()
-	bytes, err := runToolWithOutput(ctx, tool, toolArgs)
+	bytes, err := tools.RunToolWithOutput(ctx, tool, toolArgs)
 	out := string(bytes)
 	if err != nil {
 		log.Warn("Error", "err", err)
@@ -151,12 +152,12 @@ func execInput(baseTool, input string, rl *readline.Instance) error {
 }
 
 func shellRunTool(tool string, args []string) error {
-	tp := toolPath(tool)
+	tp := tools.ToolPath(tool)
 	cmd := exec.Command(tp, args...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	err := cmd.Run()
-	return transformToolError(tool, err)
+	return tools.TransformToolError(tool, err)
 }
 
 func runShell(ctx context.Context, cmd *cli.Command) error {
@@ -165,7 +166,7 @@ func runShell(ctx context.Context, cmd *cli.Command) error {
 	prompt := pkg.PromptStyle.Render("flight» ")
 	if baseTool != "" {
 		if !slices.Contains(toolCompletions(""), baseTool) {
-			return UnknownTool{Tool: baseTool}
+			return tools.UnknownTool{Tool: baseTool}
 		}
 		prompt = pkg.PromptStyle.Render(fmt.Sprintf("flight %s» ", baseTool))
 	}

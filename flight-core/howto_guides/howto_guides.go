@@ -1,4 +1,4 @@
-package main
+package howto_guides
 
 import (
 	"fmt"
@@ -10,6 +10,16 @@ import (
 	"charm.land/log/v2"
 )
 
+var (
+	flightRoot string = "/opt/flight"
+)
+
+func init() {
+	if root, ok := os.LookupEnv("FLIGHT_ROOT"); ok {
+		flightRoot = root
+	}
+}
+
 func howTosDir(name string, isTool bool) string {
 	if isTool {
 		return filepath.Join(flightRoot, "usr", "share", "doc", fmt.Sprintf("flight-%s", name))
@@ -18,7 +28,7 @@ func howTosDir(name string, isTool bool) string {
 	}
 }
 
-func createHowtoSymlinks(name string, isTool bool) error {
+func CreateHowtoSymlinks(name string, isTool bool) error {
 	tgtDir := filepath.Join(flightRoot, "usr", "share", "doc", "howtos-enabled")
 	srcDir := howTosDir(name, isTool)
 	err := filepath.WalkDir(srcDir, func(path string, d fs.DirEntry, err error) error {
@@ -52,7 +62,7 @@ func createHowtoSymlinks(name string, isTool bool) error {
 	return err
 }
 
-func removeHowtoSymlinks(name string, isTool bool) error {
+func RemoveHowtoSymlinks(name string, isTool bool) error {
 	symDir := filepath.Join(flightRoot, "usr", "share", "doc", "howtos-enabled")
 	srcDir := filepath.Clean(howTosDir(name, isTool))
 
