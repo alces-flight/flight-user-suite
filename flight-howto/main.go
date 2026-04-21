@@ -16,7 +16,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/table"
 	"charm.land/log/v2"
-	"github.com/concertim/flight-user-suite/flight/pkg"
+	"github.com/concertim/flight-user-suite/flight/cliui"
 	"github.com/urfave/cli/v3"
 	"golang.org/x/term"
 )
@@ -73,7 +73,7 @@ func main() {
 
 	// Override help printer to inject some colour.
 	origHelpPrinter := cli.HelpPrinter
-	cli.HelpPrinter = pkg.ColourisedHelpPrinter(origHelpPrinter)
+	cli.HelpPrinter = cliui.ColourisedHelpPrinter(origHelpPrinter)
 
 	// TODO deduplicate this from equivalent section in flight-core/main.go?
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
@@ -190,16 +190,16 @@ func entriesTable(howtos []*Howto) error {
 	namecolWidth := 7
 	t := table.New().
 		Border(lipgloss.NormalBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(pkg.AlcesBlue)).
+		BorderStyle(lipgloss.NewStyle().Foreground(cliui.AlcesBlue)).
 		StyleFunc(func(row, col int) lipgloss.Style {
 			var style lipgloss.Style
 			switch {
 			case row == table.HeaderRow:
-				return pkg.TableHeaderStyle
+				return cliui.TableHeaderStyle
 			case row%2 == 0:
-				style = pkg.TableEvenRowStyle
+				style = cliui.TableEvenRowStyle
 			default:
-				style = pkg.TableOddRowStyle
+				style = cliui.TableOddRowStyle
 			}
 			switch col {
 			case 0:

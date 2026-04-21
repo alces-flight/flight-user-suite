@@ -1,4 +1,4 @@
-package pkg
+package pidfile
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 
 // Read the PID file at path. Return the PID contained in the file if it
 // contains a valid PID for a running process.  Otherwise return 0.
-func ReadPidfile(path string) (int, error) {
+func Read(path string) (int, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return 0, fmt.Errorf("reading pidfile: %w", err)
@@ -34,8 +34,8 @@ func ReadPidfile(path string) (int, error) {
 	return pid, nil
 }
 
-func WritePidfile(path string, pid int) error {
-	existingPID, err := ReadPidfile(path)
+func Write(path string, pid int) error {
+	existingPID, err := Read(path)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}

@@ -14,7 +14,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"charm.land/log/v2"
 	"github.com/adrg/xdg"
-	"github.com/concertim/flight-user-suite/flight/pkg"
+	"github.com/concertim/flight-user-suite/flight/cliui"
 	"github.com/hashicorp/go-envparse"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/urfave/cli/v3"
@@ -46,7 +46,7 @@ func configCommand() *cli.Command {
 
 		setting := lipgloss.JoinHorizontal(
 			lipgloss.Top,
-			pkg.Bullet.Render(fmt.Sprintf("* %s:", key)),
+			cliui.Bullet.Render(fmt.Sprintf("* %s:", key)),
 			values,
 			permittedKeyDescriptions[i],
 		)

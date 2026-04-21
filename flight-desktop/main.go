@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"charm.land/log/v2"
-	"github.com/concertim/flight-user-suite/flight/pkg"
+	"github.com/concertim/flight-user-suite/flight/cliui"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/urfave/cli/v3"
 	"golang.org/x/term"
@@ -107,7 +107,7 @@ func main() {
 
 	// Override help printer to inject some colour.
 	origHelpPrinter := cli.HelpPrinter
-	cli.HelpPrinter = pkg.ColourisedHelpPrinter(origHelpPrinter)
+	cli.HelpPrinter = cliui.ColourisedHelpPrinter(origHelpPrinter)
 
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
 		// A bunch of checks to avoid reporting the usage errors twice.

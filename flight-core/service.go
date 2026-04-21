@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 
 	"charm.land/log/v2"
-	"github.com/concertim/flight-user-suite/flight/pkg"
+	"github.com/concertim/flight-user-suite/flight/pidfile"
 )
 
 type Service struct {
@@ -42,7 +42,7 @@ func (s *Service) Start(ctx context.Context) error {
 
 func (s *Service) Kill() error {
 	log.Debug("Killing service process", "pidfile", s.PidfilePath(), "name", s.ID)
-	pid, err := pkg.ReadPidfile(s.PidfilePath())
+	pid, err := pidfile.Read(s.PidfilePath())
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
@@ -66,7 +66,7 @@ func (s *Service) Kill() error {
 }
 
 func (s *Service) State() string {
-	pid, _ := pkg.ReadPidfile(s.PidfilePath())
+	pid, _ := pidfile.Read(s.PidfilePath())
 	if pid == 0 {
 		return "Stopped"
 	}

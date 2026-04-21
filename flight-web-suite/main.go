@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/concertim/flight-user-suite/flight/pidfile"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
 )
@@ -27,7 +28,7 @@ var (
 	config            webSuiteConfig
 
 	// Flags
-	pidfile      = flag.String("pidfile", "", "pidfile")
+	pidfilePath  = flag.String("pidfile", "", "pidfile")
 	printVersion = flag.Bool("version", false, "print the version")
 )
 
@@ -72,8 +73,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	if *pidfile != "" {
-		err = writePidfile(*pidfile, os.Getpid())
+	if *pidfilePath != "" {
+		err = pidfile.Write(*pidfilePath, os.Getpid())
 		if err != nil {
 			w := flag.CommandLine.Output()
 			fmt.Fprintf(w, "Unable to write pidfile: %s", err.Error()) // nolint:errcheck
