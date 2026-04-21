@@ -13,6 +13,7 @@ import (
 
 	"charm.land/log/v2"
 	"github.com/concertim/flight-user-suite/flight/cliui"
+	"github.com/concertim/flight-user-suite/flight/configenv"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/urfave/cli/v3"
 	"golang.org/x/term"
@@ -25,7 +26,7 @@ var (
 	date    string = "unknown"
 
 	progName        string = "flight"
-	flightRoot      string = "/opt/flight"
+	env             configenv.Env
 	toolDir         string
 	hookDir         string
 	validEvents            = []string{"login", "activation"}
@@ -38,22 +39,18 @@ func init() {
 	log.SetReportTimestamp(false)
 	log.SetReportCaller(false)
 	log.SetLevel(log.WarnLevel)
-	if root, ok := os.LookupEnv("FLIGHT_ROOT"); ok {
-		flightRoot = root
-	}
-	if _, ok := os.LookupEnv("FLIGHT_STATE_ROOT"); !ok {
-		if err := os.Setenv("FLIGHT_STATE_ROOT", filepath.Join(flightRoot, "var", "lib")); err != nil {
-			panic(fmt.Errorf("setting FLIGHT_STATE_ROOT: %w", err))
-		}
-	}
 	var err error
+	env, err = configenv.InitFlightEnv()
+	if err != nil {
+		panic(fmt.Errorf("initializing flight env: %w", err))
+	}
 	termWidth, _, err = term.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
 		termWidth = 80
 	}
 	maxTextWidth = min(termWidth, 80)
-	toolDir = filepath.Join(flightRoot, "usr", "lib", "flight-core")
-	hookDir = filepath.Join(flightRoot, "usr", "lib", "hooks")
+	toolDir = filepath.Join(env.FlightRoot, "usr", "lib", "flight-core")
+	hookDir = filepath.Join(env.FlightRoot, "usr", "lib", "hooks")
 }
 
 func main() {

@@ -93,7 +93,7 @@ func toolsTable(tools []*Tool) error {
 func getTools(onlyEnabled bool) ([]*Tool, error) {
 	log.Debug("getting tools", "dir", toolDir, "onlyEnabled", onlyEnabled)
 
-	toolSynopsisDir := filepath.Join(flightRoot, "usr", "share", "doc", "tools")
+	toolSynopsisDir := filepath.Join(env.FlightRoot, "usr", "share", "doc", "tools")
 
 	entries, err := os.ReadDir(toolDir)
 	if err != nil {

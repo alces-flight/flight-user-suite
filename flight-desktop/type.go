@@ -10,7 +10,7 @@ import (
 )
 
 func loadAllTypes() ([]*Type, error) {
-	glob := filepath.Join(flightRoot, "usr", "lib", "desktop", "types", "*", "metadata.yml")
+	glob := filepath.Join(env.FlightRoot, "usr", "lib", "desktop", "types", "*", "metadata.yml")
 	log.Debug("Loading all desktop types", "glob", glob)
 	types := make([]*Type, 0)
 	matches, err := filepath.Glob(glob)
@@ -81,7 +81,7 @@ func (t *Type) loadDependencies() error {
 }
 
 func (t *Type) dir() string {
-	return filepath.Join(flightRoot, "usr", "lib", "desktop", "types", t.ID)
+	return filepath.Join(env.FlightRoot, "usr", "lib", "desktop", "types", t.ID)
 }
 
 func (t *Type) metadataFile() string {

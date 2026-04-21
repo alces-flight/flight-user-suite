@@ -12,6 +12,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
+require github.com/hashicorp/go-envparse v0.1.0 // indirect
+
 require (
 	github.com/cyucelen/marker v0.0.0-20220628090808-ec8d542c2d28 // indirect
 	github.com/fatih/color v1.19.0 // indirect

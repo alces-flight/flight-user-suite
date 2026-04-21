@@ -75,7 +75,7 @@ func (ng *nameGenerator) loadFileList(name string, dst *[]string) {
 	if ng.err != nil {
 		return
 	}
-	path := filepath.Join(flightRoot, "usr", "lib", "desktop", "name-generation", fmt.Sprintf("%s.txt", name))
+	path := filepath.Join(env.FlightRoot, "usr", "lib", "desktop", "name-generation", fmt.Sprintf("%s.txt", name))
 	data, err := os.ReadFile(path)
 	if err != nil {
 		log.Debug("Unable to load name generation list", "path", path, "err", err)
@@ -93,7 +93,7 @@ func (ng *nameGenerator) loadCombinations() {
 	if ng.err != nil {
 		return
 	}
-	path := filepath.Join(flightRoot, "usr", "lib", "desktop", "name-generation", "combinations.txt")
+	path := filepath.Join(env.FlightRoot, "usr", "lib", "desktop", "name-generation", "combinations.txt")
 	data, err := os.ReadFile(path)
 	if err != nil {
 		log.Debug("Unable to load name generation combinations", "path", path, "err", err)

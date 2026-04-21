@@ -12,14 +12,14 @@ import (
 
 func howTosDir(name string, isTool bool) string {
 	if isTool {
-		return filepath.Join(flightRoot, "usr", "share", "doc", fmt.Sprintf("flight-%s", name))
+		return filepath.Join(env.FlightRoot, "usr", "share", "doc", fmt.Sprintf("flight-%s", name))
 	} else {
-		return filepath.Join(flightRoot, "usr", "share", "doc", name)
+		return filepath.Join(env.FlightRoot, "usr", "share", "doc", name)
 	}
 }
 
 func createHowtoSymlinks(name string, isTool bool) error {
-	tgtDir := filepath.Join(flightRoot, "usr", "share", "doc", "howtos-enabled")
+	tgtDir := filepath.Join(env.FlightRoot, "usr", "share", "doc", "howtos-enabled")
 	srcDir := howTosDir(name, isTool)
 	err := filepath.WalkDir(srcDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -53,7 +53,7 @@ func createHowtoSymlinks(name string, isTool bool) error {
 }
 
 func removeHowtoSymlinks(name string, isTool bool) error {
-	symDir := filepath.Join(flightRoot, "usr", "share", "doc", "howtos-enabled")
+	symDir := filepath.Join(env.FlightRoot, "usr", "share", "doc", "howtos-enabled")
 	srcDir := filepath.Clean(howTosDir(name, isTool))
 
 	err := filepath.WalkDir(symDir, func(path string, d fs.DirEntry, err error) error {

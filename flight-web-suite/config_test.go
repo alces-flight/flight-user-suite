@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/concertim/flight-user-suite/flight/configenv"
 )
 
 func TestLoadConfigUsesEmbeddedDefaultsWhenFileMissing(t *testing.T) {
@@ -130,22 +132,19 @@ func TestLoadConfigIgnoresSessionSecretInConfigFile(t *testing.T) {
 func setFlightRootForTest(t *testing.T, root string) {
 	t.Helper()
 
-	orig := flightRoot
-	origStateRoot := flightStateRoot
-	flightRoot = root
-	flightStateRoot = filepath.Join(root, "var", "lib")
-	authenticatorPath = filepath.Join(flightRoot, "usr", "libexec", "web-suite", "authenticate.py")
+	orig := env
+	env = configenv.RepoLocalFlightEnv(root)
+	authenticatorPath = filepath.Join(env.FlightRoot, "usr", "libexec", "web-suite", "authenticate.py")
 	t.Cleanup(func() {
-		flightRoot = orig
-		flightStateRoot = origStateRoot
-		authenticatorPath = filepath.Join(flightRoot, "usr", "libexec", "web-suite", "authenticate.py")
+		env = orig
+		authenticatorPath = filepath.Join(env.FlightRoot, "usr", "libexec", "web-suite", "authenticate.py")
 	})
 }
 
 func assertSessionSecretSaved(t *testing.T, expected string) {
 	t.Helper()
 
-	data, err := os.ReadFile(filepath.Join(flightStateRoot, "web-suite", "session-secret"))
+	data, err := os.ReadFile(filepath.Join(env.FlightStateRoot, "web-suite", "session-secret"))
 	if err != nil {
 		t.Fatalf("failed to read persisted session secret: %v", err)
 	}

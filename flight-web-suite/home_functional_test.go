@@ -18,7 +18,7 @@ func TestMain(m *testing.M) {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
-	flightStateRoot = stateRoot
+	env = env.WithStateRoot(stateRoot)
 	if err := os.Setenv("FLIGHT_STATE_ROOT", stateRoot); err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
@@ -109,14 +109,4 @@ func assertAuthenticated(t *testing.T, body, username string) {
 		testutil.HasText("Logout"),
 	)
 	testutil.AssertNoSelection(t, body, `[data-testid="sign-in-link"]`)
-}
-
-func setFlightRootForTest(t *testing.T, path string) {
-	t.Helper()
-
-	origPath := flightRoot
-	flightRoot = path
-	t.Cleanup(func() {
-		flightRoot = origPath
-	})
 }

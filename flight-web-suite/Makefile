@@ -39,13 +39,13 @@ dev: $(TAILWIND)
 	FLIGHT_ROOT=$(OPT)/flight FLIGHT_STATE_ROOT=$(FLIGHT_STATE_ROOT) air
 
 run: all
-	FLIGHT_ROOT=$(FLIGHT_ROOT) $(EXE)
+	FLIGHT_ROOT=$(FLIGHT_ROOT) FLIGHT_STATE_ROOT=$(FLIGHT_STATE_ROOT) $(EXE)
 
 test:
 ifdef GOTESTSUM
-	FLIGHT_ROOT=$(OPT)/flight $(GOTESTSUM) -- ./... -count 1
+	FLIGHT_ROOT=$(OPT)/flight FLIGHT_STATE_ROOT=$(FLIGHT_STATE_ROOT) $(GOTESTSUM) -- ./... -count 1
 else
-	FLIGHT_ROOT=$(OPT)/flight go test ./... -count 1
+	FLIGHT_ROOT=$(OPT)/flight FLIGHT_STATE_ROOT=$(FLIGHT_STATE_ROOT) go test ./... -count 1
 endif
 
 help:

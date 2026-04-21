@@ -17,12 +17,13 @@ import (
 	"charm.land/lipgloss/v2/table"
 	"charm.land/log/v2"
 	"github.com/concertim/flight-user-suite/flight/cliui"
+	"github.com/concertim/flight-user-suite/flight/configenv"
 	"github.com/urfave/cli/v3"
 	"golang.org/x/term"
 )
 
 var (
-	flightRoot       string = "/opt/flight"
+	env              configenv.Env
 	howtoDir         string
 	markdownThemeDir string
 	termWidth        int = 80
@@ -33,12 +34,13 @@ func init() {
 	log.SetReportTimestamp(false)
 	log.SetReportCaller(false)
 	log.SetLevel(log.WarnLevel)
-	if root, ok := os.LookupEnv("FLIGHT_ROOT"); ok {
-		flightRoot = root
-	}
-	howtoDir = filepath.Join(flightRoot, "usr", "share", "doc", "howtos-enabled")
-	markdownThemeDir = filepath.Join(flightRoot, "usr", "lib", "flight-howto", "themes")
 	var err error
+	env, err = configenv.InitFlightEnv()
+	if err != nil {
+		panic(fmt.Errorf("initializing flight env: %w", err))
+	}
+	howtoDir = filepath.Join(env.FlightRoot, "usr", "share", "doc", "howtos-enabled")
+	markdownThemeDir = filepath.Join(env.FlightRoot, "usr", "lib", "flight-howto", "themes")
 	termWidth, _, err = term.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
 		termWidth = 80

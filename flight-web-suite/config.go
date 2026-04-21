@@ -42,7 +42,7 @@ func defaultConfig() webSuiteConfig {
 }
 
 func loadConfig() (webSuiteConfig, error) {
-	configPath := filepath.Join(flightRoot, "etc", "web-suite.yml")
+	configPath := filepath.Join(env.FlightRoot, "etc", "web-suite.yml")
 	data, err := os.ReadFile(configPath)
 	if err != nil {
 		if pathError, ok := errors.AsType[*fs.PathError](err); ok && pathError.Err.Error() == "no such file or directory" {
@@ -80,7 +80,7 @@ func loadConfig() (webSuiteConfig, error) {
 }
 
 func loadSessionSecret() (string, error) {
-	path := filepath.Join(flightStateRoot, "web-suite", "session-secret")
+	path := filepath.Join(env.FlightStateRoot, "web-suite", "session-secret")
 	data, err := os.ReadFile(path)
 
 	// The file can't be read, for some reason other than it not existing. This

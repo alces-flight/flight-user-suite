@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/concertim/flight-user-suite/flight/configenv"
 	"github.com/concertim/flight-user-suite/flight/pidfile"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
@@ -22,8 +23,7 @@ var (
 	commit  string = "unknown"
 	date    string = "unknown"
 
-	flightRoot        string = "/opt/flight"
-	flightStateRoot   string
+	env               configenv.Env
 	authenticatorPath string
 	config            webSuiteConfig
 
@@ -35,15 +35,12 @@ var (
 func init() {
 	// TODO: Setup log/slog. Save logs to file/stdout?
 
-	if root, ok := os.LookupEnv("FLIGHT_ROOT"); ok {
-		flightRoot = root
+	var err error
+	env, err = configenv.InitFlightEnv()
+	if err != nil {
+		panic(fmt.Errorf("initializing flight env: %w", err))
 	}
-	if fsr, ok := os.LookupEnv("FLIGHT_STATE_ROOT"); ok {
-		flightStateRoot = fsr
-	} else {
-		flightStateRoot = filepath.Join(flightRoot, "var", "lib")
-	}
-	authenticatorPath = filepath.Join(flightRoot, "usr", "libexec", "web-suite", "authenticate.py")
+	authenticatorPath = filepath.Join(env.FlightRoot, "usr", "libexec", "web-suite", "authenticate.py")
 
 	flag.Usage = func() {
 		cmd := path.Base(os.Args[0])
@@ -145,7 +142,7 @@ func getDirectory(dirName string) string {
 	// in production.
 	_, err := os.Stat(dirName)
 	if errors.Is(err, os.ErrNotExist) {
-		return path.Join(flightRoot, "var", "web-suite", dirName)
+		return path.Join(env.FlightRoot, "var", "web-suite", dirName)
 	}
 	return dirName
 }

@@ -18,7 +18,7 @@ type Service struct {
 }
 
 func (s *Service) ExePath() string {
-	return filepath.Join(flightRoot, "usr", "libexec", s.ID, "service")
+	return filepath.Join(env.FlightRoot, "usr", "libexec", s.ID, "service")
 }
 
 func (s *Service) PidfilePath() string {
