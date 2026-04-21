@@ -11,8 +11,8 @@ func TestHomepageAnonymous(t *testing.T) {
 	_, body := testutil.RenderPage(t, newApp(), http.MethodGet, "/", nil, http.StatusOK)
 
 	assertNotAuthenticated(t, body)
-	assertToolCardPresentHTML(t, body, "Flight Desktop", "/assets/images/desktop.png", "Access interactive desktop sessions")
-	assertToolCardPresentHTML(t, body, "Flight Howto", "/assets/images/howto.png", "Learn about the Flight User Suite and using your cluster")
+	assertToolCardAbsentHTML(t, body, "Flight Desktop")
+	assertToolCardAbsentHTML(t, body, "Flight Howto")
 }
 
 func TestHomepageAuthenticated(t *testing.T) {
@@ -33,6 +33,13 @@ func assertToolCardPresentHTML(t *testing.T, body, title, imagePath, description
 		testutil.HasAttr("src", imagePath),
 		testutil.HasAttr("alt", title+" logo"),
 	)
+}
+
+func assertToolCardAbsentHTML(t *testing.T, body, title string) {
+	t.Helper()
+
+	cardSelector := `div[data-testid="tool-card--` + title + `"]`
+	testutil.AssertNoSelection(t, body, cardSelector)
 }
 
 func assertNotAuthenticated(t *testing.T, body string) {
