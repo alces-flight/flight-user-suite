@@ -115,20 +115,15 @@ func indexData() map[string]any {
 }
 
 func getToolsList() []Tool {
-	return []Tool{
-		{
-			Name:        "Flight Desktop",
-			Description: "Access interactive desktop sessions",
-			URL:         "/desktop",
-			IconPath:    "/assets/images/desktop.png",
-		},
-		{
-			Name:        "Flight Howto",
-			Description: "Learn about the Flight User Suite and using your cluster",
-			URL:         "/howto",
-			IconPath:    "/assets/images/howto.png",
-		},
+	flightTools, _ := getTools(true)
+	availableTools := make([]Tool, 0, 2)
+	for _, flightTool := range flightTools {
+		toolDef, exists := toolDefs[flightTool.Name]
+		if exists {
+			availableTools = append(availableTools, toolDef)
+		}
 	}
+	return availableTools
 }
 
 func getDirectory(dirName string) string {
