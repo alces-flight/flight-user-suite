@@ -110,19 +110,23 @@ func newApp() *echo.Echo {
 func indexData() map[string]any {
 	return map[string]any{
 		"EnvName": "My Cluster",
-		"Tools": []Tool{
-			{
-				Name:        "Flight Desktop",
-				Description: "Access interactive desktop sessions",
-				URL:         "/desktop",
-				IconPath:    "/assets/images/desktop.png",
-			},
-			{
-				Name:        "Flight Howto",
-				Description: "Learn about the Flight User Suite and using your cluster",
-				URL:         "/howto",
-				IconPath:    "/assets/images/howto.png",
-			},
+		"Tools":   getToolsList(),
+	}
+}
+
+func getToolsList() []Tool {
+	return []Tool{
+		{
+			Name:        "Flight Desktop",
+			Description: "Access interactive desktop sessions",
+			URL:         "/desktop",
+			IconPath:    "/assets/images/desktop.png",
+		},
+		{
+			Name:        "Flight Howto",
+			Description: "Learn about the Flight User Suite and using your cluster",
+			URL:         "/howto",
+			IconPath:    "/assets/images/howto.png",
 		},
 	}
 }
