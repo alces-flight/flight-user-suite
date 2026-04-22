@@ -101,9 +101,11 @@ func newApp() *echo.Echo {
 }
 
 func indexData() map[string]any {
+	toolsList := getToolsList()
 	return map[string]any{
-		"EnvName": "My Cluster",
-		"Tools":   getToolsList(),
+		"EnvName":  "My Cluster",
+		"Tools":    toolsList,
+		"HasTools": len(toolsList) > 0,
 	}
 }
 
