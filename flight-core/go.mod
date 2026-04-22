@@ -12,7 +12,7 @@ require (
 	github.com/hashicorp/go-envparse v0.1.0
 	github.com/muesli/reflow v0.3.0
 	github.com/urfave/cli/v3 v3.7.0
-	golang.org/x/term v0.41.0
+	golang.org/x/term v0.42.0
 )
 
 require (
