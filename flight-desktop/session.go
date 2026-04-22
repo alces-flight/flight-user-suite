@@ -265,7 +265,7 @@ func (s *Session) createPassword() error {
 }
 
 func (s *Session) installSessionScript() error {
-	srcPath := filepath.Join(flightRoot, "usr", "lib", "desktop", "types", s.SessionType, "session.sh")
+	srcPath := filepath.Join(env.FlightRoot, "usr", "lib", "desktop", "types", s.SessionType, "session.sh")
 	dstPath := s.sessionScript()
 	log.Debug("installing session script", "src", srcPath, "dst", dstPath)
 	src, err := os.Open(srcPath)

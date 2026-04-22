@@ -1,11 +1,49 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/concertim/flight-user-suite/flight-web-suite/internal/testutil"
 )
+
+// Setup/teardown logic.
+func TestMain(m *testing.M) {
+	stateRoot, err := os.MkdirTemp("", "flight-web-suite-state-")
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+	env = env.WithStateRoot(stateRoot)
+	if err := os.Setenv("FLIGHT_STATE_ROOT", stateRoot); err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+	config, err = loadConfig()
+	if err != nil {
+		fmt.Println(err.Error())
+		_ = os.RemoveAll(stateRoot)
+		os.Exit(1)
+	}
+	config.Authenticator.Timeout = 1 * time.Second
+	exitCode := m.Run()
+	if !isRepoLocalStateRoot(stateRoot) {
+		_ = os.RemoveAll(stateRoot)
+	}
+	os.Exit(exitCode)
+}
+
+func isRepoLocalStateRoot(path string) bool {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return false
+	}
+	return path == filepath.Join(cwd, "tmp")
+}
 
 func TestHomepageAnonymous(t *testing.T) {
 	_, body := testutil.RenderPage(t, newApp(), http.MethodGet, "/", nil, http.StatusOK)
@@ -17,11 +55,18 @@ func TestHomepageAnonymous(t *testing.T) {
 
 func TestHomepageAuthenticated(t *testing.T) {
 	setFlightRootForTest(t, "./testdata/flight_root") // Fake FLIGHT_ROOT with dummy tools enabled
-	_, body := testutil.RenderPage(t, newApp(), http.MethodGet, "/", nil, http.StatusOK, testutil.WithSessionCookie("ben"))
+	_, body := testutil.RenderPage(t, newApp(), http.MethodGet, "/", nil, http.StatusOK, testutil.WithSessionCookie("ben", config.Session.Secret))
 
 	assertAuthenticated(t, body, "ben")
 	assertToolCardPresentHTML(t, body, "Flight Desktop", "/assets/images/desktop.png", "Access interactive desktop sessions")
 	assertToolCardPresentHTML(t, body, "Flight Howto", "/assets/images/howto.png", "Learn about the Flight User Suite and using your cluster")
+}
+
+func TestHomepageAuthenticatedWithInvalidSessionCookie(t *testing.T) {
+	_, body := testutil.RenderPage(t, newApp(), http.MethodGet, "/", nil, http.StatusOK,
+		testutil.WithSessionCookie("ben", "stale-secret"),
+	)
+	assertNotAuthenticated(t, body)
 }
 
 func assertToolCardPresentHTML(t *testing.T, body, title, imagePath, description string) {
@@ -71,14 +116,4 @@ func assertAuthenticated(t *testing.T, body, username string) {
 		testutil.HasText("Logout"),
 	)
 	testutil.AssertNoSelection(t, body, `[data-testid="sign-in-link"]`)
-}
-
-func setFlightRootForTest(t *testing.T, path string) {
-	t.Helper()
-
-	origPath := flightRoot
-	flightRoot = path
-	t.Cleanup(func() {
-		flightRoot = origPath
-	})
 }

@@ -1,6 +1,8 @@
 DIST := dist
 ASSET_DIRS := opt
 EXE := $(DIST)/opt/flight/bin/flight
+FLIGHT_ROOT := $(DIST)/opt/flight
+FLIGHT_STATE_ROOT := $(DIST)/opt/flight/var/lib
 
 VERSION := $(shell git describe --tags --dirty --always)
 COMMIT := $(shell git rev-parse HEAD)
@@ -21,7 +23,7 @@ shell_completions: $(DIST)/usr/share/bash-completion/completions/flight
 
 $(DIST)/usr/share/bash-completion/completions/flight: $(EXE)
 	mkdir -p $(dir $@)
-	$(EXE) completion bash > $@
+	FLIGHT_ROOT=$(FLIGHT_ROOT) FLIGHT_STATE_ROOT=$(FLIGHT_STATE_ROOT) $(EXE) completion bash > $@
 
 clean:
 	rm -f $(EXE)

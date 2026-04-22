@@ -22,7 +22,7 @@ var (
 )
 
 func libexecPath(relpath string) string {
-	return filepath.Join(flightRoot, "usr", "libexec", "desktop", relpath)
+	return filepath.Join(env.FlightRoot, "usr", "libexec", "desktop", relpath)
 }
 
 func startSessionCommand() *cli.Command {

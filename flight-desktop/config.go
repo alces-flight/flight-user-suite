@@ -56,7 +56,7 @@ func optionalDependencies(deps []dependency) []dependency {
 var defaultConfig []byte
 
 func loadConfig() (desktopConfig, error) {
-	path := filepath.Join(flightRoot, "etc", "desktop.yml")
+	path := filepath.Join(env.FlightRoot, "etc", "desktop.yml")
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if pathError, ok := errors.AsType[*fs.PathError](err); ok && pathError.Err.Error() == "no such file or directory" {

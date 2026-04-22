@@ -4,6 +4,7 @@ OPT := opt
 ASSET_DIRS := assets views static
 EXE := $(DIST)/opt/flight/usr/libexec/web-suite/service
 FLIGHT_ROOT := $(DIST)/opt/flight
+FLIGHT_STATE_ROOT := tmp
 WEB_ROOT := $(FLIGHT_ROOT)/var/web-suite
 TAILWIND := ./bin/tailwind/tailwindcss
 GOTESTSUM := $(shell type -p gotestsum)
@@ -35,16 +36,16 @@ build-css: $(TAILWIND)
 		-o ./static/styles.css
 
 dev: $(TAILWIND)
-	FLIGHT_ROOT=$(OPT)/flight air
+	FLIGHT_ROOT=$(OPT)/flight FLIGHT_STATE_ROOT=$(FLIGHT_STATE_ROOT) air
 
 run: all
-	FLIGHT_ROOT=$(FLIGHT_ROOT) $(EXE)
+	FLIGHT_ROOT=$(FLIGHT_ROOT) FLIGHT_STATE_ROOT=$(FLIGHT_STATE_ROOT) $(EXE)
 
 test:
 ifdef GOTESTSUM
-	FLIGHT_ROOT=$(OPT)/flight $(GOTESTSUM) -- ./... -count 1
+	FLIGHT_ROOT=$(OPT)/flight FLIGHT_STATE_ROOT=$(FLIGHT_STATE_ROOT) $(GOTESTSUM) -- ./... -count 1
 else
-	FLIGHT_ROOT=$(OPT)/flight go test ./... -count 1
+	FLIGHT_ROOT=$(OPT)/flight FLIGHT_STATE_ROOT=$(FLIGHT_STATE_ROOT) go test ./... -count 1
 endif
 
 help:

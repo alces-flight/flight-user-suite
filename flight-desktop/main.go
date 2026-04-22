@@ -8,7 +8,8 @@ import (
 	"strings"
 
 	"charm.land/log/v2"
-	"github.com/concertim/flight-user-suite/flight/pkg"
+	"github.com/concertim/flight-user-suite/flight/cliui"
+	"github.com/concertim/flight-user-suite/flight/configenv"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/urfave/cli/v3"
 	"golang.org/x/term"
@@ -21,9 +22,9 @@ var (
 	date    string = "unknown"
 
 	progName     string = "flight desktop"
-	flightRoot   string = "/opt/flight"
-	termWidth    int    = 80
-	maxTextWidth int    = 80
+	env          configenv.Env
+	termWidth    int = 80
+	maxTextWidth int = 80
 	config       desktopConfig
 )
 
@@ -31,10 +32,11 @@ func init() {
 	log.SetReportTimestamp(false)
 	log.SetReportCaller(false)
 	log.SetLevel(log.InfoLevel)
-	if root, ok := os.LookupEnv("FLIGHT_ROOT"); ok {
-		flightRoot = root
-	}
 	var err error
+	env, err = configenv.InitFlightEnv()
+	if err != nil {
+		panic(fmt.Errorf("initializing flight env: %w", err))
+	}
 	termWidth, _, err = term.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
 		termWidth = 80
@@ -107,7 +109,7 @@ func main() {
 
 	// Override help printer to inject some colour.
 	origHelpPrinter := cli.HelpPrinter
-	cli.HelpPrinter = pkg.ColourisedHelpPrinter(origHelpPrinter)
+	cli.HelpPrinter = cliui.ColourisedHelpPrinter(origHelpPrinter)
 
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
 		// A bunch of checks to avoid reporting the usage errors twice.

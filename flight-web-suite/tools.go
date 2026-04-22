@@ -43,8 +43,8 @@ type FlightTool struct {
 func getTools(onlyEnabled bool) ([]*FlightTool, error) {
 	//log.Debug("getting tools", "dir", toolDir, "onlyEnabled", onlyEnabled)
 
-	toolSynopsisDir := filepath.Join(flightRoot, "usr", "share", "doc", "tools")
-	toolDir := filepath.Join(flightRoot, "usr", "lib", "flight-core")
+	toolSynopsisDir := filepath.Join(env.FlightRoot, "usr", "share", "doc", "tools")
+	toolDir := filepath.Join(env.FlightRoot, "usr", "lib", "flight-core")
 
 	entries, err := os.ReadDir(toolDir)
 	if err != nil {

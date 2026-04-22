@@ -7,7 +7,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"charm.land/log/v2"
-	"github.com/concertim/flight-user-suite/flight/pkg"
+	"github.com/concertim/flight-user-suite/flight/cliui"
 )
 
 func sessionStarted(session *Session) {
@@ -27,8 +27,8 @@ func sessionStarted(session *Session) {
 }
 
 func sessionInfo(session *Session) {
-	dt := lipgloss.NewStyle().Foreground(pkg.AlcesBlue).Padding(0, 2, 0, 1)
-	dd := lipgloss.NewStyle().Foreground(pkg.LightDark(pkg.Primary, pkg.Cream))
+	dt := lipgloss.NewStyle().Foreground(cliui.AlcesBlue).Padding(0, 2, 0, 1)
+	dd := lipgloss.NewStyle().Foreground(cliui.LightDark(cliui.Primary, cliui.Cream))
 	metadata := lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		lipgloss.JoinVertical(
@@ -50,7 +50,7 @@ func sessionInfo(session *Session) {
 	)
 	out := lipgloss.JoinVertical(
 		lipgloss.Left,
-		pkg.Header.Render("Session Details"),
+		cliui.Header.Render("Session Details"),
 		metadata,
 	)
 	lipgloss.Println(out)
@@ -72,16 +72,16 @@ func connectionInfo(session *Session) {
 
 	out := lipgloss.JoinVertical(
 		lipgloss.Left,
-		pkg.Header.Render("Connection Details"),
-		pkg.Subheader.Render("1. Connection address"),
-		pkg.Paragraph.Render(lipgloss.Wrap("Copy and paste the first address into your VNC viewer. If that doesn't work, try one of the alternatives:", maxTextWidth, " -")),
+		cliui.Header.Render("Connection Details"),
+		cliui.Subheader.Render("1. Connection address"),
+		cliui.Paragraph.Render(lipgloss.Wrap("Copy and paste the first address into your VNC viewer. If that doesn't work, try one of the alternatives:", maxTextWidth, " -")),
 		lipgloss.JoinHorizontal(
 			lipgloss.Top,
 			lipgloss.JoinVertical(
 				lipgloss.Left,
-				pkg.Bullet.Render("* Primary:"),
-				pkg.Bullet.Render("* Alternative 1:"),
-				pkg.Bullet.Render("* Alternative 2:"),
+				cliui.Bullet.Render("* Primary:"),
+				cliui.Bullet.Render("* Alternative 1:"),
+				cliui.Bullet.Render("* Alternative 2:"),
 			),
 			lipgloss.JoinVertical(
 				lipgloss.Left,
@@ -90,17 +90,17 @@ func connectionInfo(session *Session) {
 				ipDisplay,
 			),
 		),
-		pkg.Subheader.PaddingTop(1).Render("2. Password"),
+		cliui.Subheader.PaddingTop(1).Render("2. Password"),
 		lipgloss.JoinHorizontal(
 			lipgloss.Top,
-			pkg.Paragraph.Render("If prompted, use this password:"),
-			pkg.Code.Render(session.Password),
+			cliui.Paragraph.Render("If prompted, use this password:"),
+			cliui.Code.Render(session.Password),
 		),
-		pkg.Subheader.Render("3. Need Help?"),
+		cliui.Subheader.Render("3. Need Help?"),
 		lipgloss.JoinHorizontal(
 			lipgloss.Top,
-			pkg.Paragraph.MarginBottom(0).Render("For more details on how to connect, run:"),
-			pkg.Code.Render("flight howto show flight-desktop"),
+			cliui.Paragraph.MarginBottom(0).Render("For more details on how to connect, run:"),
+			cliui.Code.Render("flight howto show flight-desktop"),
 		),
 	)
 	lipgloss.Println(out)
@@ -109,10 +109,10 @@ func connectionInfo(session *Session) {
 func managementInfo(session *Session) {
 	out := lipgloss.JoinVertical(
 		lipgloss.Left,
-		pkg.Header.Render("Manage this session"),
-		pkg.Paragraph.PaddingBottom(0).Render("To view details or stop this session, you will need the Session Name:"),
-		pkg.Code.Margin(0, 0, 1, 1).Render(session.Name),
-		pkg.Paragraph.Render("(Tip: Run 'flight desktop --help' to see management commands)"),
+		cliui.Header.Render("Manage this session"),
+		cliui.Paragraph.PaddingBottom(0).Render("To view details or stop this session, you will need the Session Name:"),
+		cliui.Code.Margin(0, 0, 1, 1).Render(session.Name),
+		cliui.Paragraph.Render("(Tip: Run 'flight desktop --help' to see management commands)"),
 	)
 	lipgloss.Println(out)
 }

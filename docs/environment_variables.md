@@ -11,6 +11,8 @@ configuration that we're happy to allow being overridden should be included.
 are either relative to this directory or absolute paths rooted at `/`. Default
 `/opt/flight`.  Overriding this setting allows using an alternative
 installation of FUS, which is useful for development and testing.
+* `FLIGHT_STATE_ROOT` : set to a state directory that can be used for non-user
+  specific data. Default `${FLIGHT_ROOT}/var/lib/`.
 
 The following is managed by `flight-start` and `flight-stop` (that is
 `${FLIGHT_ROOT}/libexec/flight-starter/main.sh`).

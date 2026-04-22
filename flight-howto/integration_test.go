@@ -22,6 +22,7 @@ var goRoot = ""
 var testdataPath = ""
 var tmpDir = ""
 var flightRoot = ""
+var flightStateRoot = ""
 
 // Setup/teardown logic for running all tests in the package.
 func TestMain(m *testing.M) {
@@ -35,6 +36,7 @@ func TestMain(m *testing.M) {
 	tmpDir = createTempDir("flight-howto-")
 	fmt.Printf("tmpDir: %v\n", tmpDir)
 	flightRoot = filepath.Join(tmpDir, "opt", "flight")
+	flightStateRoot = filepath.Join(tmpDir, "state")
 	symlinkTestHowtos()
 	installThemeFile()
 
@@ -126,7 +128,7 @@ func loadFixture(t *testing.T, fixture string) string {
 func runBinary(args []string, stdin *string) ([]byte, error) {
 	fullArgs := append([]string{"run", entryPoint}, args...)
 	cmd := exec.Command("go", fullArgs...)
-	cmd.Env = append(os.Environ(), "GOCOVERDIR=.coverdata", fmt.Sprintf("FLIGHT_ROOT=%s", flightRoot))
+	cmd.Env = append(os.Environ(), "GOCOVERDIR=.coverdata", fmt.Sprintf("FLIGHT_ROOT=%s", flightRoot), fmt.Sprintf("FLIGHT_STATE_ROOT=%s", flightStateRoot))
 	if stdin != nil {
 		cmd.Stdin = strings.NewReader(*stdin)
 	}

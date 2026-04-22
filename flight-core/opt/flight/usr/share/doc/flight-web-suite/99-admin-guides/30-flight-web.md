@@ -14,10 +14,14 @@ Requires:
 
 ## Configuration
 
-* Edit config file directly.
-  * Where is it?
+* Edit config file at `/opt/flight/etc/web-suite.yml` directly.
   * What do the different values mean?
   * What are the permitted values for each setting?
+
+The session secret is stored in at
+`/opt/flight/var/lib/web-suite/session-secret`. It will be created
+automatically when web suite starts for the first time.  Changing it will
+invalidate all sessions.
 
 ## Usage
 

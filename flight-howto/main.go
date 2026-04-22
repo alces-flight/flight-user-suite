@@ -16,13 +16,14 @@ import (
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/table"
 	"charm.land/log/v2"
-	"github.com/concertim/flight-user-suite/flight/pkg"
+	"github.com/concertim/flight-user-suite/flight/cliui"
+	"github.com/concertim/flight-user-suite/flight/configenv"
 	"github.com/urfave/cli/v3"
 	"golang.org/x/term"
 )
 
 var (
-	flightRoot       string = "/opt/flight"
+	env              configenv.Env
 	howtoDir         string
 	markdownThemeDir string
 	termWidth        int = 80
@@ -33,12 +34,13 @@ func init() {
 	log.SetReportTimestamp(false)
 	log.SetReportCaller(false)
 	log.SetLevel(log.WarnLevel)
-	if root, ok := os.LookupEnv("FLIGHT_ROOT"); ok {
-		flightRoot = root
-	}
-	howtoDir = filepath.Join(flightRoot, "usr", "share", "doc", "howtos-enabled")
-	markdownThemeDir = filepath.Join(flightRoot, "usr", "lib", "flight-howto", "themes")
 	var err error
+	env, err = configenv.InitFlightEnv()
+	if err != nil {
+		panic(fmt.Errorf("initializing flight env: %w", err))
+	}
+	howtoDir = filepath.Join(env.FlightRoot, "usr", "share", "doc", "howtos-enabled")
+	markdownThemeDir = filepath.Join(env.FlightRoot, "usr", "lib", "flight-howto", "themes")
 	termWidth, _, err = term.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
 		termWidth = 80
@@ -73,7 +75,7 @@ func main() {
 
 	// Override help printer to inject some colour.
 	origHelpPrinter := cli.HelpPrinter
-	cli.HelpPrinter = pkg.ColourisedHelpPrinter(origHelpPrinter)
+	cli.HelpPrinter = cliui.ColourisedHelpPrinter(origHelpPrinter)
 
 	// TODO deduplicate this from equivalent section in flight-core/main.go?
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
@@ -190,16 +192,16 @@ func entriesTable(howtos []*Howto) error {
 	namecolWidth := 7
 	t := table.New().
 		Border(lipgloss.NormalBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(pkg.AlcesBlue)).
+		BorderStyle(lipgloss.NewStyle().Foreground(cliui.AlcesBlue)).
 		StyleFunc(func(row, col int) lipgloss.Style {
 			var style lipgloss.Style
 			switch {
 			case row == table.HeaderRow:
-				return pkg.TableHeaderStyle
+				return cliui.TableHeaderStyle
 			case row%2 == 0:
-				style = pkg.TableEvenRowStyle
+				style = cliui.TableEvenRowStyle
 			default:
-				style = pkg.TableOddRowStyle
+				style = cliui.TableOddRowStyle
 			}
 			switch col {
 			case 0:

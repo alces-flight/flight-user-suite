@@ -23,6 +23,7 @@ var goRoot = ""
 var testdataPath = ""
 var tmpDir = ""
 var flightRoot = ""
+var flightStateRoot = ""
 
 // Setup/teardown logic for running all tests in the package.
 func TestMain(m *testing.M) {
@@ -36,6 +37,7 @@ func TestMain(m *testing.M) {
 	tmpDir = createTempDir("flight-desktop-")
 	fmt.Printf("tmpDir: %v\n", tmpDir)
 	flightRoot = filepath.Join(tmpDir, "opt", "flight")
+	flightStateRoot = filepath.Join(tmpDir, "state")
 	installTestFiles()
 	exitCode := m.Run()
 	if !*keepTmpDir {
@@ -255,6 +257,7 @@ func runBinary(args []string, stdin *string) ([]byte, error) {
 		os.Environ(),
 		"GOCOVERDIR=.coverdata",
 		fmt.Sprintf("FLIGHT_ROOT=%s", flightRoot),
+		fmt.Sprintf("FLIGHT_STATE_ROOT=%s", flightStateRoot),
 		fmt.Sprintf("XDG_STATE_HOME=%s", filepath.Join(tmpDir, "local", "state")),
 	)
 	if stdin != nil {

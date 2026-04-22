@@ -2,15 +2,19 @@
 
 import pam
 import sys
+import os
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: {} <username>".format(sys.argv[0]))
         print("  Password is read from standard input")
         sys.exit(1)
+    pam_service = os.environ.get("FLIGHT_WEB_SUITE_PAM_SERVICE", "login")
+    if pam_service == "":
+        pam_service = "login"
     username = sys.argv[1]
     password = sys.stdin.read().strip()
-    success = pam.authenticate(username, password, service="login")
+    success = pam.authenticate(username, password, service=pam_service)
     if success:
         sys.exit(0)
     else:

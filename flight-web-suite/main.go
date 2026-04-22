@@ -10,8 +10,9 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"time"
 
+	"github.com/concertim/flight-user-suite/flight/configenv"
+	"github.com/concertim/flight-user-suite/flight/pidfile"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
 )
@@ -22,23 +23,24 @@ var (
 	commit  string = "unknown"
 	date    string = "unknown"
 
-	flightRoot           string = "/opt/flight"
-	authenticatorPath    string
-	authenticatorTimeout = 10 * time.Second
+	env               configenv.Env
+	authenticatorPath string
+	config            webSuiteConfig
 
 	// Flags
-	port         = flag.Int("port", 8080, "port to listen on")
-	pidfile      = flag.String("pidfile", "", "pidfile")
+	pidfilePath  = flag.String("pidfile", "", "pidfile")
 	printVersion = flag.Bool("version", false, "print the version")
 )
 
 func init() {
 	// TODO: Setup log/slog. Save logs to file/stdout?
 
-	if root, ok := os.LookupEnv("FLIGHT_ROOT"); ok {
-		flightRoot = root
+	var err error
+	env, err = configenv.InitFlightEnv()
+	if err != nil {
+		panic(fmt.Errorf("initializing flight env: %w", err))
 	}
-	authenticatorPath = filepath.Join(flightRoot, "usr", "libexec", "web-suite", "authenticate.py")
+	authenticatorPath = filepath.Join(env.FlightRoot, "usr", "libexec", "web-suite", "authenticate.py")
 
 	flag.Usage = func() {
 		cmd := path.Base(os.Args[0])
@@ -60,8 +62,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	if *pidfile != "" {
-		err := writePidfile(*pidfile, os.Getpid())
+	var err error
+	config, err = loadConfig()
+	if err != nil {
+		w := flag.CommandLine.Output()
+		fmt.Fprintf(w, "Unable to load config: %s\n", err) // nolint:errcheck
+		os.Exit(1)
+	}
+
+	if *pidfilePath != "" {
+		err = pidfile.Write(*pidfilePath, os.Getpid())
 		if err != nil {
 			w := flag.CommandLine.Output()
 			fmt.Fprintf(w, "Unable to write pidfile: %s", err.Error()) // nolint:errcheck
@@ -69,7 +79,7 @@ func main() {
 		}
 	}
 
-	address := fmt.Sprintf("0.0.0.0:%d", *port)
+	address := fmt.Sprintf("0.0.0.0:%d", config.Port)
 	log.Printf("Starting Web Suite on %s\n", address)
 
 	e := newApp()
@@ -132,7 +142,7 @@ func getDirectory(dirName string) string {
 	// in production.
 	_, err := os.Stat(dirName)
 	if errors.Is(err, os.ErrNotExist) {
-		return path.Join(flightRoot, "var", "web-suite", dirName)
+		return path.Join(env.FlightRoot, "var", "web-suite", dirName)
 	}
 	return dirName
 }

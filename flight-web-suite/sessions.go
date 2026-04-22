@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"os"
 	"os/exec"
 
 	"github.com/labstack/echo/v5"
@@ -56,9 +57,10 @@ func destroySessionHandler(c *echo.Context) error {
 }
 
 func authenticate(ctx context.Context, username, password string) (bool, error) {
-	ctx, cancel := context.WithTimeout(ctx, authenticatorTimeout)
+	ctx, cancel := context.WithTimeout(ctx, config.Authenticator.Timeout)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, authenticatorPath, username)
+	cmd.Env = append(os.Environ(), "FLIGHT_WEB_SUITE_PAM_SERVICE="+config.Authenticator.PAMService)
 	pipe, err := cmd.StdinPipe()
 	if err != nil {
 		return false, err

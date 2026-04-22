@@ -9,10 +9,10 @@ import (
 )
 
 // SessionCookie returns a signed session cookie containing the provided username.
-func SessionCookie(t *testing.T, username string) *http.Cookie {
+func SessionCookie(t *testing.T, username, secret string) *http.Cookie {
 	t.Helper()
 
-	store := sessions.NewCookieStore([]byte("totally-not-a-secret"))
+	store := sessions.NewCookieStore([]byte(secret))
 	store.Options = &sessions.Options{
 		Path:     "/",
 		MaxAge:   86400 * 7,
@@ -34,7 +34,7 @@ func SessionCookie(t *testing.T, username string) *http.Cookie {
 	}
 
 	res := rec.Result()
-	defer res.Body.Close()
+	defer res.Body.Close() // nolint:errcheck
 
 	for _, cookie := range res.Cookies() {
 		if cookie.Name == "session" {
@@ -46,14 +46,14 @@ func SessionCookie(t *testing.T, username string) *http.Cookie {
 }
 
 // AddSessionCookie adds a signed session cookie for username to req.
-func AddSessionCookie(t *testing.T, req *http.Request, username string) {
+func AddSessionCookie(t *testing.T, req *http.Request, username, secret string) {
 	t.Helper()
-	req.AddCookie(SessionCookie(t, username))
+	req.AddCookie(SessionCookie(t, username, secret))
 }
 
-func WithSessionCookie(username string) RequestOption {
+func WithSessionCookie(username, secret string) RequestOption {
 	return func(t *testing.T, req *http.Request) {
 		t.Helper()
-		AddSessionCookie(t, req, username)
+		AddSessionCookie(t, req, username, secret)
 	}
 }
