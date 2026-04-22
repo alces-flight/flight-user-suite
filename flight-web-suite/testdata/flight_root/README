@@ -1,0 +1,2 @@
+This directory is a fake `FLIGHT_ROOT` for use by `home_functional_test.go`: it
+contains two enabled dummy tools for flight-desktop and flight-howto.

@@ -16,6 +16,7 @@ func TestHomepageAnonymous(t *testing.T) {
 }
 
 func TestHomepageAuthenticated(t *testing.T) {
+	setFlightRootForTest(t, "./testdata/flight_root") // Fake FLIGHT_ROOT with dummy tools enabled
 	_, body := testutil.RenderPage(t, newApp(), http.MethodGet, "/", nil, http.StatusOK, testutil.WithSessionCookie("ben"))
 
 	assertAuthenticated(t, body, "ben")
@@ -70,4 +71,14 @@ func assertAuthenticated(t *testing.T, body, username string) {
 		testutil.HasText("Logout"),
 	)
 	testutil.AssertNoSelection(t, body, `[data-testid="sign-in-link"]`)
+}
+
+func setFlightRootForTest(t *testing.T, path string) {
+	t.Helper()
+
+	origPath := flightRoot
+	flightRoot = path
+	t.Cleanup(func() {
+		flightRoot = origPath
+	})
 }
