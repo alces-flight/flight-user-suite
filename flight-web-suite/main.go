@@ -91,7 +91,10 @@ func newApp() *echo.Echo {
 	e.Static("/assets", getDirectory("assets"))
 	e.Static("/static", getDirectory("static"))
 	e.GET("/", func(c *echo.Context) error {
-		data := indexData()
+		data, err := indexData()
+		if err != nil {
+			e.Logger.Error("Error when calling indexData", "error", err)
+		}
 		return c.Render(http.StatusOK, "home", AddCommonData(c, data))
 	})
 	e.GET("/sessions", newSessionHandler)
@@ -100,25 +103,26 @@ func newApp() *echo.Echo {
 	return e
 }
 
-func indexData() map[string]any {
-	toolsList := getToolsList()
+func indexData() (map[string]any, error) {
+	toolsList, err := getToolsList()
 	return map[string]any{
 		"EnvName":  "My Cluster",
 		"Tools":    toolsList,
 		"HasTools": len(toolsList) > 0,
-	}
+	}, err
 }
 
-func getToolsList() []Tool {
-	flightTools, _ := getTools(true)
-	availableTools := make([]Tool, 0, 2)
+func getToolsList() ([]Tool, error) {
+	flightTools, err := getTools(true)
+
+	availableTools := make([]Tool, 0, len(flightTools))
 	for _, flightTool := range flightTools {
 		toolDef, exists := toolDefs[flightTool.Name]
 		if exists {
 			availableTools = append(availableTools, toolDef)
 		}
 	}
-	return availableTools
+	return availableTools, err
 }
 
 func getDirectory(dirName string) string {
