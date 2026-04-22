@@ -1,0 +1,26 @@
+{{define "desktop/index"}}
+{{template "layouts.application.start" . }}
+
+<h1 class="mt-20 mb-6">Desktop Sessions</h1>
+<p class="mb-8" data-testid="desktop-sessions-summary">{{ .Summary }}</p>
+
+<div class="grid grid-cols-1 gap-4 xl:grid-cols-2 2xl:grid-cols-3" data-testid="desktop-session-cards">
+    {{range .DesktopSessions}}
+    <div class="border border-alces-blue-light p-6 text-left" data-testid="desktop-session-card--{{ .Name }}">
+        <h2 class="mb-3">{{ .Name }}</h2>
+        <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2">
+            <dt class="font-semibold">Desktop</dt>
+            <dd data-testid="desktop-session-desktop-type--{{ .Name }}">{{ .DesktopType }}</dd>
+            <dt class="font-semibold">State</dt>
+            <dd data-testid="desktop-session-state--{{ .Name }}">{{ .State }}</dd>
+            <dt class="font-semibold">Host</dt>
+            <dd data-testid="desktop-session-host--{{ .Name }}"><code class="text-fuchsia-700">{{ .Host }}</code></dd>
+            <dt class="font-semibold">Started</dt>
+            <dd data-testid="desktop-session-start-time--{{ .Name }}">{{ .StartTimeText }}</dd>
+        </dl>
+    </div>
+    {{end}}
+</div>
+
+{{template "layouts.application.end" . }}
+{{end}}

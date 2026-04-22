@@ -14,6 +14,7 @@ import (
 	"charm.land/log/v2"
 	"github.com/adrg/xdg"
 	"github.com/concertim/flight-user-suite/flight/cliui"
+	"github.com/concertim/flight-user-suite/flight/toolset"
 	"github.com/ergochat/readline"
 	"github.com/urfave/cli/v3"
 )
@@ -33,7 +34,7 @@ func toolCompletions(line string) []string {
 		cmdComplete = true
 	}
 
-	tools, err := getTools(true)
+	tools, err := toolset.GetTools(env.FlightRoot, false)
 	if err != nil {
 		log.Warn("Error", "err", err)
 		return nil
@@ -58,7 +59,7 @@ func toolCompletions(line string) []string {
 		// "help"), we offer no completions.
 		return nil
 	}
-	tool := &Tool{Name: cmd}
+	tool := &toolset.Tool{Name: cmd}
 
 	// Request completion from tool. Omit the final word if incomplete.
 	var toolArgs []string

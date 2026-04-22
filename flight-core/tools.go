@@ -9,12 +9,12 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slices"
-	"strings"
 
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/table"
 	"charm.land/log/v2"
 	"github.com/concertim/flight-user-suite/flight/cliui"
+	"github.com/concertim/flight-user-suite/flight/toolset"
 	"github.com/urfave/cli/v3"
 )
 
@@ -38,7 +38,7 @@ func transformToolError(tool string, err error) error {
 
 func listTools(ctx context.Context, cmd *cli.Command) error {
 	onlyEnabled := cmd.Bool("enabled")
-	tools, err := getTools(onlyEnabled)
+	tools, err := toolset.GetTools(env.FlightRoot, onlyEnabled)
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func listTools(ctx context.Context, cmd *cli.Command) error {
 	return toolsTable(tools)
 }
 
-func toolsTable(tools []*Tool) error {
+func toolsTable(tools []*toolset.Tool) error {
 	namecolWidth := 8
 
 	t := table.New().
@@ -90,37 +90,6 @@ func toolsTable(tools []*Tool) error {
 	return err
 }
 
-func getTools(onlyEnabled bool) ([]*Tool, error) {
-	log.Debug("getting tools", "dir", toolDir, "onlyEnabled", onlyEnabled)
-
-	toolSynopsisDir := filepath.Join(env.FlightRoot, "usr", "share", "doc", "tools")
-
-	entries, err := os.ReadDir(toolDir)
-	if err != nil {
-		return nil, fmt.Errorf("listing tools: %w", err)
-	}
-	tools := make([]*Tool, 0)
-	for _, entry := range entries {
-		if toolName, hasPrefix := strings.CutPrefix(entry.Name(), "flight-"); hasPrefix {
-			info, err := entry.Info()
-			if err != nil {
-				return nil, fmt.Errorf("reading tool info: %w", err)
-			}
-			enabled := info.Mode()&0111 != 0
-
-			synopsisFile := filepath.Join(toolSynopsisDir, entry.Name())
-			synopsis, _ := os.ReadFile(synopsisFile)
-
-			tool := &Tool{Enabled: enabled, Name: toolName, Synopsis: strings.TrimSpace(string(synopsis))}
-
-			if !onlyEnabled || tool.Enabled {
-				tools = append(tools, tool)
-			}
-		}
-	}
-	return tools, nil
-}
-
 func enableTool(ctx context.Context, cmd *cli.Command) error {
 	tool := cmd.StringArg("tool")
 	tp := toolPath(tool)
@@ -149,13 +118,13 @@ func disableTool(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func runToolAction(tool *Tool) func(ctx context.Context, cmd *cli.Command) error {
+func runToolAction(tool *toolset.Tool) func(ctx context.Context, cmd *cli.Command) error {
 	return func(ctx context.Context, cmd *cli.Command) error {
 		return runTool(ctx, tool, cmd.Args().Slice())
 	}
 }
 
-func buildToolExecCmd(ctx context.Context, tool *Tool, args []string) *exec.Cmd {
+func buildToolExecCmd(ctx context.Context, tool *toolset.Tool, args []string) *exec.Cmd {
 	tp := toolPath(tool.Name)
 	log.Debug("Execing", "tool", tool.Name, "path", tp, "args", args)
 	exe := exec.CommandContext(ctx, tp, args...)
@@ -164,7 +133,7 @@ func buildToolExecCmd(ctx context.Context, tool *Tool, args []string) *exec.Cmd 
 	return exe
 }
 
-func runTool(ctx context.Context, tool *Tool, args []string) error {
+func runTool(ctx context.Context, tool *toolset.Tool, args []string) error {
 	exe := buildToolExecCmd(ctx, tool, args)
 	exe.Stdout = os.Stdout
 	exe.Stderr = os.Stderr
@@ -173,24 +142,18 @@ func runTool(ctx context.Context, tool *Tool, args []string) error {
 }
 
 // Run the specified tool and return its Stdout.
-func runToolWithOutput(ctx context.Context, tool *Tool, args []string) ([]byte, error) {
+func runToolWithOutput(ctx context.Context, tool *toolset.Tool, args []string) ([]byte, error) {
 	exe := buildToolExecCmd(ctx, tool, args)
 	output, err := exe.Output()
 	return output, transformToolError(tool.Name, err)
-}
-
-type Tool struct {
-	Enabled  bool
-	Name     string
-	Synopsis string
 }
 
 type DisabledTool struct {
 	Tool string
 }
 
-func (ut DisabledTool) Error() string {
-	return fmt.Sprintf("The %s tool is not enabled", ut.Tool)
+func (dt DisabledTool) Error() string {
+	return fmt.Sprintf("The %s tool is not enabled", dt.Tool)
 }
 
 type UnknownTool struct {

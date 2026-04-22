@@ -14,6 +14,7 @@ import (
 	"charm.land/log/v2"
 	"github.com/concertim/flight-user-suite/flight/cliui"
 	"github.com/concertim/flight-user-suite/flight/configenv"
+	"github.com/concertim/flight-user-suite/flight/toolset"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/urfave/cli/v3"
 	"golang.org/x/term"
@@ -76,7 +77,7 @@ func main() {
 			cli.DefaultCompleteWithFlags(ctx, cmd)
 			switch cmd.NArg() {
 			case 0:
-				tools, err := getTools(true)
+				tools, err := toolset.GetTools(env.FlightRoot, true)
 				if err != nil {
 					return
 				}
@@ -219,7 +220,7 @@ func addAdminCommands(cmd *cli.Command, maxTextWidth int) {
 					ShellComplete: func(ctx context.Context, cmd *cli.Command) {
 						switch cmd.NArg() {
 						case 0:
-							tools, err := getTools(false)
+							tools, err := toolset.GetTools(env.FlightRoot, false)
 							if err != nil {
 								return
 							}
@@ -249,7 +250,7 @@ func addAdminCommands(cmd *cli.Command, maxTextWidth int) {
 					ShellComplete: func(ctx context.Context, cmd *cli.Command) {
 						switch cmd.NArg() {
 						case 0:
-							tools, err := getTools(true)
+							tools, err := toolset.GetTools(env.FlightRoot, false)
 							if err != nil {
 								return
 							}
@@ -396,7 +397,7 @@ The Flight Web Suite provides in-browser access to the Flight User Suite tools.`
 }
 
 func addToolProxyCommands(cmd *cli.Command) {
-	tools, err := getTools(true)
+	tools, err := toolset.GetTools(env.FlightRoot, false)
 	if err != nil {
 		log.Warn("Unable to add tool proxy commands", "err", err)
 		return
