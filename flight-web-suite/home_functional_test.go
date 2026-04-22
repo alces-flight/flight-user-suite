@@ -11,11 +11,12 @@ func TestHomepageAnonymous(t *testing.T) {
 	_, body := testutil.RenderPage(t, newApp(), http.MethodGet, "/", nil, http.StatusOK)
 
 	assertNotAuthenticated(t, body)
-	assertToolCardPresentHTML(t, body, "Flight Desktop", "/assets/images/desktop.png", "Access interactive desktop sessions")
-	assertToolCardPresentHTML(t, body, "Flight Howto", "/assets/images/howto.png", "Learn about the Flight User Suite and using your cluster")
+	assertToolCardAbsentHTML(t, body, "Flight Desktop")
+	assertToolCardAbsentHTML(t, body, "Flight Howto")
 }
 
 func TestHomepageAuthenticated(t *testing.T) {
+	setFlightRootForTest(t, "./testdata/flight_root") // Fake FLIGHT_ROOT with dummy tools enabled
 	_, body := testutil.RenderPage(t, newApp(), http.MethodGet, "/", nil, http.StatusOK, testutil.WithSessionCookie("ben"))
 
 	assertAuthenticated(t, body, "ben")
@@ -33,6 +34,13 @@ func assertToolCardPresentHTML(t *testing.T, body, title, imagePath, description
 		testutil.HasAttr("src", imagePath),
 		testutil.HasAttr("alt", title+" logo"),
 	)
+}
+
+func assertToolCardAbsentHTML(t *testing.T, body, title string) {
+	t.Helper()
+
+	cardSelector := `div[data-testid="tool-card--` + title + `"]`
+	testutil.AssertNoSelection(t, body, cardSelector)
 }
 
 func assertNotAuthenticated(t *testing.T, body string) {
@@ -63,4 +71,14 @@ func assertAuthenticated(t *testing.T, body, username string) {
 		testutil.HasText("Logout"),
 	)
 	testutil.AssertNoSelection(t, body, `[data-testid="sign-in-link"]`)
+}
+
+func setFlightRootForTest(t *testing.T, path string) {
+	t.Helper()
+
+	origPath := flightRoot
+	flightRoot = path
+	t.Cleanup(func() {
+		flightRoot = origPath
+	})
 }

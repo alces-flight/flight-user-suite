@@ -4,23 +4,37 @@
 <h1 class="mt-20 mb-15">
     Welcome to the <span class="text-alces-blue">{{ .EnvName }}</span> compute environment.
 </h1>
-<p class="mb-8">Select a tool to access your cluster from within your browser.</p>
-<div class="flex flex-wrap justify-center gap-x-4" data-testid="tool-cards">
-    {{range .Tools}}
-    <div class="
-	  flex flex-col items-center gap-y-1 justify-center
-	  border border-alces-blue-light
-	  w-70 p-9 px-8
-	  hover:shadow hover:border-alces-blue transition-colors duration-200 cursor-pointer group
-	" data-testid="tool-card--{{ .Name }}">
-        <div class="size-25 mb-2">
-            <img src="{{ .IconPath }}" alt="{{ .Name }} logo" class="h-full">
+
+{{ if .CurrentUserName }}
+    {{ if .HasTools }}
+        <p class="mb-8">Select a tool to access your cluster from within your browser.</p>
+        <div class="flex flex-wrap justify-center gap-x-4" data-testid="tool-cards">
+            {{range .Tools}}
+            <div class="
+            flex flex-col items-center gap-y-1 justify-center
+            border border-alces-blue-light
+            w-70 p-9 px-8
+            hover:shadow hover:border-alces-blue transition-colors duration-200 cursor-pointer group
+            " data-testid="tool-card--{{ .Name }}">
+                <div class="size-25 mb-2">
+                    <img src="{{ .IconPath }}" alt="{{ .Name }} logo" class="h-full">
+                </div>
+                <h2 class="group-hover:text-alces-blue!">{{ .Name }}</h2>
+                <p>{{ .Description }}</p>
+            </div>
+            {{end}}
         </div>
-        <h2 class="group-hover:text-alces-blue!">{{ .Name }}</h2>
-        <p>{{ .Description }}</p>
-    </div>
-    {{end}}
-</div>
+    {{ else }}
+        <p class="mb-8">
+            Your system administrator has not enabled any Flight tools.
+        </p>
+    {{ end }}
+{{ else }}
+    <p class="mb-8">
+        <a href="/sessions" class="underline text-alces-blue">Log in</a> to your
+        cluster to access Flight Web Suite functionality.
+    </p>
+{{ end }}
 
 {{template "layouts.application.end" . }}
 {{end}}
