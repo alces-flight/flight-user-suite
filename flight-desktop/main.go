@@ -44,6 +44,18 @@ func init() {
 	maxTextWidth = min(termWidth, 80)
 }
 
+var formatFlag = &cli.StringFlag{
+	Name:  "format",
+	Value: "pretty",
+	Usage: "use specified `FORMAT` for the output (pretty, json).",
+	Validator: func(format string) error {
+		if format != "pretty" && format != "json" {
+			return fmt.Errorf("%s is not a known format (pretty, json)", format)
+		}
+		return nil
+	},
+}
+
 func main() {
 	// Load config here rather than `init` to prevent errors from breaking
 	// tests.

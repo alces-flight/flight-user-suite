@@ -20,19 +20,7 @@ func listSessionsCommand() *cli.Command {
 		Usage:       "List interactive desktop sessions",
 		Description: wordwrap.String("Display all known desktop sessions and their states.", 80),
 		Category:    "Sessions",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:  "format",
-				Value: "pretty",
-				Usage: "output sessions in the specified `FORMAT` (pretty, json).",
-				Validator: func(format string) error {
-					if format != "pretty" && format != "json" {
-						return fmt.Errorf("%s is not a known format (pretty, json)", format)
-					}
-					return nil
-				},
-			},
-		},
+		Flags:       []cli.Flag{formatFlag},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			sessions, err := loadAllSessions()
 			if err != nil {
