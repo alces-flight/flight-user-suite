@@ -62,6 +62,13 @@ func TestHomepageAuthenticated(t *testing.T) {
 	assertToolCardPresentHTML(t, body, "Flight Howto", "/assets/images/howto.png", "Learn about the Flight User Suite and using your cluster")
 }
 
+func TestHomepageAuthenticatedWithInvalidSessionCookie(t *testing.T) {
+	_, body := testutil.RenderPage(t, newApp(), http.MethodGet, "/", nil, http.StatusOK,
+		testutil.WithSessionCookie("ben", "stale-secret"),
+	)
+	assertNotAuthenticated(t, body)
+}
+
 func assertToolCardPresentHTML(t *testing.T, body, title, imagePath, description string) {
 	t.Helper()
 

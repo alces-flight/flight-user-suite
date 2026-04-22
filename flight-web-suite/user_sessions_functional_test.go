@@ -66,6 +66,52 @@ func TestCreateNewSessionGoodData(t *testing.T) {
 	}
 }
 
+func TestCreateNewSessionGoodDataWithInvalidSessionCookie(t *testing.T) {
+	setAuthenticatorPathForTest(t, filepath.Join("testdata", "authenticator_success.sh"))
+	data := strings.NewReader("username=bob&password=fakepassword")
+	resp, _ := testutil.RenderPage(t, newApp(), http.MethodPost, "/sessions", data, http.StatusSeeOther,
+		testutil.WithContentType("application/x-www-form-urlencoded"),
+		testutil.WithSessionCookie("alice", "stale-secret"),
+	)
+
+	if resp.Header.Get("location") != "/" {
+		t.Errorf("Expected new sessions page to redirect to '/' for authenticated users")
+	}
+}
+
+func TestCreateNewSessionNoDataWithInvalidSessionCookie(t *testing.T) {
+	data := strings.NewReader("")
+	_, body := testutil.RenderPage(t, newApp(), http.MethodPost, "/sessions", data, http.StatusOK,
+		testutil.WithContentType("application/x-www-form-urlencoded"),
+		testutil.WithSessionCookie("alice", "stale-secret"),
+	)
+
+	assertNotAuthenticated(t, body)
+	testutil.AssertSelection(t, body, `div.flash.alert`,
+		testutil.HasText("Username and/or password not provided"),
+	)
+}
+
+func TestCreateNewSessionBadDataWithInvalidSessionCookie(t *testing.T) {
+	setAuthenticatorPathForTest(t, filepath.Join("testdata", "authenticator_fail.sh"))
+	data := strings.NewReader("username=bob&password=fakepassword")
+	_, body := testutil.RenderPage(t, newApp(), http.MethodPost, "/sessions", data, http.StatusOK,
+		testutil.WithContentType("application/x-www-form-urlencoded"),
+		testutil.WithSessionCookie("alice", "stale-secret"),
+	)
+
+	assertNotAuthenticated(t, body)
+	testutil.AssertSelection(t, body, `div.flash.alert`,
+		testutil.HasText("Invalid username or password"),
+	)
+	testutil.AssertSelection(t, body, `form[data-testid="new-session-form"] input[name="username"]`,
+		testutil.HasAttr("value", "bob"),
+	)
+	testutil.AssertSelection(t, body, `form[data-testid="new-session-form"] input[name="password"]`,
+		testutil.HasNoAttr("value"),
+	)
+}
+
 func TestCreateNewSessionInternalErrors(t *testing.T) {
 	testCases := []struct {
 		name string

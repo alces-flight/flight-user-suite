@@ -1,12 +1,16 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v5"
 )
+
+const sessionContextKey = "_session"
 
 func Flashes(c *echo.Context, flavour string) []string {
 	sess, err := GetSession(c)
@@ -29,12 +33,29 @@ func Flashes(c *echo.Context, flavour string) []string {
 }
 
 func GetSession(c *echo.Context) (*sessions.Session, error) {
+	if sess, ok := c.Get(sessionContextKey).(*sessions.Session); ok {
+		return sess, nil
+	}
+
 	name := "session"
 	store, err := echo.ContextGet[sessions.Store](c, "_session_store")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session store: %w", err)
 	}
-	return store.Get(c.Request(), name)
+	sess, err := store.Get(c.Request(), name)
+	if err != nil {
+		if multiErr, ok := errors.AsType[securecookie.MultiError](err); ok && multiErr.IsDecode() {
+			// If we can't decode the session, use an empty session for the
+			// rest of this request.  We cache the session to ensure subsequent
+			// calls to `GetSession()` return it without logging again.
+			CacheSession(c, sess)
+			c.Logger().Warn("error decoding session: using empty session", "err", multiErr)
+			return sess, nil
+		} else {
+			return sess, err
+		}
+	}
+	return sess, err
 }
 
 func DeleteSession(c *echo.Context) error {
@@ -53,6 +74,10 @@ func SaveSession(c *echo.Context, sess *sessions.Session) {
 	if err := sess.Save(c.Request(), c.Response()); err != nil {
 		c.Logger().Warn("Error saving session", "err", err)
 	}
+}
+
+func CacheSession(c *echo.Context, sess *sessions.Session) {
+	c.Set(sessionContextKey, sess)
 }
 
 func IsLoggedIn(c *echo.Context) bool {
