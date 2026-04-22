@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
+	"time"
 
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/table"
@@ -17,22 +20,58 @@ func listSessionsCommand() *cli.Command {
 		Usage:       "List interactive desktop sessions",
 		Description: wordwrap.String("Display all known desktop sessions and their states.", 80),
 		Category:    "Sessions",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "format",
+				Value: "pretty",
+				Usage: "output sessions in the specified `FORMAT` (pretty, json).",
+				Validator: func(format string) error {
+					if format != "pretty" && format != "json" {
+						return fmt.Errorf("%s is not a known format (pretty, json)", format)
+					}
+					return nil
+				},
+			},
+		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			sessions, err := loadAllSessions()
 			if err != nil {
 				return err
 			}
+			if cmd.String("format") == "json" {
+				return writeSessionsJSON(sessions)
+			}
 			if len(sessions) == 0 {
 				fmt.Println("No desktop sessions found.")
 				return nil
 			}
-			err = sessionsTable(sessions)
-			if err != nil {
-				return err
-			}
-			return nil
+			return sessionsTable(sessions)
 		},
 	}
+}
+
+type listedSession struct {
+	Name        string       `json:"name"`
+	DesktopType string       `json:"desktop_type"`
+	State       sessionState `json:"state"`
+	Host        string       `json:"host"`
+	CreatedAt   string       `json:"created_at"`
+}
+
+func writeSessionsJSON(sessions []*Session) error {
+	output := make([]listedSession, 0, len(sessions))
+	for _, session := range sessions {
+		output = append(output, listedSession{
+			Name:        session.Name,
+			DesktopType: session.SessionType,
+			State:       session.SessionState(),
+			Host:        session.Metadata.Host,
+			CreatedAt:   session.CreatedAt.Format(time.RFC3339),
+		})
+	}
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	return enc.Encode(output)
 }
 
 func sessionsTable(sessions []*Session) error {
