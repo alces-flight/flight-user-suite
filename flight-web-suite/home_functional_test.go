@@ -58,8 +58,8 @@ func TestHomepageAuthenticated(t *testing.T) {
 	_, body := testutil.RenderPage(t, newApp(), http.MethodGet, "/", nil, http.StatusOK, testutil.WithSessionCookie("ben", config.Session.Secret))
 
 	assertAuthenticated(t, body, "ben")
-	assertToolCardPresentHTML(t, body, "Flight Desktop", "/assets/images/desktop.png", "Access interactive desktop sessions")
-	assertToolCardPresentHTML(t, body, "Flight Howto", "/assets/images/howto.png", "Learn about the Flight User Suite and using your cluster")
+	assertToolCardPresentHTML(t, body, "Flight Desktop", "/assets/images/desktop.png", "Access interactive desktop sessions", "/desktop")
+	assertToolCardPresentHTML(t, body, "Flight Howto", "/assets/images/howto.png", "Learn about the Flight User Suite and using your cluster", "/howto")
 }
 
 func TestHomepageAuthenticatedWithInvalidSessionCookie(t *testing.T) {
@@ -69,16 +69,17 @@ func TestHomepageAuthenticatedWithInvalidSessionCookie(t *testing.T) {
 	assertNotAuthenticated(t, body)
 }
 
-func assertToolCardPresentHTML(t *testing.T, body, title, imagePath, description string) {
+func assertToolCardPresentHTML(t *testing.T, body, title, imagePath, description, url string) {
 	t.Helper()
 
-	cardSelector := `div[data-testid="tool-card--` + title + `"]`
+	cardSelector := `a[data-testid="tool-card--` + title + `"]`
 	testutil.AssertSelection(t, body, cardSelector+` h2`, testutil.HasText(title))
 	testutil.AssertSelection(t, body, cardSelector+` p`, testutil.HasText(description))
 	testutil.AssertSelection(t, body, cardSelector+` img`,
 		testutil.HasAttr("src", imagePath),
 		testutil.HasAttr("alt", title+" logo"),
 	)
+	testutil.AssertSelection(t, body, cardSelector, testutil.HasAttr("href", url))
 }
 
 func assertToolCardAbsentHTML(t *testing.T, body, title string) {
