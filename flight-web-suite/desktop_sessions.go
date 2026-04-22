@@ -192,7 +192,7 @@ type terminationResponse struct {
 }
 
 func desktopKillCommand(ctx context.Context, username, sessionName string) (terminationResponse, error) {
-	cmd, err := buildDesktopCommand(ctx, username, "kill", sessionName, "--format", "json")
+	cmd, err := buildDesktopCommand(ctx, username, "kill", "--format", "json", "--", sessionName)
 	if err != nil {
 		return terminationResponse{}, err
 	}

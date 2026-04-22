@@ -157,7 +157,7 @@ JSON
 	if err != nil {
 		t.Fatalf("failed to read command args fixture: %v", err)
 	}
-	if got := strings.TrimSpace(string(data)); got != "kill\nalpha\n--format\njson" {
+	if got := strings.TrimSpace(string(data)); got != "kill\n--format\njson\n--\nalpha" {
 		t.Fatalf("expected kill command args, got %q", got)
 	}
 }
