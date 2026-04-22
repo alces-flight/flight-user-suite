@@ -7,6 +7,13 @@ import (
 	"strings"
 )
 
+type Tool struct {
+	Name        string
+	Description string
+	URL         string
+	IconPath    string
+}
+
 var toolDefs = map[string]Tool{
 	// Keys should match the unprefixed name of FUS tools.
 	"desktop": {

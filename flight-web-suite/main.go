@@ -32,13 +32,6 @@ var (
 	printVersion = flag.Bool("version", false, "print the version")
 )
 
-type Tool struct {
-	Name        string
-	Description string
-	URL         string
-	IconPath    string
-}
-
 func init() {
 	// TODO: Setup log/slog. Save logs to file/stdout?
 
