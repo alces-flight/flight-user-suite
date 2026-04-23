@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"os"
 
 	"charm.land/log/v2"
 	"github.com/muesli/reflow/wordwrap"
@@ -19,11 +22,15 @@ func killSessionCommand() *cli.Command {
 		Arguments: []cli.Argument{
 			&cli.StringArg{Name: "name", UsageText: "<name>"},
 		},
+		Flags:         []cli.Flag{formatFlag},
 		Before:        assertArgPresent("name"),
 		ShellComplete: completeActiveSessionNames,
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			name := cmd.StringArg("name")
 			session, err := loadSession(name)
+			if cmd.String("format") == "json" {
+				return killSessionJSON(ctx, session, err)
+			}
 			if err != nil {
 				if err2 := session.RemoveSessionDir(); err2 != nil {
 					log.Debug("Removing session dir", "sessionDir", session.sessionDir(), "err", err2)
@@ -55,6 +62,63 @@ func killSessionCommand() *cli.Command {
 			fmt.Printf("Desktop session '%s' has been terminated.\n", session.Name)
 			return nil
 		},
+	}
+}
+
+type terminationResponse struct {
+	Success     bool   `json:"success"`
+	SessionName string `json:"session_name"`
+	Error       string `json:"error,omitempty"`
+	Reason      string `json:"reason,omitempty"`
+}
+
+func killSessionJSON(ctx context.Context, session *Session, loadErr error) error {
+	if loadErr != nil {
+		if _, ok := errors.AsType[UnknownSession](loadErr); ok {
+			return writeTerminationFailure(session.Name, loadErr.Error(), "not_found")
+		}
+		return writeTerminationFailure(session.Name, loadErr.Error(), "terminate_failed")
+	}
+	if !session.IsLocal() {
+		return writeTerminationFailure(session.Name, fmt.Sprintf("Desktop session '%s' is not local.", session.Name), "not_local")
+	}
+	if session.State != Active {
+		return writeTerminationFailure(session.Name, fmt.Sprintf("Desktop session '%s' is not active.", session.Name), "not_active")
+	}
+	if err := session.Kill(ctx); err != nil {
+		return writeTerminationFailure(session.Name, fmt.Sprintf("Terminating session '%s' failed.", session.Name), "terminate_failed")
+	}
+	return writeTerminationSuccess(session.Name)
+}
+
+func writeTerminationSuccess(sessionName string) error {
+	return writeTerminationResponse(terminationResponse{
+		Success:     true,
+		SessionName: sessionName,
+	}, 0)
+}
+
+func writeTerminationFailure(sessionName, message, reason string) error {
+	return writeTerminationResponse(terminationResponse{
+		Success:     false,
+		SessionName: sessionName,
+		Error:       message,
+		Reason:      reason,
+	}, 1)
+}
+
+func writeTerminationResponse(response terminationResponse, exitCode int) error {
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(response); err != nil {
+		return err
+	}
+	if exitCode == 0 {
+		return nil
+	}
+	return SilentExitError{
+		ExitCode:  exitCode,
+		exitError: errors.New("session termination failed"),
 	}
 }
 

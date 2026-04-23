@@ -17,7 +17,7 @@ import (
 var (
 	nameWhitelist            = "-_.A-Za-z0-9"
 	nameWhitelistExplanation = "letters, numbers, hyphens, underscores and dots"
-	nameBlacklist            = regexp.MustCompile(fmt.Sprintf("[^%s]+", nameWhitelist))
+	nameBlacklist            = regexp.MustCompile(fmt.Sprintf("^-|[^%s]+", nameWhitelist))
 	nameMaxLen               = 40
 )
 
@@ -39,7 +39,7 @@ func startSessionCommand() *cli.Command {
 				DefaultText: "random",
 				Validator: func(name string) error {
 					if nameBlacklist.MatchString(name) {
-						return fmt.Errorf("it can contain only %s.", nameWhitelistExplanation)
+						return fmt.Errorf("it can contain only %s and cannot start with a hyphen.", nameWhitelistExplanation)
 					}
 					if len(name) > nameMaxLen {
 						return fmt.Errorf("it must be no more than %d characters", nameMaxLen)

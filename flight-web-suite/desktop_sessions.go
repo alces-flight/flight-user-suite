@@ -34,6 +34,9 @@ type desktopSessionCard struct {
 	State         string
 	Host          string
 	StartTimeText string
+	ActionLabel   string
+	ActionTitle   string
+	ActionEnabled bool
 }
 
 func indexDesktopSessionsHandler(c *echo.Context) error {
@@ -46,7 +49,7 @@ func indexDesktopSessionsHandler(c *echo.Context) error {
 		return echo.NewHTTPError(http.StatusServiceUnavailable, "Flight Desktop is not enabled")
 	}
 
-	sessions, err := listDesktopSessions(c.Request().Context(), CurrentUserName(c))
+	sessions, err := desktopListCommand(c.Request().Context(), CurrentUserName(c))
 	if err != nil {
 		return err
 	}
@@ -65,15 +68,59 @@ func indexDesktopSessionsHandler(c *echo.Context) error {
 	return c.Render(http.StatusOK, "desktop/index", AddCommonData(c, data))
 }
 
+func destroyDesktopSessionHandler(c *echo.Context) error {
+	if !IsLoggedIn(c) {
+		return c.Redirect(http.StatusSeeOther, "/sessions")
+	}
+
+	tool, err := toolset.GetTool(env.FlightRoot, "desktop")
+	if err != nil || !tool.Enabled {
+		return echo.NewHTTPError(http.StatusServiceUnavailable, "Flight Desktop is not enabled")
+	}
+
+	response, err := desktopKillCommand(c.Request().Context(), CurrentUserName(c), c.Param("sessionName"))
+	if err != nil {
+		return err
+	}
+
+	sess, err := GetSession(c)
+	if err != nil {
+		return err
+	}
+	if response.Success {
+		sess.AddFlash(fmt.Sprintf("Desktop session '%s' terminated.", response.SessionName), "notice")
+	} else {
+		sess.AddFlash(fmt.Sprintf("Failed to terminate desktop session '%s': %s", response.SessionName, response.Error), "alert")
+	}
+	SaveSession(c, sess)
+	return c.Redirect(http.StatusSeeOther, "/desktop")
+}
+
 func buildDesktopSessionCards(sessions []desktopSession) []desktopSessionCard {
 	cards := make([]desktopSessionCard, 0, len(sessions))
 	for _, session := range sessions {
+		actionLabel := "Clean"
+		actionTitle := "Cleaning desktop sessions is not yet implemented."
+		actionEnabled := false
+		switch session.State {
+		case "active":
+			actionLabel = "Terminate"
+			actionTitle = ""
+			actionEnabled = true
+		case "remote":
+			actionLabel = "Terminate"
+			actionTitle = "Termination of remote sessions is not yet implemented."
+		}
+
 		cards = append(cards, desktopSessionCard{
 			Name:          session.Name,
 			DesktopType:   session.DesktopType,
 			State:         session.State,
 			Host:          session.Host,
 			StartTimeText: session.CreatedAt.Format("Mon 2 Jan 2006 15:04"),
+			ActionLabel:   actionLabel,
+			ActionTitle:   actionTitle,
+			ActionEnabled: actionEnabled,
 		})
 	}
 	return cards
@@ -113,13 +160,8 @@ func desktopSessionsSummary(sessions []desktopSession) string {
 	return fmt.Sprintf("You have %d desktop sessions currently running %s", runningCount, nonRunningString)
 }
 
-func listDesktopSessions(ctx context.Context, username string) ([]desktopSession, error) {
-	userInfo, err := user.Lookup(username)
-	if err != nil {
-		return nil, fmt.Errorf("looking up user %q: %w", username, err)
-	}
-
-	cmd, err := desktopListCommand(ctx, userInfo)
+func desktopListCommand(ctx context.Context, username string) ([]desktopSession, error) {
+	cmd, err := buildDesktopCommand(ctx, username, "list", "--format", "json")
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +184,45 @@ func listDesktopSessions(ctx context.Context, username string) ([]desktopSession
 	return sessions, nil
 }
 
-func desktopListCommand(ctx context.Context, userInfo *user.User) (*exec.Cmd, error) {
+type terminationResponse struct {
+	Success     bool   `json:"success"`
+	SessionName string `json:"session_name"`
+	Error       string `json:"error"`
+	Reason      string `json:"reason"`
+}
+
+func desktopKillCommand(ctx context.Context, username, sessionName string) (terminationResponse, error) {
+	cmd, err := buildDesktopCommand(ctx, username, "kill", "--format", "json", "--", sessionName)
+	if err != nil {
+		return terminationResponse{}, err
+	}
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	runErr := cmd.Run()
+
+	var response terminationResponse
+	if decodeErr := json.Unmarshal(stdout.Bytes(), &response); decodeErr == nil {
+		return response, nil
+	}
+
+	if runErr != nil {
+		if stderr.Len() != 0 {
+			return terminationResponse{}, fmt.Errorf("terminating desktop session: %s", stderr.String())
+		}
+		return terminationResponse{}, fmt.Errorf("terminating desktop session: %w", runErr)
+	}
+	return terminationResponse{}, fmt.Errorf("decoding desktop termination response: %s", stdout.String())
+}
+
+func buildDesktopCommand(ctx context.Context, username string, args ...string) (*exec.Cmd, error) {
+	userInfo, err := user.Lookup(username)
+	if err != nil {
+		return nil, fmt.Errorf("looking up user %q: %w", username, err)
+	}
+
 	uid, err := strconv.Atoi(userInfo.Uid)
 	if err != nil {
 		return nil, fmt.Errorf("parsing uid for user %q: %w", userInfo.Username, err)
@@ -165,7 +245,7 @@ func desktopListCommand(ctx context.Context, userInfo *user.User) (*exec.Cmd, er
 		groups = append(groups, uint32(parsed))
 	}
 
-	cmd := exec.CommandContext(ctx, desktopToolPath(), "list", "--format", "json")
+	cmd := exec.CommandContext(ctx, desktopToolPath(), args...)
 	cmd.Dir = userInfo.HomeDir
 	cmd.Env = desktopCommandEnv(userInfo)
 	if os.Geteuid() == 0 {

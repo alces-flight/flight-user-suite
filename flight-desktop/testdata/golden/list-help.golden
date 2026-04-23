@@ -11,7 +11,7 @@ DESCRIPTION:
    Display all known desktop sessions and their states.
 
 OPTIONS:
-   --format FORMAT  output sessions in the specified FORMAT (pretty, json). (default: "pretty")
+   --format FORMAT  use specified FORMAT for the output (pretty, json). (default: "pretty")
    --help, -h       show help
 
 GLOBAL OPTIONS:
