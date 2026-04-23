@@ -32,16 +32,13 @@
                             class="flex flex-col justify-between cursor-pointer border p-5 transition max-w-xs border-slate-300 bg-white peer-checked:border-alces-blue peer-checked:bg-sky-50">
                             <div class="flex items-start justify-between gap-4">
                                 <div>
-                                    <h3 class="text-xl font-semibold" data-testid="desktop-type-heading--{{ .ID }}">{{
-                                        .ID }}</h3>
-                                    <p class="mt-3 text-sm leading-6 text-slate-700"
-                                        data-testid="desktop-type-summary--{{ .ID }}">{{ .Summary }}</p>
+                                    <h3 class="text-xl font-semibold">{{ .ID }}</h3>
+                                    <p class="mt-3 text-sm leading-6 text-slate-700">{{ .Summary }}</p>
                                 </div>
                             </div>
                             {{if .URL}}
                             <p class="mt-4 text-sm">
-                                <a href="{{ .URL }}" class="text-alces-blue underline"
-                                    data-testid="desktop-type-url--{{ .ID }}">Project page</a>
+                                <a href="{{ .URL }}" class="text-alces-blue underline">Project page</a>
                             </p>
                             {{end}}
                         </label>

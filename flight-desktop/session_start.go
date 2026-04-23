@@ -126,13 +126,34 @@ func startSessionPretty(ctx context.Context, sessionType, nameInput, geometry st
 type sessionStartResponse struct {
 	Success     bool   `json:"success"`
 	SessionName string `json:"session_name"`
-	Error       string `json:"error,omitempty"`
-	Reason      string `json:"reason,omitempty"`
+}
+
+type sessionStartErrorDocument struct {
+	Errors []sessionStartError `json:"errors"`
+}
+
+type sessionStartError struct {
+	Code   string                   `json:"code"`
+	Title  string                   `json:"title"`
+	Detail string                   `json:"detail"`
+	Source *sessionStartErrorSource `json:"source,omitempty"`
+	Meta   sessionStartErrorMeta    `json:"meta"`
+}
+
+type sessionStartErrorSource struct {
+	Parameter string `json:"parameter"`
+}
+
+type sessionStartErrorMeta struct {
+	CLIDetail string `json:"cli_detail"`
 }
 
 type startValidationError struct {
 	message string // Human-readable error message.
 	reason  string // Machine-readable error message.
+	title   string
+	detail  string
+	source  string
 }
 
 func (e startValidationError) Error() string {
@@ -141,13 +162,13 @@ func (e startValidationError) Error() string {
 
 func startSessionJSON(ctx context.Context, sessionType, nameInput, geometry string) error {
 	if err := validateSessionType(sessionType); err != nil {
-		return writeStartFailure(nameInput, err.Error(), startFailureReason(err, "invalid_type"))
+		return writeStartFailure(startFailureError(err, nameInput))
 	}
 	if err := validateSessionName(nameInput); err != nil {
-		return writeStartFailure(nameInput, err.Error(), startFailureReason(err, "invalid_name"))
+		return writeStartFailure(startFailureError(err, nameInput))
 	}
 	if err := validateGeometry(geometry); err != nil {
-		return writeStartFailure(nameInput, err.Error(), startFailureReason(err, "invalid_geometry"))
+		return writeStartFailure(startFailureError(err, nameInput))
 	}
 
 	sessionName := nameInput
@@ -157,10 +178,17 @@ func startSessionJSON(ctx context.Context, sessionType, nameInput, geometry stri
 
 	depsOK, err := checkDependenciesQuiet(sessionType)
 	if err != nil {
-		return writeStartFailure(sessionName, err.Error(), "start_failed")
+		return writeStartFailure(startFailureError(err, nameInput))
 	}
 	if !depsOK {
-		return writeStartFailure(sessionName, fmt.Sprintf("Missing required dependencies for %s desktop type.", sessionType), "dependencies_failed")
+		return writeStartFailure(sessionStartError{
+			Code:   "dependencies_failed",
+			Title:  "Desktop dependencies unavailable",
+			Detail: fmt.Sprintf("Missing required dependencies for %s desktop type.", sessionType),
+			Meta: sessionStartErrorMeta{
+				CLIDetail: fmt.Sprintf("Missing required dependencies for %s desktop type.", sessionType),
+			},
+		})
 	}
 
 	session := Session{
@@ -170,7 +198,7 @@ func startSessionJSON(ctx context.Context, sessionType, nameInput, geometry stri
 		Geometry:    geometry,
 	}
 	if err := session.Start(ctx); err != nil {
-		return writeStartFailure(sessionName, startFailureMessage(sessionName, err), startFailureReason(err, "start_failed"))
+		return writeStartFailure(startFailureError(err, nameInput))
 	}
 	return writeStartSuccess(sessionName)
 }
@@ -187,11 +215,18 @@ func validateSessionType(sessionType string) error {
 	if !slices.Contains(typeNames, sessionType) {
 		return startValidationError{
 			message: fmt.Sprintf(
-				"Incorrect Usage: unknown type '%s'. Valid values are %s.",
+				"unknown type '%s'. Valid values are %s.",
 				sessionType,
 				strings.Join(typeNames, ", "),
 			),
 			reason: "invalid_type",
+			title:  "Invalid desktop type",
+			detail: fmt.Sprintf(
+				"Unknown desktop type '%s'. Valid values are %s.",
+				sessionType,
+				strings.Join(typeNames, ", "),
+			),
+			source: "type",
 		}
 	}
 	return nil
@@ -205,12 +240,18 @@ func validateSessionName(name string) error {
 		return startValidationError{
 			message: fmt.Sprintf("invalid value %q for flag -name: it can contain only %s and cannot start with a hyphen.", name, nameWhitelistExplanation),
 			reason:  "invalid_name",
+			title:   "Invalid session name",
+			detail:  fmt.Sprintf("Session name can contain only %s and cannot start with a hyphen.", nameWhitelistExplanation),
+			source:  "name",
 		}
 	}
 	if len(name) > nameMaxLen {
 		return startValidationError{
 			message: fmt.Sprintf("invalid value %q for flag -name: it must be no more than %d characters", name, nameMaxLen),
 			reason:  "invalid_name",
+			title:   "Invalid session name",
+			detail:  fmt.Sprintf("Session name must be no more than %d characters.", nameMaxLen),
+			source:  "name",
 		}
 	}
 	return nil
@@ -225,6 +266,9 @@ func validateGeometry(geometry string) error {
 	return startValidationError{
 		message: fmt.Sprintf("invalid value %q for flag -geometry: it must be in WIDTHxHEIGHT format with positive integers", geometry),
 		reason:  "invalid_geometry",
+		title:   "Invalid desktop geometry",
+		detail:  "Desktop geometry must be in WIDTHxHEIGHT format with positive integers.",
+		source:  "geometry",
 	}
 }
 
@@ -289,7 +333,7 @@ func checkDependenciesQuiet(sessionType string) (bool, error) {
 	return true, nil
 }
 
-func startFailureMessage(sessionName string, err error) string {
+func startFailureMessage(nameInput string, err error) string {
 	var validationErr startValidationError
 	switch {
 	case errors.As(err, &validationErr):
@@ -298,8 +342,10 @@ func startFailureMessage(sessionName string, err error) string {
 		return err.Error()
 	case strings.Contains(err.Error(), "geometry") && strings.Contains(err.Error(), "invalid"):
 		return err.Error()
+	case nameInput == "":
+		return "Starting desktop session failed."
 	default:
-		return fmt.Sprintf("Starting desktop session '%s' failed.", sessionName)
+		return fmt.Sprintf("Starting desktop session '%s' failed.", nameInput)
 	}
 }
 
@@ -317,6 +363,39 @@ func startFailureReason(err error, fallback string) string {
 	}
 }
 
+func startFailureError(err error, nameInput string) sessionStartError {
+	if validationErr, ok := errors.AsType[startValidationError](err); ok {
+		startErr := sessionStartError{
+			Code:   validationErr.reason,
+			Title:  validationErr.title,
+			Detail: validationErr.detail,
+			Meta: sessionStartErrorMeta{
+				CLIDetail: validationErr.message,
+			},
+		}
+		if validationErr.source != "" {
+			startErr.Source = &sessionStartErrorSource{Parameter: validationErr.source}
+		}
+		return startErr
+	}
+
+	fallbackReason := "start_failed"
+	reason := startFailureReason(err, fallbackReason)
+	detail := startFailureMessage(nameInput, err)
+	title := "Desktop session failed to start"
+	if reason == "dependencies_failed" {
+		title = "Desktop dependencies unavailable"
+	}
+	return sessionStartError{
+		Code:   reason,
+		Title:  title,
+		Detail: detail,
+		Meta: sessionStartErrorMeta{
+			CLIDetail: err.Error(),
+		},
+	}
+}
+
 func writeStartSuccess(sessionName string) error {
 	return writeStartResponse(sessionStartResponse{
 		Success:     true,
@@ -324,16 +403,13 @@ func writeStartSuccess(sessionName string) error {
 	}, 0)
 }
 
-func writeStartFailure(sessionName, message, reason string) error {
-	return writeStartResponse(sessionStartResponse{
-		Success:     false,
-		SessionName: sessionName,
-		Error:       message,
-		Reason:      reason,
+func writeStartFailure(startErr sessionStartError) error {
+	return writeStartResponse(sessionStartErrorDocument{
+		Errors: []sessionStartError{startErr},
 	}, 1)
 }
 
-func writeStartResponse(response sessionStartResponse, exitCode int) error {
+func writeStartResponse(response any, exitCode int) error {
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
 	if err := enc.Encode(response); err != nil {

@@ -125,8 +125,10 @@ func main() {
 
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
 		// A bunch of checks to avoid reporting the usage errors twice.
+		_, isSVE := errors.AsType[startValidationError](err)
 		errStr := err.Error()
-		if (strings.Contains(errStr, "invalid value") && strings.Contains(errStr, "for flag")) ||
+		if !isSVE &&
+			(strings.Contains(errStr, "invalid value") && strings.Contains(errStr, "for flag")) ||
 			(strings.Contains(errStr, "flag provided but not defined")) ||
 			(strings.Contains(errStr, "flag needs an argument")) {
 			// We've already reported the usage error.  No need to do so a
@@ -134,8 +136,8 @@ func main() {
 			os.Exit(1)
 		}
 
-		if strings.Contains(errStr, "cannot be set along with") {
-			log.Printf("\nIncorrect Usage: %s", err)
+		if strings.Contains(errStr, "cannot be set along with") || isSVE {
+			log.Printf("Incorrect Usage: %s", err)
 			os.Exit(1)
 		}
 
@@ -145,19 +147,6 @@ func main() {
 			log.Printf("%s\n", err)
 			os.Exit(1)
 		}
-	}
-}
-
-func composeBeforeFuncs(fns ...cli.BeforeFunc) cli.BeforeFunc {
-	return func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
-		var err error
-		for _, fn := range fns {
-			ctx, err = fn(ctx, cmd)
-			if err != nil {
-				return ctx, err
-			}
-		}
-		return ctx, nil
 	}
 }
 

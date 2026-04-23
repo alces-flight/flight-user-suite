@@ -32,10 +32,29 @@ type desktopStartInput struct {
 }
 
 type desktopStartResponse struct {
-	Success     bool   `json:"success"`
+	Success     bool
+	SessionName string
+	Error       desktopStartError
+}
+
+type desktopStartSuccessDocument struct {
+	Success     *bool  `json:"success"`
 	SessionName string `json:"session_name"`
-	Error       string `json:"error"`
-	Reason      string `json:"reason"`
+}
+
+type desktopStartErrorDocument struct {
+	Errors []desktopStartError `json:"errors"`
+}
+
+type desktopStartError struct {
+	Code   string                   `json:"code"`
+	Title  string                   `json:"title"`
+	Detail string                   `json:"detail"`
+	Source *desktopStartErrorSource `json:"source,omitempty"`
+}
+
+type desktopStartErrorSource struct {
+	Parameter string `json:"parameter"`
 }
 
 type desktopLaunchFieldErrors struct {
@@ -49,7 +68,7 @@ type desktopLaunchFormData struct {
 	Name        string
 	Geometry    string
 	Errors      desktopLaunchFieldErrors
-	FormError   string
+	Alert       string
 }
 
 var desktopGeometryOptions = []desktopGeometryOption{
@@ -122,11 +141,11 @@ func createDesktopSessionHandler(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
-	alertMessage := form.FormError
-	if alertMessage == "" {
-		alertMessage = "Failed to launch desktop session."
+	alert := form.Alert
+	if alert == "" {
+		alert = "Failed to launch desktop session."
 	}
-	sess.AddFlash(alertMessage, "alert")
+	sess.AddFlash(alert, "alert")
 	SaveSession(c, sess)
 	return renderDesktopLaunchPage(c, http.StatusUnprocessableEntity, desktopTypes, form)
 }
@@ -183,9 +202,20 @@ func desktopStartCommand(ctx context.Context, username string, input desktopStar
 	cmd.Stderr = &stderr
 	runErr := cmd.Run()
 
-	var response desktopStartResponse
-	if decodeErr := json.Unmarshal(stdout.Bytes(), &response); decodeErr == nil {
-		return response, nil
+	var successDoc desktopStartSuccessDocument
+	if decodeErr := json.Unmarshal(stdout.Bytes(), &successDoc); decodeErr == nil && successDoc.Success != nil {
+		return desktopStartResponse{
+			Success:     *successDoc.Success,
+			SessionName: successDoc.SessionName,
+		}, nil
+	}
+
+	var errorDoc desktopStartErrorDocument
+	if decodeErr := json.Unmarshal(stdout.Bytes(), &errorDoc); decodeErr == nil && len(errorDoc.Errors) > 0 {
+		return desktopStartResponse{
+			Success: false,
+			Error:   errorDoc.Errors[0],
+		}, nil
 	}
 	if runErr != nil {
 		if stderr.Len() != 0 {
@@ -206,15 +236,17 @@ func validateDesktopLaunchForm(desktopTypes []desktopType, form *desktopLaunchFo
 }
 
 func applyDesktopStartErrors(form *desktopLaunchFormData, response desktopStartResponse) {
-	switch response.Reason {
-	case "invalid_type":
-		form.Errors.DesktopType = response.Error
-	case "invalid_name":
-		form.Errors.Name = response.Error
-	case "invalid_geometry":
-		form.Errors.Geometry = response.Error
-	default:
-		form.FormError = response.Error
+	form.Alert = "Failed to launch desktop session."
+	if response.Error.Code == "dependencies_failed" {
+		form.Alert = response.Error.Detail
+	}
+	switch {
+	case response.Error.Source != nil && response.Error.Source.Parameter == "type":
+		form.Errors.DesktopType = response.Error.Detail
+	case response.Error.Source != nil && response.Error.Source.Parameter == "name":
+		form.Errors.Name = response.Error.Detail
+	case response.Error.Source != nil && response.Error.Source.Parameter == "geometry":
+		form.Errors.Geometry = response.Error.Detail
 	}
 }
 

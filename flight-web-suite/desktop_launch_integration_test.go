@@ -74,10 +74,13 @@ JSON
 fi
 cat <<'JSON'
 {
-  "success": false,
-  "session_name": "named-session",
-  "error": "Desktop startup failed.",
-  "reason": "start_failed"
+  "errors": [
+    {
+      "code": "start_failed",
+      "title": "Desktop session failed to start",
+      "detail": "Desktop startup failed."
+    }
+  ]
 }
 JSON
 exit 1
@@ -97,6 +100,6 @@ exit 1
 
 	client.AssertResponseCode(t, http.StatusUnprocessableEntity)
 	testutil.AssertSelection(t, body, `div.flash.alert`,
-		testutil.HasText("Desktop startup failed."),
+		testutil.HasText("Failed to launch desktop session."),
 	)
 }
