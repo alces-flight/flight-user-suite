@@ -27,7 +27,7 @@
                     {{range .DesktopTypes}}
                     <div class="grid grid-rows-subgrid" data-testid="desktop-type-card--{{ .ID }}">
                         <input type="radio" name="desktop_type" id="{{ .ID }}" value="{{ .ID }}" class="sr-only peer"
-                            {{if eq $.Form.DesktopType .ID}}checked{{end}} data-testid="desktop-type-input--{{ .ID }}">
+                            {{if eq $.Form.DesktopType .ID}}checked{{end}}>
                         <label for="{{ .ID }}"
                             class="flex flex-col justify-between cursor-pointer border p-5 transition max-w-xs border-slate-300 bg-white peer-checked:border-alces-blue peer-checked:bg-sky-50">
                             <div class="flex items-start justify-between gap-4">

@@ -93,7 +93,7 @@ fi
 	testutil.AssertSelection(t, body, `[data-testid="desktop-type-card--gnome"] h3`, testutil.HasText("gnome"))
 	testutil.AssertSelection(t, body, `[data-testid="desktop-type-card--gnome"] h3 + p`, testutil.HasText("GNOME desktop."))
 	testutil.AssertSelection(t, body, `[data-testid="desktop-type-card--gnome"] a`, testutil.HasAttr("href", "https://example.invalid/gnome"))
-	testutil.AssertSelection(t, body, `[data-testid="desktop-type-input--gnome"]`, testutil.HasAttr("checked", ""))
+	testutil.AssertSelection(t, body, `[data-testid="desktop-type-card--gnome"] input[type="radio"]`, testutil.HasAttr("checked", ""))
 	testutil.AssertSelection(t, body, `[data-testid="desktop-launch-geometry-option--1024x768"]`, testutil.HasAttr("selected", ""))
 
 	gnomeIndex := strings.Index(body, `data-testid="desktop-type-card--gnome"`)
@@ -287,7 +287,7 @@ exit 1
 
 	testutil.AssertSelection(t, body, `div.flash.alert`, testutil.HasText("Failed to launch desktop session."))
 	testutil.AssertSelection(t, body, `[data-testid="desktop-launch-name"]`, testutil.HasAttr("value", "custom-session"))
-	testutil.AssertSelection(t, body, `[data-testid="desktop-type-input--xterm"]`, testutil.HasAttr("checked", ""))
+	testutil.AssertSelection(t, body, `[data-testid="desktop-type-card--xterm"] input[type="radio"]`, testutil.HasAttr("checked", ""))
 	testutil.AssertSelection(t, body, `[data-testid="desktop-launch-geometry-option--1280x1024"]`, testutil.HasAttr("selected", ""))
 	testutil.AssertSelection(t, body, `[data-testid="desktop-launch-name-error"]`, testutil.HasText("Invalid session name."))
 }
