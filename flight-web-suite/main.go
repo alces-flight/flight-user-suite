@@ -108,6 +108,8 @@ func newApp() *echo.Echo {
 		return c.Render(http.StatusOK, "home", AddCommonData(c, data))
 	})
 	e.GET("/desktop", indexDesktopSessionsHandler)
+	e.GET("/desktop/new", newDesktopSessionHandler)
+	e.POST("/desktop", createDesktopSessionHandler)
 	e.DELETE("/desktop/:sessionName", destroyDesktopSessionHandler)
 	e.GET("/sessions", newSessionHandler)
 	e.POST("/sessions", createSessionHandler)

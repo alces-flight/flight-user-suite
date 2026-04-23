@@ -16,7 +16,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/concertim/flight-user-suite/flight/toolset"
 	"github.com/labstack/echo/v5"
 )
 
@@ -43,10 +42,8 @@ func indexDesktopSessionsHandler(c *echo.Context) error {
 	if !IsLoggedIn(c) {
 		return c.Redirect(http.StatusSeeOther, "/sessions")
 	}
-
-	tool, err := toolset.GetTool(env.FlightRoot, "desktop")
-	if err != nil || !tool.Enabled {
-		return echo.NewHTTPError(http.StatusServiceUnavailable, "Flight Desktop is not enabled")
+	if err := requireDesktopToolEnabled(); err != nil {
+		return err
 	}
 
 	sessions, err := desktopListCommand(c.Request().Context(), CurrentUserName(c))
@@ -72,10 +69,8 @@ func destroyDesktopSessionHandler(c *echo.Context) error {
 	if !IsLoggedIn(c) {
 		return c.Redirect(http.StatusSeeOther, "/sessions")
 	}
-
-	tool, err := toolset.GetTool(env.FlightRoot, "desktop")
-	if err != nil || !tool.Enabled {
-		return echo.NewHTTPError(http.StatusServiceUnavailable, "Flight Desktop is not enabled")
+	if err := requireDesktopToolEnabled(); err != nil {
+		return err
 	}
 
 	response, err := desktopKillCommand(c.Request().Context(), CurrentUserName(c), c.Param("sessionName"))
