@@ -1,60 +1,18 @@
 package main
 
 import (
-	"bytes"
-	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"slices"
-	"strings"
 
+	"github.com/concertim/flight-user-suite/flight-web-suite/desktop"
 	"github.com/concertim/flight-user-suite/flight/toolset"
 	"github.com/labstack/echo/v5"
 )
-
-type desktopType struct {
-	ID      string `json:"id"`
-	Summary string `json:"summary"`
-	URL     string `json:"url"`
-}
 
 type desktopGeometryOption struct {
 	Value   string
 	Label   string
 	Default bool
-}
-
-type desktopStartInput struct {
-	DesktopType string
-	Name        string
-	Geometry    string
-}
-
-type desktopStartResponse struct {
-	Success     bool
-	SessionName string
-	Error       desktopStartError
-}
-
-type desktopStartSuccessDocument struct {
-	Success     *bool  `json:"success"`
-	SessionName string `json:"session_name"`
-}
-
-type desktopStartErrorDocument struct {
-	Errors []desktopStartError `json:"errors"`
-}
-
-type desktopStartError struct {
-	Code   string                   `json:"code"`
-	Title  string                   `json:"title"`
-	Detail string                   `json:"detail"`
-	Source *desktopStartErrorSource `json:"source,omitempty"`
-}
-
-type desktopStartErrorSource struct {
-	Parameter string `json:"parameter"`
 }
 
 type desktopLaunchFieldErrors struct {
@@ -84,7 +42,7 @@ func newDesktopSessionHandler(c *echo.Context) error {
 		return err
 	}
 
-	desktopTypes, err := desktopAvailCommand(c.Request().Context(), CurrentUserName(c))
+	desktopTypes, err := desktop.AvailCommand(c.Request().Context(), env, CurrentUserName(c))
 	if err != nil {
 		return err
 	}
@@ -110,14 +68,14 @@ func createDesktopSessionHandler(c *echo.Context) error {
 		Geometry:    c.FormValue("geometry"),
 	}
 
-	desktopTypes, err := desktopAvailCommand(c.Request().Context(), CurrentUserName(c))
+	desktopTypes, err := desktop.AvailCommand(c.Request().Context(), env, CurrentUserName(c))
 	if err != nil {
 		return err
 	}
 
 	validateDesktopLaunchForm(desktopTypes, &form)
 	if form.Errors == (desktopLaunchFieldErrors{}) {
-		response, err := desktopStartCommand(c.Request().Context(), CurrentUserName(c), desktopStartInput{
+		response, err := desktop.StartCommand(c.Request().Context(), env, CurrentUserName(c), desktop.StartInput{
 			DesktopType: form.DesktopType,
 			Name:        form.Name,
 			Geometry:    form.Geometry,
@@ -158,75 +116,7 @@ func requireDesktopToolEnabled() error {
 	return nil
 }
 
-func desktopAvailCommand(ctx context.Context, username string) ([]desktopType, error) {
-	cmd, err := buildDesktopCommand(ctx, username, "avail", "--format", "json")
-	if err != nil {
-		return nil, err
-	}
-
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
-		if stderr.Len() != 0 {
-			return nil, fmt.Errorf("listing desktop types: %s", stderr.String())
-		}
-		return nil, fmt.Errorf("listing desktop types: %w", err)
-	}
-
-	var desktopTypes []desktopType
-	if err := json.Unmarshal(stdout.Bytes(), &desktopTypes); err != nil {
-		return nil, fmt.Errorf("decoding desktop types: %w", err)
-	}
-	slices.SortFunc(desktopTypes, func(a, b desktopType) int {
-		return strings.Compare(a.ID, b.ID)
-	})
-	return desktopTypes, nil
-}
-
-func desktopStartCommand(ctx context.Context, username string, input desktopStartInput) (desktopStartResponse, error) {
-	args := []string{"start", input.DesktopType, "--format", "json", "--geometry", input.Geometry}
-	if input.Name != "" {
-		args = append(args, "--name", input.Name)
-	}
-
-	cmd, err := buildDesktopCommand(ctx, username, args...)
-	if err != nil {
-		return desktopStartResponse{}, err
-	}
-
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	runErr := cmd.Run()
-
-	var successDoc desktopStartSuccessDocument
-	if decodeErr := json.Unmarshal(stdout.Bytes(), &successDoc); decodeErr == nil && successDoc.Success != nil {
-		return desktopStartResponse{
-			Success:     *successDoc.Success,
-			SessionName: successDoc.SessionName,
-		}, nil
-	}
-
-	var errorDoc desktopStartErrorDocument
-	if decodeErr := json.Unmarshal(stdout.Bytes(), &errorDoc); decodeErr == nil && len(errorDoc.Errors) > 0 {
-		return desktopStartResponse{
-			Success: false,
-			Error:   errorDoc.Errors[0],
-		}, nil
-	}
-	if runErr != nil {
-		if stderr.Len() != 0 {
-			return desktopStartResponse{}, fmt.Errorf("starting desktop session: %s", stderr.String())
-		}
-		return desktopStartResponse{}, fmt.Errorf("starting desktop session: %w", runErr)
-	}
-	return desktopStartResponse{}, fmt.Errorf("decoding desktop start response: %s", stdout.String())
-}
-
-func validateDesktopLaunchForm(desktopTypes []desktopType, form *desktopLaunchFormData) {
+func validateDesktopLaunchForm(desktopTypes []*desktop.Type, form *desktopLaunchFormData) {
 	if !hasDesktopType(desktopTypes, form.DesktopType) {
 		form.Errors.DesktopType = "Select an available desktop type."
 	}
@@ -235,7 +125,7 @@ func validateDesktopLaunchForm(desktopTypes []desktopType, form *desktopLaunchFo
 	}
 }
 
-func applyDesktopStartErrors(form *desktopLaunchFormData, response desktopStartResponse) {
+func applyDesktopStartErrors(form *desktopLaunchFormData, response desktop.StartResponse) {
 	form.Alert = "Failed to launch desktop session."
 	if response.Error.Code == "dependencies_failed" {
 		form.Alert = response.Error.Detail
@@ -250,7 +140,7 @@ func applyDesktopStartErrors(form *desktopLaunchFormData, response desktopStartR
 	}
 }
 
-func renderDesktopLaunchPage(c *echo.Context, status int, desktopTypes []desktopType, form desktopLaunchFormData) error {
+func renderDesktopLaunchPage(c *echo.Context, status int, desktopTypes []*desktop.Type, form desktopLaunchFormData) error {
 	if form.DesktopType == "" {
 		form.DesktopType = defaultDesktopType(desktopTypes)
 	}
@@ -266,7 +156,7 @@ func renderDesktopLaunchPage(c *echo.Context, status int, desktopTypes []desktop
 	return c.Render(status, "desktop/new", AddCommonData(c, data))
 }
 
-func defaultDesktopType(desktopTypes []desktopType) string {
+func defaultDesktopType(desktopTypes []*desktop.Type) string {
 	if len(desktopTypes) == 0 {
 		return ""
 	}
@@ -282,7 +172,7 @@ func defaultDesktopGeometry() string {
 	return ""
 }
 
-func hasDesktopType(desktopTypes []desktopType, id string) bool {
+func hasDesktopType(desktopTypes []*desktop.Type, id string) bool {
 	for _, desktopType := range desktopTypes {
 		if desktopType.ID == id {
 			return true
