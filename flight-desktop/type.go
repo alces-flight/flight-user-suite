@@ -56,9 +56,9 @@ func loadType(id string) (*Type, error) {
 }
 
 type Type struct {
-	ID           string `yaml:"id"`
-	Summary      string `yaml:"summary"`
-	URL          string `yaml:"url"`
+	ID           string `json:"id" yaml:"id"`
+	Summary      string `json:"summary" yaml:"summary"`
+	URL          string `json:"url" yaml:"url"`
 	dependencies []dependency
 }
 

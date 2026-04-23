@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
+	"slices"
 
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/table"
@@ -18,22 +21,31 @@ func typeAvailCommand() *cli.Command {
 		Usage:       "Show available desktop types",
 		Description: wordwrap.String("Display a list of available desktop types.", maxTextWidth),
 		Category:    "Desktop types",
+		Flags:       []cli.Flag{formatFlag},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			types, err := loadAllTypes()
 			if err != nil {
 				return err
 			}
+			slices.SortFunc(types, func(a, b *Type) int {
+				return compareStrings(a.ID, b.ID)
+			})
+			if cmd.String("format") == "json" {
+				return writeTypesJSON(types)
+			}
 			if len(types) == 0 {
 				fmt.Println("No desktop types found.")
 				return nil
 			}
-			err = typesTable(types)
-			if err != nil {
-				return err
-			}
-			return nil
+			return typesTable(types)
 		},
 	}
+}
+
+func writeTypesJSON(types []*Type) error {
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	return enc.Encode(types)
 }
 
 func typesTable(types []*Type) error {
@@ -100,4 +112,15 @@ type UnknownType struct {
 
 func (ut UnknownType) Error() string {
 	return fmt.Sprintf("Unknown desktop type: %s", ut.Type)
+}
+
+func compareStrings(a, b string) int {
+	switch {
+	case a < b:
+		return -1
+	case a > b:
+		return 1
+	default:
+		return 0
+	}
 }

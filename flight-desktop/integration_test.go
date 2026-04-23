@@ -1,6 +1,8 @@
 package main_test
 
 import (
+	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -24,6 +26,19 @@ var testdataPath = ""
 var tmpDir = ""
 var flightRoot = ""
 var flightStateRoot = ""
+
+type availableTypeResponse struct {
+	ID      string `json:"id"`
+	Summary string `json:"summary"`
+	URL     string `json:"url"`
+}
+
+type startCommandResponse struct {
+	Success     bool   `json:"success"`
+	SessionName string `json:"session_name"`
+	Error       string `json:"error"`
+	Reason      string `json:"reason"`
+}
 
 // Setup/teardown logic for running all tests in the package.
 func TestMain(m *testing.M) {
@@ -230,6 +245,162 @@ func Test_session_life_cycle(t *testing.T) {
 	}
 }
 
+func Test_avail_json(t *testing.T) {
+	output, err := runBinary([]string{"avail", "--format", "json"}, nil)
+	assertExitCode(t, 0, output, err)
+
+	var response []availableTypeResponse
+	if err := json.Unmarshal(jsonPayload(t, output), &response); err != nil {
+		t.Fatalf("failed to decode avail json: %v\noutput:\n%s", err, output)
+	}
+
+	if len(response) != 2 {
+		t.Fatalf("expected 2 desktop types, got %d", len(response))
+	}
+	if response[0].ID != "gnome" || response[1].ID != "xterm" {
+		t.Fatalf("expected types to be ordered by id, got %#v", response)
+	}
+}
+
+func Test_avail_json_empty(t *testing.T) {
+	typesDir := filepath.Join(flightRoot, "usr", "lib", "desktop", "types")
+	backupDir := filepath.Join(flightRoot, "usr", "lib", "desktop", "types-backup")
+	if err := os.Rename(typesDir, backupDir); err != nil {
+		t.Fatalf("failed to move types dir aside: %v", err)
+	}
+	if err := os.MkdirAll(typesDir, 0o755); err != nil {
+		t.Fatalf("failed to create empty types dir: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = os.RemoveAll(typesDir)
+		_ = os.Rename(backupDir, typesDir)
+	})
+
+	output, err := runBinary([]string{"avail", "--format", "json"}, nil)
+	assertExitCode(t, 0, output, err)
+
+	var response []availableTypeResponse
+	if err := json.Unmarshal(jsonPayload(t, output), &response); err != nil {
+		t.Fatalf("failed to decode avail json: %v\noutput:\n%s", err, output)
+	}
+	if len(response) != 0 {
+		t.Fatalf("expected empty desktop type list, got %#v", response)
+	}
+}
+
+func Test_start_json(t *testing.T) {
+	tests := []struct {
+		name            string
+		args            []string
+		setup           func(t *testing.T)
+		wantExitCode    int
+		wantSuccess     bool
+		wantSessionName string
+		wantReason      string
+		wantNamePrefix  string // We're using the "meaningless" name generator so prefix is correct.
+	}{
+		{
+			name:            "success with explicit name",
+			args:            []string{"start", "xterm", "--name", "my-session", "--format", "json"},
+			wantExitCode:    0,
+			wantSuccess:     true,
+			wantSessionName: "my-session",
+		},
+		{
+			name:           "success with generated name",
+			args:           []string{"start", "xterm", "--format", "json"},
+			wantExitCode:   0,
+			wantSuccess:    true,
+			wantNamePrefix: "xterm.",
+		},
+		{
+			name:            "invalid type",
+			args:            []string{"start", "missing", "--format", "json"},
+			wantExitCode:    1,
+			wantSuccess:     false,
+			wantSessionName: "",
+			wantReason:      "invalid_type",
+		},
+		{
+			name:            "invalid name",
+			args:            []string{"start", "xterm", "--name", "bad name", "--format", "json"},
+			wantExitCode:    1,
+			wantSuccess:     false,
+			wantSessionName: "bad name",
+			wantReason:      "invalid_name",
+		},
+		{
+			name:            "invalid geometry",
+			args:            []string{"start", "xterm", "--geometry", "1024", "--name", "bad-geometry", "--format", "json"},
+			wantExitCode:    1,
+			wantSuccess:     false,
+			wantSessionName: "bad-geometry",
+			wantReason:      "invalid_geometry",
+		},
+		{
+			name:            "dependency failure",
+			args:            []string{"start", "gnome", "--name", "my-gnome", "--format", "json"},
+			wantExitCode:    1,
+			wantSuccess:     false,
+			wantSessionName: "my-gnome",
+			wantReason:      "dependencies_failed",
+		},
+		{
+			name: "session start failure",
+			args: []string{"start", "xterm", "--name", "broken-session", "--format", "json"},
+			setup: func(t *testing.T) {
+				path := filepath.Join(flightRoot, "usr", "libexec", "desktop", "vncserver")
+				original, err := os.ReadFile(path)
+				if err != nil {
+					t.Fatalf("failed to read vncserver fixture: %v", err)
+				}
+				replacement := []byte("#!/bin/sh\nexit 1\n")
+				if err := os.WriteFile(path, replacement, 0o755); err != nil {
+					t.Fatalf("failed to replace vncserver fixture: %v", err)
+				}
+				t.Cleanup(func() {
+					_ = os.WriteFile(path, original, 0o755)
+				})
+			},
+			wantExitCode:    1,
+			wantSuccess:     false,
+			wantSessionName: "broken-session",
+			wantReason:      "start_failed",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setup != nil {
+				tt.setup(t)
+			}
+
+			output, err := runBinary(tt.args, nil)
+			assertExitCode(t, tt.wantExitCode, output, err)
+
+			var response startCommandResponse
+			if err := json.Unmarshal(jsonPayload(t, output), &response); err != nil {
+				t.Fatalf("failed to decode start json: %v\noutput:\n%s", err, output)
+			}
+
+			if response.Success != tt.wantSuccess {
+				t.Fatalf("expected success=%t, got %#v", tt.wantSuccess, response)
+			}
+			if tt.wantSessionName != "" || response.SessionName == "" {
+				if response.SessionName != tt.wantSessionName {
+					t.Fatalf("expected session name %q, got %#v", tt.wantSessionName, response)
+				}
+			}
+			if tt.wantNamePrefix != "" && !strings.HasPrefix(response.SessionName, tt.wantNamePrefix) {
+				t.Fatalf("expected session name to start with %q, got %#v", tt.wantNamePrefix, response)
+			}
+			if response.Reason != tt.wantReason {
+				t.Fatalf("expected reason %q, got %#v", tt.wantReason, response)
+			}
+		})
+	}
+}
+
 func fixturePath(fixture string) string {
 	return filepath.Join(testdataPath, fixture)
 }
@@ -300,6 +471,23 @@ func assertOutputContains(t *testing.T, expectedLine string, output []byte) {
 		t.Logf("expected output to contain '%s'\n  got\n%s", expectedLine, actual)
 		t.FailNow()
 	}
+}
+
+func jsonPayload(t *testing.T, output []byte) []byte {
+	t.Helper()
+
+	trimmed := bytes.TrimSpace(output)
+	if len(trimmed) == 0 {
+		t.Fatal("expected JSON output, got empty output")
+	}
+
+	lastObject := bytes.LastIndexByte(trimmed, '}')
+	lastArray := bytes.LastIndexByte(trimmed, ']')
+	last := max(lastObject, lastArray)
+	if last == -1 {
+		t.Fatalf("expected JSON payload, got %q", trimmed)
+	}
+	return trimmed[:last+1]
 }
 
 func createTempDir(prefix string) string {
