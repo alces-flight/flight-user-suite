@@ -15,7 +15,7 @@ import (
 func cleanSessionCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "clean",
-		Usage: "Clean up one or more exited desktop sessions",
+		Usage: "Clean up one or more exited or broken desktop sessions",
 		Description: wordwrap.String(`Remove one or more desktop session directories for exited or broken desktop sessions.
 
 Depending on how cleanly desktop sessions exit, the session directory may be retained and require manual cleaning.  Desktops that are cleanly exited or manually terminated using the 'kill' command are automatically cleaned when the exit.
@@ -63,7 +63,7 @@ You can specify which sessions are cleaned by providing the optional <id> parame
 			skipped := make([]*Session, 0)
 
 			for _, session := range sessions {
-				if !session.IsLocal() || session.State == Active {
+                                if session.SessionState() == Remote || session.SessionState() == Active {
 					skipped = append(skipped, session)
 				} else {
 					err := session.RemoveSessionDir()
@@ -88,7 +88,7 @@ You can specify which sessions are cleaned by providing the optional <id> parame
 				}
 				out = lipgloss.JoinVertical(
 					lipgloss.Left,
-					append([]string{out, cliui.Header.Render("Cleaned exited sessions")}, coloured...)...,
+					append([]string{out, cliui.Header.Render("Cleaned sessions")}, coloured...)...,
 				)
 			}
 			if len(failed) > 0 {
@@ -131,7 +131,7 @@ func completeExitedSessionNames(ctx context.Context, cmd *cli.Command) {
 			return
 		}
 		for _, session := range sessions {
-			if session.SessionState() == Exited {
+			if session.SessionState() == Exited || session.SessionState() == Broken {
 				fmt.Println(session.Name)
 			}
 		}

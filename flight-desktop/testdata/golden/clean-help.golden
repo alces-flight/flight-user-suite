@@ -1,5 +1,5 @@
 NAME:
-   flight desktop clean - Clean up one or more exited desktop sessions
+   flight desktop clean - Clean up one or more exited or broken desktop sessions
 
 USAGE:
    flight desktop clean [options] [<id>...] 

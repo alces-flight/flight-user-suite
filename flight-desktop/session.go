@@ -184,7 +184,7 @@ func (s Session) PrimaryIP() netip.Addr {
 }
 
 func (s *Session) SessionState() sessionState {
-	if !s.IsLocal() {
+	if s.State != Broken && !s.IsLocal() {
 		return Remote
 	}
 	return s.State

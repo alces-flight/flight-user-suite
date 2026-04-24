@@ -107,10 +107,14 @@ func connectionInfo(session *Session) {
 }
 
 func managementInfo(session *Session) {
+	instructions := "To view details or stop this session, you will need the Session Name:"
+	if session.SessionState() == Exited || session.SessionState() == Broken {
+		instructions = "To view details or clean this session, you will need the Session Name:"
+	}
 	out := lipgloss.JoinVertical(
 		lipgloss.Left,
 		cliui.Header.Render("Manage this session"),
-		cliui.Paragraph.PaddingBottom(0).Render("To view details or stop this session, you will need the Session Name:"),
+		cliui.Paragraph.PaddingBottom(0).Render(instructions),
 		cliui.Code.Margin(0, 0, 1, 1).Render(session.Name),
 		cliui.Paragraph.Render("(Tip: Run 'flight desktop --help' to see management commands)"),
 	)
