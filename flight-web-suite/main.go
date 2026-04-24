@@ -112,6 +112,7 @@ func newApp() *echo.Echo {
 	e.GET("/desktop", indexDesktopSessionsHandler)
 	e.GET("/desktop/new", newDesktopSessionHandler)
 	e.POST("/desktop", createDesktopSessionHandler)
+	e.POST("/desktop/:sessionName/clean", cleanDesktopSessionHandler)
 	e.DELETE("/desktop/:sessionName", destroyDesktopSessionHandler)
 	e.GET("/sessions", newSessionHandler)
 	e.POST("/sessions", createSessionHandler)

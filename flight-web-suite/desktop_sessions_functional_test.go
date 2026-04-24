@@ -72,10 +72,9 @@ JSON
 	testutil.AssertSelection(t, body, `[data-testid="desktop-session-card--beta"] h2`,
 		testutil.HasText("beta"),
 	)
+	testutil.AssertSelection(t, body, `form[action="/desktop/beta/clean"] [data-testid="desktop-session-action-button--beta"]`)
 	testutil.AssertSelection(t, body, `[data-testid="desktop-session-action-button--beta"]`,
-		testutil.HasText("Clean"),
-		testutil.HasAttr("disabled", ""),
-		testutil.HasAttr("title", "Cleaning desktop sessions is not yet implemented."),
+		testutil.HasText("Remove"),
 	)
 }
 
@@ -138,6 +137,27 @@ echo '[]'
 	}
 }
 
+func TestCleanDesktopSessionRedirectsForAnonymous(t *testing.T) {
+	resp, _ := testutil.RenderPage(t, newApp(), http.MethodPost, "/desktop/alpha/clean", nil, http.StatusSeeOther)
+
+	if resp.Header.Get("location") != "/sessions" {
+		t.Errorf("expected desktop clean to redirect to '/sessions' for anonymous users")
+	}
+}
+
+func TestCleanDesktopSessionReturnsServiceUnavailableWhenToolDisabled(t *testing.T) {
+	currentUser := currentUserForTest(t)
+	setFlightRootForDesktopTest(t, desktopToolFixture(t, 0o644, `#!/bin/sh
+echo '[]'
+`))
+
+	_, body := testutil.RenderPage(t, newApp(), http.MethodPost, "/desktop/alpha/clean", nil, http.StatusServiceUnavailable, testutil.WithSessionCookie(currentUser.Username, config.Session.Secret))
+
+	if want := "Flight Desktop is not enabled"; !strings.Contains(body, want) {
+		t.Fatalf("expected body to contain %q, got %q", want, body)
+	}
+}
+
 func TestDestroyDesktopSessionInvokesKillWithJSONFormat(t *testing.T) {
 	currentUser := currentUserForTest(t)
 	argsFile := filepath.Join(t.TempDir(), "desktop-args.txt")
@@ -159,6 +179,35 @@ JSON
 	}
 	if got := strings.TrimSpace(string(data)); got != "kill\n--format\njson\n--\nalpha" {
 		t.Fatalf("expected kill command args, got %q", got)
+	}
+}
+
+func TestCleanDesktopSessionInvokesCleanWithJSONFormat(t *testing.T) {
+	currentUser := currentUserForTest(t)
+	argsFile := filepath.Join(t.TempDir(), "desktop-args.txt")
+	setFlightRootForDesktopTest(t, desktopToolFixture(t, 0o755, `#!/bin/sh
+printf '%s\n' "$@" > "`+argsFile+`"
+cat <<'JSON'
+{
+  "success": true,
+  "results": [
+    {
+      "success": true,
+      "session_name": "alpha"
+    }
+  ]
+}
+JSON
+`))
+
+	testutil.RenderPage(t, newApp(), http.MethodPost, "/desktop/alpha/clean", nil, http.StatusSeeOther, testutil.WithSessionCookie(currentUser.Username, config.Session.Secret))
+
+	data, err := os.ReadFile(argsFile)
+	if err != nil {
+		t.Fatalf("failed to read command args fixture: %v", err)
+	}
+	if got := strings.TrimSpace(string(data)); got != "clean\n--format\njson\n--\nalpha" {
+		t.Fatalf("expected clean command args, got %q", got)
 	}
 }
 
