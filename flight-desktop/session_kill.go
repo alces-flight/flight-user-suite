@@ -37,7 +37,7 @@ func killSessionCommand() *cli.Command {
 				}
 				return err
 			}
-			if !session.IsLocal() {
+			if session.ComputedState() == Remote {
 				return cli.Exit(fmt.Sprintf("Desktop session '%s' is not local.\n", session.Name), 1)
 			}
 			if session.State != Active {
@@ -79,16 +79,17 @@ func killSessionJSON(ctx context.Context, session *Session, loadErr error) error
 		}
 		return writeTerminationFailure(session.Name, loadErr.Error(), "terminate_failed")
 	}
-	if !session.IsLocal() {
+	switch session.ComputedState() {
+	case Remote:
 		return writeTerminationFailure(session.Name, fmt.Sprintf("Desktop session '%s' is not local.", session.Name), "not_local")
-	}
-	if session.State != Active {
+	case Active:
+		if err := session.Kill(ctx); err != nil {
+			return writeTerminationFailure(session.Name, fmt.Sprintf("Terminating session '%s' failed.", session.Name), "terminate_failed")
+		}
+		return writeTerminationSuccess(session.Name)
+	default:
 		return writeTerminationFailure(session.Name, fmt.Sprintf("Desktop session '%s' is not active.", session.Name), "not_active")
 	}
-	if err := session.Kill(ctx); err != nil {
-		return writeTerminationFailure(session.Name, fmt.Sprintf("Terminating session '%s' failed.", session.Name), "terminate_failed")
-	}
-	return writeTerminationSuccess(session.Name)
 }
 
 func writeTerminationSuccess(sessionName string) error {
@@ -130,7 +131,7 @@ func completeActiveSessionNames(ctx context.Context, cmd *cli.Command) {
 			return
 		}
 		for _, session := range sessions {
-			if session.SessionState() == Active {
+			if session.ComputedState() == Active {
 				fmt.Println(session.Name)
 			}
 		}

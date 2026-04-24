@@ -44,7 +44,7 @@ func sessionInfo(session *Session) {
 			dd.Render(session.Name),
 			dd.Render(session.SessionType),
 			dd.Render(session.Geometry),
-			dd.Render(string(session.SessionState())),
+			dd.Render(string(session.ComputedState())),
 			dd.Render(session.CreatedAt.Format(time.RFC822)),
 		),
 	)
@@ -108,7 +108,7 @@ func connectionInfo(session *Session) {
 
 func managementInfo(session *Session) {
 	instructions := "To view details or stop this session, you will need the Session Name:"
-	if session.SessionState() == Exited || session.SessionState() == Broken {
+	if session.ComputedState() == Exited || session.ComputedState() == Broken {
 		instructions = "To view details or clean this session, you will need the Session Name:"
 	}
 	out := lipgloss.JoinVertical(

@@ -63,7 +63,7 @@ You can specify which sessions are cleaned by providing the optional <id> parame
 			skipped := make([]*Session, 0)
 
 			for _, session := range sessions {
-                                if session.SessionState() == Remote || session.SessionState() == Active {
+				if session.ComputedState() == Remote || session.ComputedState() == Active {
 					skipped = append(skipped, session)
 				} else {
 					err := session.RemoveSessionDir()
@@ -131,7 +131,7 @@ func completeExitedSessionNames(ctx context.Context, cmd *cli.Command) {
 			return
 		}
 		for _, session := range sessions {
-			if session.SessionState() == Exited || session.SessionState() == Broken {
+			if session.ComputedState() == Exited || session.ComputedState() == Broken {
 				fmt.Println(session.Name)
 			}
 		}
