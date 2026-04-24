@@ -21,7 +21,8 @@ DESCRIPTION:
    that are marked as 'exited' or 'broken' will be removed.
 
 OPTIONS:
-   --help, -h  show help
+   --format FORMAT  use specified FORMAT for the output (pretty, json). (default: "pretty")
+   --help, -h       show help
 
 GLOBAL OPTIONS:
    --log-level LEVEL  set the log LEVEL (debug, info, warn, error, fatal). Default: warn
