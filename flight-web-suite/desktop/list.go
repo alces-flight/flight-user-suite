@@ -15,6 +15,8 @@ type Session struct {
 	DesktopType string    `json:"desktop_type"`
 	State       string    `json:"state"`
 	Host        string    `json:"host"`
+	Port        int       `json:"port,omitempty"`
+	Password    string    `json:"password,omitempty"`
 	CreatedAt   time.Time `json:"created_at"`
 }
 

@@ -42,6 +42,9 @@
             <dt class="font-semibold">Started</dt>
             <dd data-testid="desktop-session-start-time--{{ .Name }}">{{ .StartTimeText }}</dd>
         </dl>
+        <div class="flex justify-end">
+            <a class="btn btn-sm !mb-0" href="/desktop/{{ .Name }}">View</a>
+        </div>
     </div>
     {{end}}
 </div>
