@@ -17,14 +17,25 @@
         class="flex items-center w-full h-[3.6rem] bg-black py-2 px-3 box-border border-b-4 border-alces-blue justify-between">
         <img src="/assets/images/logo.png" alt="Flight Web Suite Logo" class="h-full">
         {{ if eq .CurrentUserName "" }}
-        <a href="/sessions" class="text-white" data-testid="sign-in-link">Login</a>
+        <a href="/sessions" class="text-white text-sm px-2" data-testid="sign-in-link">LOGIN</a>
         {{ else }}
-        <div class="text-white flex justify-end gap-x-3">
-            <span data-testid="signed-in-message">You are signed in as {{ .CurrentUserName }}</span>
-            <form action="sessions" method="post" data-testid="logout-form">
-                <input type="hidden" name="_method" value="DELETE" />
-                <button class="text-white cursor-pointer" type="submit">Logout</button>
-            </form>
+        <div class="text-white flex justify-end gap-x-3 relative">
+            <button
+                class="dropdown-toggle flex items-center gap-x-1 cursor-pointer px-2"
+                data-testid="signed-in-message"
+                data-target-id="session-dropdown"
+            >
+                {{ .CurrentUserName }}
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                </svg>
+            </button>
+            <div id="session-dropdown" class="hidden absolute right-0 top-[2.4rem] bg-black z-10">
+                <form action="sessions" method="post" data-testid="logout-form">
+                    <input type="hidden" name="_method" value="DELETE" />
+                    <button class="text-white cursor-pointer hover:bg-slate-800 px-6 py-2" type="submit">Logout</button>
+                </form>
+            </div>
         </div>
         {{ end }}
     </div>
@@ -37,4 +48,13 @@
 </body>
 
 </html>
+
+<script>
+    const dropdownToggles = document.getElementsByClassName('dropdown-toggle');
+    for (const dropdownToggle of dropdownToggles) {
+        addEventListener("click", (e) => {
+            document.getElementById(dropdownToggle.dataset.targetId).classList.toggle("hidden");
+        })
+    }
+</script>
 {{ end }}
