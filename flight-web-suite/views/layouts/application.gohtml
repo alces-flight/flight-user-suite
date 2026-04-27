@@ -17,7 +17,7 @@
         class="flex items-center w-full h-[3.6rem] bg-black py-2 px-3 box-border border-b-4 border-alces-blue justify-between">
         <img src="/assets/images/logo.png" alt="Flight Web Suite Logo" class="h-full">
         {{ if eq .CurrentUserName "" }}
-        <a href="/sessions" class="text-white text-sm px-2" data-testid="sign-in-link">LOGIN</a>
+        <a href="/sessions" class="text-white text-sm px-2" data-testid="sign-in-link">LOG IN</a>
         {{ else }}
         <div class="text-white flex justify-end gap-x-3 relative">
             <button
@@ -65,7 +65,6 @@
         </div>
     </div>
 </body>
-
 </html>
 
 <script>

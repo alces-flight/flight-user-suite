@@ -70,7 +70,6 @@ h2 {
 
 }
 
-.submit-button {
-  @apply w-full bg-alces-blue text-white py-1 mb-4 rounded-lg hover:bg-alces-blue-dark cursor-pointer focus:bg-alces-blue-dark focus:outline-none focus-visible:outline-none;
+.btn {
+  @apply rounded py-1 px-4 mb-4 cursor-pointer text-white bg-alces-blue hover:bg-alces-blue-dark focus:bg-alces-blue-dark focus:outline-none focus-visible:outline-none;
 }
-
