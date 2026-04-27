@@ -153,7 +153,7 @@ func renderDesktopLaunchPage(c *echo.Context, status int, desktopTypes []*deskto
 		"GeometryOptions": desktopGeometryOptions,
 		"Form":            form,
 	}
-	return c.Render(status, "desktop/new", AddCommonData(c, data))
+	return c.Render(status, "desktop/new", data)
 }
 
 func defaultDesktopType(desktopTypes []*desktop.Type) string {

@@ -94,9 +94,11 @@ func newApp() *echo.Echo {
 	e.Use(middleware.RequestLogger())
 	e.Use(NewSessionMiddleware())
 
-	t := template.Must(template.ParseGlob(getDirectory("views") + "/*.gohtml"))
-	t = template.Must(t.ParseGlob(getDirectory("views") + "/*/*.gohtml"))
-	e.Renderer = &echo.TemplateRenderer{Template: t}
+	t := template.Must(template.ParseGlob(getDirectory("views") + "/layouts/*.gohtml"))
+	// TODO: Move partials from layouts to partials and uncomment this line.
+	// t = template.Must(t.ParseGlob(getDirectory("views") + "/partials/*.gohtml"))
+
+	e.Renderer = &TemplateRenderer{Template: t}
 
 	e.Static("/assets", getDirectory("assets"))
 	e.Static("/static", getDirectory("static"))
@@ -105,7 +107,7 @@ func newApp() *echo.Echo {
 		if err != nil {
 			e.Logger.Error("Error when calling indexData", "error", err)
 		}
-		return c.Render(http.StatusOK, "home", AddCommonData(c, data))
+		return c.Render(http.StatusOK, "home", data)
 	})
 	e.GET("/desktop", indexDesktopSessionsHandler)
 	e.GET("/desktop/new", newDesktopSessionHandler)

@@ -14,7 +14,7 @@ func newSessionHandler(c *echo.Context) error {
 	if IsLoggedIn(c) {
 		return c.Redirect(http.StatusSeeOther, "/")
 	}
-	return c.Render(http.StatusOK, "sessions/new", AddCommonData(c, nil))
+	return c.Render(http.StatusOK, "sessions/new", nil)
 }
 
 func createSessionHandler(c *echo.Context) error {
@@ -28,7 +28,7 @@ func createSessionHandler(c *echo.Context) error {
 	if username == "" || password == "" {
 		sess.AddFlash("Username and/or password not provided", "alert")
 		SaveSession(c, sess)
-		return c.Render(http.StatusOK, "sessions/new", AddCommonData(c, nil))
+		return c.Render(http.StatusOK, "sessions/new", nil)
 	}
 	ok, err := authenticate(c.Request().Context(), username, password)
 	if err != nil {
@@ -44,7 +44,7 @@ func createSessionHandler(c *echo.Context) error {
 		sess.AddFlash("Invalid username or password", "alert")
 		SaveSession(c, sess)
 		data := map[string]any{"username": username}
-		return c.Render(http.StatusOK, "sessions/new", AddCommonData(c, data))
+		return c.Render(http.StatusOK, "sessions/new", data)
 	}
 }
 
