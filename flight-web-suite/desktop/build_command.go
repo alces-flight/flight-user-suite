@@ -61,7 +61,7 @@ func buildDesktopCommand(ctx context.Context, env configenv.Env, username string
 			},
 		}
 	} else if os.Geteuid() != uid {
-		return nil, fmt.Errorf("cannot run desktop listing as %q without root privileges", userInfo.Username)
+		return nil, fmt.Errorf("cannot run desktop command as %q without root privileges", userInfo.Username)
 	}
 	return cmd, nil
 }
