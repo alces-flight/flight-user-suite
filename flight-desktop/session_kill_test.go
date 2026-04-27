@@ -156,6 +156,9 @@ func createDesktopSessionFixture(t *testing.T, session desktopSessionFixture) {
 	t.Helper()
 
 	sessionDir := filepath.Join(tmpDir, "local", "state", "flight", "desktop", "sessions", session.Name)
+	t.Cleanup(func() {
+		_ = os.RemoveAll(sessionDir)
+	})
 	if err := os.MkdirAll(sessionDir, 0o700); err != nil {
 		t.Fatalf("failed to create session dir: %v", err)
 	}
