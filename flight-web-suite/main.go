@@ -95,8 +95,7 @@ func newApp() *echo.Echo {
 	e.Use(NewSessionMiddleware())
 
 	t := template.Must(template.ParseGlob(getDirectory("views") + "/layouts/*.gohtml"))
-	// TODO: Move partials from layouts to partials and uncomment this line.
-	// t = template.Must(t.ParseGlob(getDirectory("views") + "/partials/*.gohtml"))
+	t = template.Must(t.ParseGlob(getDirectory("views") + "/partials/*.gohtml"))
 
 	e.Renderer = &TemplateRenderer{Template: t}
 

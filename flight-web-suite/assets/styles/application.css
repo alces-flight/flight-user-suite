@@ -33,7 +33,7 @@ h2 {
 }
 
 .flash {
-  @apply absolute top-15 right-5 border rounded-lg p-1 ;
+  @apply absolute top-15 right-5 border rounded-lg p-1 z-10;
 
   &.alert {
     @apply text-red-500 border-red-400 bg-red-50;
