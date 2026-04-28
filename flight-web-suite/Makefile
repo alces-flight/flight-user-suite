@@ -8,20 +8,21 @@ FLIGHT_STATE_ROOT := tmp
 WEB_ROOT := $(FLIGHT_ROOT)/var/web-suite
 TAILWIND := ./bin/tailwind/tailwindcss
 GOTESTSUM := $(shell type -p gotestsum)
+ESBUILD := ./node_modules/.bin/esbuild
 
 VERSION := $(shell git describe --tags --dirty --always)
 COMMIT := $(shell git rev-parse HEAD)
 DATE := $(shell date --rfc-3339=seconds)
 LD_FLAGS := -ldflags="-X 'main.version=$(VERSION)' -X 'main.commit=$(COMMIT)' -X 'main.date=$(DATE)'"
 
-.PHONY: all $(EXE) assets build-css clean distclean dev help run test
+.PHONY: all $(EXE) assets build-css build-javascript clean distclean dev help run test
 
 all: $(EXE) assets
 
 $(EXE):
 	CGO_ENABLED=0 go build -v $(LD_FLAGS) -o $(EXE)
 
-assets: build-css
+assets: build-css build-javascript
 	mkdir -p $(WEB_ROOT)
 	rsync -rlptgo --exclude .gitkeep $(ASSET_DIRS) $(WEB_ROOT)/
 	rsync -rlptgo --exclude .gitkeep $(OPT) $(DIST)/
@@ -35,7 +36,17 @@ build-css: $(TAILWIND)
 		-i ./assets/styles/application.css \
 		-o ./static/styles.css
 
-dev: $(TAILWIND)
+$(ESBUILD):
+	npm install
+
+build-javascript: $(ESBUILD)
+	$(ESBUILD) \
+		assets/javascript/application.js \
+		--bundle \
+		--outfile=static/js/application.js \
+		--minify
+
+dev: $(TAILWIND) $(ESBUILD)
 	FLIGHT_ROOT=$(OPT)/flight FLIGHT_STATE_ROOT=$(FLIGHT_STATE_ROOT) air
 
 run: all

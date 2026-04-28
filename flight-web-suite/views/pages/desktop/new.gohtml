@@ -1,6 +1,4 @@
-{{define "desktop/new"}}
-{{template "layouts.application.start" . }}
-
+{{ define "content" }}
 <div class="mx-auto mt-6 max-w-5xl text-left">
     <a href="/desktop" class="inline-flex items-center gap-2 text-sm text-slate-500"
         data-testid="desktop-launch-back-link">← Back to desktops</a>
@@ -93,6 +91,4 @@
         {{end}}
     </div>
 </div>
-
-{{template "layouts.application.end" . }}
 {{end}}

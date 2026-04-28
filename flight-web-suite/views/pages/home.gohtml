@@ -1,6 +1,4 @@
-{{define "home"}}
-{{template "layouts.application.start" . }}
-
+{{ define "content" }}
 <h1 class="mt-20 mb-15">
     Welcome to the <span class="text-alces-blue">{{ .EnvName }}</span> compute environment.
 </h1>
@@ -37,6 +35,4 @@
         cluster to access Flight Web Suite functionality.
     </p>
 {{ end }}
-
-{{template "layouts.application.end" . }}
-{{end}}
+{{ end }}

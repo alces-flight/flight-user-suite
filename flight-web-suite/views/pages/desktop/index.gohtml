@@ -1,6 +1,4 @@
-{{define "desktop/index"}}
-{{template "layouts.application.start" . }}
-
+{{ define "content" }}
 <div class="mt-20 mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
     <div class="flex-grow">
         <h1 class="mb-2">Desktop Sessions</h1>
@@ -45,6 +43,4 @@
     </div>
     {{end}}
 </div>
-
-{{template "layouts.application.end" . }}
 {{end}}

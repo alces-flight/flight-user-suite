@@ -45,7 +45,7 @@ func indexDesktopSessionsHandler(c *echo.Context) error {
 		"Summary":         desktopSessionsSummary(sessions),
 		"DesktopSessions": buildDesktopSessionCards(sessions),
 	}
-	return c.Render(http.StatusOK, "desktop/index", AddCommonData(c, data))
+	return c.Render(http.StatusOK, "desktop/index", data)
 }
 
 func destroyDesktopSessionHandler(c *echo.Context) error {

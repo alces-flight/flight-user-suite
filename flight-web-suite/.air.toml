@@ -19,14 +19,17 @@ tmp_dir = "tmp"
   full_bin = ""
   ignore_dangerous_root_dir = false
   include_dir = []
-  include_ext = ["go", "tpl", "tmpl", "gohtml", "css"]
+  include_ext = ["go", "tpl", "tmpl", "gohtml", "css", "js"]
   include_file = []
   kill_delay = "0s"
   log = "build-errors.log"
   poll = false
   poll_interval = 0
   post_cmd = []
-  pre_cmd = ["./bin/tailwind/tailwindcss --config ./tailwind.config.js -i ./assets/styles/application.css -o ./static/styles.css"]
+  pre_cmd = [
+      "./bin/tailwind/tailwindcss --config ./tailwind.config.js -i ./assets/styles/application.css -o ./static/styles.css",
+      "./node_modules/.bin/esbuild assets/javascript/application.js --bundle --outfile=static/js/application.js --sourcemap"
+  ]
   rerun = false
   rerun_delay = 500
   send_interrupt = false
