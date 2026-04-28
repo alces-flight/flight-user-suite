@@ -7,16 +7,16 @@
     >
         < Back to desktops
     </a>
-    <div class="flex flex-col gap-y-12 items-start lg:items-center mt-6">
+    <div class="flex flex-col gap-y-12 items-stretch mt-6">
         <h1 class="text-center">Launch a desktop session</h1>
         <form
             action="/desktop"
             method="post"
-            class="flex flex-col items-start md:items-center gap-y-12"
+            class="flex flex-col items-center gap-y-12"
             data-testid="desktop-launch-form"
         >
-            <section>
-                <p class="mb-4 text-center w-full">
+            <section class="flex flex-col items-center w-full">
+                <p class="text-center w-full">
                     Select your desktop type from the following options:
                 </p>
                 <div class="mb-3 flex items-end justify-between gap-4">
@@ -24,9 +24,9 @@
                         <p class="text-sm text-red-700" data-testid="desktop-launch-desktop-type-error">{{ .Form.Errors.DesktopType }}</p>
                     {{end}}
                 </div>
-                <div class="grid gap-4 md:grid-cols-2" data-testid="desktop-type-cards">
+                <div class="flex flex-wrap justify-center gap-4 w-full" data-testid="desktop-type-cards">
                     {{range .DesktopTypes}}
-                        <div class="grid grid-rows-subgrid" data-testid="desktop-type-card--{{ .ID }}">
+                        <div data-testid="desktop-type-card--{{ .ID }}">
                             <input
                                 type="radio"
                                 name="desktop_type"
@@ -39,13 +39,13 @@
                                 for="{{ .ID }}"
                                 class="
                                     flex flex-col justify-between
-                                    cursor-pointer p-5 max-w-xs
-                                    bg-white border border-slate-300 peer-checked:border-alces-blue peer-checked:bg-sky-50 transition
+                                    cursor-pointer p-5 w-64 h-full
+                                    bg-white border border-alces-blue-light peer-checked:border-alces-blue peer-checked:shadow transition
                                 "
                             >
                                 <div class="flex items-start justify-between gap-4">
                                     <div>
-                                        <h3 class="text-xl font-semibold">{{ .ID }}</h3>
+                                        <h3 class="text-xl">{{ .ID }}</h3>
                                         <p class="mt-3 text-sm leading-6 text-slate-700">{{ .Summary }}</p>
                                     </div>
                                 </div>
@@ -59,7 +59,7 @@
                     {{end}}
                 </div>
             </section>
-            <div class="flex flex-col items-start md:items-center">
+            <div class="flex flex-col items-center">
                 <label for="desktop-launch-name">
                     Name your session <span class="font-normal text-slate-500">(optional)</span>
                 </label>
@@ -75,7 +75,7 @@
                     <p class="mt-2 text-sm text-red-700" data-testid="desktop-launch-name-error">{{ .Form.Errors.Name }}</p>
                 {{end}}
             </div>
-            <div class="flex flex-col items-start md:items-center">
+            <div class="flex flex-col items-center">
                 <label for="desktop-launch-geometry">
                     Select your desktop resolution
                 </label>
