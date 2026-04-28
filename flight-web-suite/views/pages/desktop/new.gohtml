@@ -1,26 +1,30 @@
 {{ define "content" }}
-<div class="mx-auto mt-6 max-w-5xl text-left">
-    <a href="/desktop" class="inline-flex items-center gap-2 text-sm text-slate-500"
-        data-testid="desktop-launch-back-link">← Back to desktops</a>
-
-    <div class="mt-6 flex flex-col gap-y-6 items-start lg:items-center">
-        <div class="mt-2">
-            <h1 class="">Launch a desktop session</h1>
-            <p class="mt-1 max-w-2xl text-base text-slate-700">
-                Select your desktop type from the options below.
-            </p>
-        </div>
-
-        <form action="/desktop" method="post" class="mt-8 flex flex-col items-start md:items-center space-y-12"
-            data-testid="desktop-launch-form">
+<div>
+    <a
+        href="/desktop"
+        class="text-sm text-slate-500 text-left"
+        data-testid="desktop-launch-back-link"
+    >
+        < Back to desktops
+    </a>
+    <div class="flex flex-col gap-y-12 items-start lg:items-center mt-6">
+        <h1 class="text-center">Launch a desktop session</h1>
+        <form
+            action="/desktop"
+            method="post"
+            class="flex flex-col items-start md:items-center gap-y-12"
+            data-testid="desktop-launch-form"
+        >
             <section>
+                <p class="mb-4 text-center w-full">
+                    Select your desktop type from the following options:
+                </p>
                 <div class="mb-3 flex items-end justify-between gap-4">
                     {{if .Form.Errors.DesktopType}}
                     <p class="text-sm text-red-700" data-testid="desktop-launch-desktop-type-error">{{
                         .Form.Errors.DesktopType }}</p>
                     {{end}}
                 </div>
-
                 <div class="grid gap-4 md:grid-cols-2" data-testid="desktop-type-cards">
                     {{range .DesktopTypes}}
                     <div class="grid grid-rows-subgrid" data-testid="desktop-type-card--{{ .ID }}">
@@ -36,7 +40,7 @@
                             </div>
                             {{if .URL}}
                             <p class="mt-4 text-sm">
-                                <a href="{{ .URL }}" class="text-alces-blue underline">Project page</a>
+                                <a href="{{ .URL }}" class="text-alces-blue underline">More info</a>
                             </p>
                             {{end}}
                         </label>
@@ -46,8 +50,8 @@
             </section>
 
             <div class="flex flex-col items-start md:items-center">
-                <label for="desktop-launch-name" class="block text-sm">
-                    Name your session <span class="font-normal text-slate-500">(optional).</span>
+                <label for="desktop-launch-name">
+                    Name your session <span class="font-normal text-slate-500">(optional)</span>
                 </label>
                 <input id="desktop-launch-name" name="name" type="text" value="{{ .Form.Name }}"
                     class="mt-2 w-md border border-slate-300 px-3 py-2" data-testid="desktop-launch-name">
@@ -58,8 +62,8 @@
             </div>
 
             <div class="flex flex-col items-start md:items-center">
-                <label for="desktop-launch-geometry" class="block text-sm">
-                    Select your desktop resolution.
+                <label for="desktop-launch-geometry">
+                    Select your desktop resolution
                 </label>
                 <select id="desktop-launch-geometry" name="geometry"
                     class="mt-2 w-full border border-slate-300 bg-white px-3 py-2"
@@ -75,9 +79,11 @@
                 {{end}}
             </div>
 
-            <button type="submit"
-                class="cursor-pointer border border-alces-blue bg-alces-blue px-10 py-2 font-semibold text-white"
-                data-testid="desktop-launch-submit">LAUNCH</button>
+            <button
+                type="submit"
+                class="btn !px-12"
+                data-testid="desktop-launch-submit"
+            >LAUNCH</button>
         </form>
 
         {{if false }}
