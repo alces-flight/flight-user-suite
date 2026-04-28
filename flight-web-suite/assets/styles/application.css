@@ -59,7 +59,22 @@ h2 {
     }
   }
 
-  label, em {
+  .custom-select {
+    @apply block bg-white border border-alces-blue rounded py-2 pl-4 pr-8;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url('/assets/images/icons/chevron-down.svg');
+    background-size: 0.75rem;
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+
+    &:focus {
+      @apply outline-none border-alces-blue bg-alces-blue-light;
+    }
+  }
+
+  em {
     @apply text-zinc-500 text-xs;
   }
 

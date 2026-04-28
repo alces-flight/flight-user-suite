@@ -40,7 +40,8 @@
                                 class="
                                     flex flex-col justify-between
                                     cursor-pointer p-5 w-64 h-full
-                                    bg-white border border-alces-blue-light peer-checked:border-alces-blue peer-checked:shadow transition
+                                    bg-white border border-alces-blue-light
+                                    peer-checked:border-alces-blue peer-checked:shadow transition
                                 "
                             >
                                 <div class="flex items-start justify-between gap-4">
@@ -59,30 +60,30 @@
                     {{end}}
                 </div>
             </section>
-            <div class="flex flex-col items-center">
+            <div class="flex flex-col gap-y-2 items-center text-field">
                 <label for="desktop-launch-name">
-                    Name your session <span class="font-normal text-slate-500">(optional)</span>
+                    Name your session <span class="text-slate-400">(optional)</span>
                 </label>
                 <input
                     id="desktop-launch-name"
                     name="name"
+                    class="max-w-96"
                     type="text"
                     value="{{ .Form.Name }}"
-                    class="mt-2 w-md border border-slate-300 px-3 py-2"
                     data-testid="desktop-launch-name"
                 >
                 {{if .Form.Errors.Name}}
                     <p class="mt-2 text-sm text-red-700" data-testid="desktop-launch-name-error">{{ .Form.Errors.Name }}</p>
                 {{end}}
             </div>
-            <div class="flex flex-col items-center">
+            <div class="flex flex-col gap-y-2 items-center text-field">
                 <label for="desktop-launch-geometry">
                     Select your desktop resolution
                 </label>
                 <select
                     id="desktop-launch-geometry"
                     name="geometry"
-                    class="mt-2 w-full border border-slate-300 bg-white px-3 py-2"
+                    class="custom-select"
                     data-testid="desktop-launch-geometry"
                 >
                     {{range .GeometryOptions}}
