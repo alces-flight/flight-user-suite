@@ -1,6 +1,13 @@
 {{ define "content" }}
 <h1 class="mt-12 lg:mt-20 mb-15">
-    Welcome to the <span class="text-alces-blue">{{ .EnvName }}</span> compute environment.
+    Welcome to
+    {{ if .UsingCustomEnvName }}
+        the <span class="text-alces-blue">{{ .EnvName }}</span>
+    {{ else }}
+        your cluster
+    {{ end }}
+    </span>
+    compute environment.
 </h1>
 
 {{ if .CurrentUserName }}

@@ -32,6 +32,8 @@ var (
 	printVersion = flag.Bool("version", false, "print the version")
 )
 
+const defaultClusterName = "your cluster"
+
 func init() {
 	// TODO: Setup log/slog. Save logs to file/stdout?
 
@@ -121,11 +123,19 @@ func newApp() *echo.Echo {
 
 func indexData() (map[string]any, error) {
 	toolsList, err := getToolsList()
+	envName, usingCustom := environmentName()
 	return map[string]any{
-		"EnvName":  "My Cluster",
-		"Tools":    toolsList,
-		"HasTools": len(toolsList) > 0,
+		"EnvName":            envName,
+		"UsingCustomEnvName": usingCustom,
+		"Tools":              toolsList,
+		"HasTools":           len(toolsList) > 0,
 	}, err
+}
+
+func environmentName() (string, bool) {
+	envName := os.Getenv("FLIGHT_STARTER_CLUSTER_NAME")
+	usingCustom := (envName != defaultClusterName && envName != "")
+	return envName, usingCustom
 }
 
 func getToolsList() ([]Tool, error) {

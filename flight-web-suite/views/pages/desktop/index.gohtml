@@ -1,11 +1,11 @@
 {{ define "content" }}
-<div class="mt-20 mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-    <div class="flex-grow">
-        <h1 class="mb-2">Desktop Sessions</h1>
-        <p data-testid="desktop-sessions-summary">{{ .Summary }}</p>
+<div class="flex flex-wrap gap-4 items-center justify-between mx-auto my-16 w-full max-w-[60rem]">
+    <p data-testid="desktop-sessions-summary">{{ .Summary }}</p>
+    <div>
+        <a class="btn" href="/desktop/new" data-testid="launch-desktop-link">
+            Launch Desktop
+        </a>
     </div>
-    <a class="inline-flex items-center justify-center border border-alces-blue bg-alces-blue px-4 py-2 text-white"
-        href="/desktop/new" data-testid="launch-desktop-link">Launch Desktop</a>
 </div>
 
 <div class="grid grid-cols-1 gap-4 xl:grid-cols-2 2xl:grid-cols-3" data-testid="desktop-session-cards">

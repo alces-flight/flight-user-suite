@@ -2,7 +2,10 @@
 <div class="flex justify-center">
     <div class="max-w-[26rem]">
         <h1 class="mt-20 mb-15">
-            Log in to <span class="text-alces-blue">OpenFlight</span>
+            Log in
+            {{ if .UsingCustomEnvName }}
+                to <span class="text-alces-blue">{{ .EnvName }}</span>
+            {{ end }}
         </h1>
         <p class="text-zinc-500 text-sm mb-12">
             Log in to your cluster. Contact your HPC administrator if you
