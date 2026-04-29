@@ -153,7 +153,7 @@ function initNoVnc() {
   }
   console.log("initialising NoVNC")
 
-  // Read parameters specified in the URL query string
+  // Read parameters to be specified in the URL query string passed to NoVNC
   const websockifyHost = readDataVariable(domEl, 'Host');
   const websockifyPort = readDataVariable(domEl, 'Port');
   const password = readDataVariable(domEl, 'Password');
