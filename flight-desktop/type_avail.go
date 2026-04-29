@@ -87,17 +87,14 @@ func typesTable(types []*Type) error {
 		)
 
 		depsText := "\u2754 Unknown"
-		depsLoadError := typ.loadDependencies()
 
-		if depsLoadError == nil {
-			_, depsOK := runDoctor(requiredDependencies(typ.dependencies))
-
+		if typ.dependenciesLoadError == nil {
 			depsText = lipgloss.NewStyle().Foreground(lipgloss.Red).Render("\u274c Missing")
-			if depsOK {
+			if typ.IsAvailable {
 				depsText = lipgloss.NewStyle().Foreground(lipgloss.Green).Render("\u2705 OK")
 			}
 		} else {
-			log.Debug("While loading dependencies for type", "type", typ.ID, "err", depsLoadError)
+			log.Debug("While loading dependencies for type", "type", typ.ID, "err", typ.dependenciesLoadError)
 		}
 
 		t.Row(typ.ID, summary, depsText)

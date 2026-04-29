@@ -26,6 +26,15 @@ func loadAllTypes() ([]*Type, error) {
 		}
 		types = append(types, typ)
 	}
+	for _, t := range types {
+		t.IsAvailable = false
+		t.dependenciesLoadError = t.loadDependencies()
+		if t.dependenciesLoadError == nil {
+			if _, depsOK := runDoctor(requiredDependencies(t.dependencies)); depsOK {
+				t.IsAvailable = true
+			}
+		}
+	}
 	return types, nil
 }
 
@@ -56,10 +65,12 @@ func loadType(id string) (*Type, error) {
 }
 
 type Type struct {
-	ID           string `json:"id" yaml:"id"`
-	Summary      string `json:"summary" yaml:"summary"`
-	URL          string `json:"url" yaml:"url"`
-	dependencies []dependency
+	ID                    string `json:"id" yaml:"id"`
+	Summary               string `json:"summary" yaml:"summary"`
+	URL                   string `json:"url" yaml:"url"`
+	IsAvailable           bool   `json:"available" yaml:"available"`
+	dependencies          []dependency
+	dependenciesLoadError error
 }
 
 func (t *Type) loadDependencies() error {
