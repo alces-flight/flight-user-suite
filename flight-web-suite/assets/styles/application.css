@@ -72,3 +72,8 @@ h2 {
 .btn {
   @apply rounded py-2 px-4 mb-4 cursor-pointer text-white bg-alces-blue hover:bg-alces-blue-dark focus:bg-alces-blue-dark focus:outline-none focus-visible:outline-none;
 }
+
+/* This class assumes .btn has been applied too. */
+.btn-sm {
+  @apply py-1 px-2 mb-2 text-sm;
+}

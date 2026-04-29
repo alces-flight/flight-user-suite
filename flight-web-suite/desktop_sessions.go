@@ -50,6 +50,28 @@ func indexDesktopSessionsHandler(c *echo.Context) error {
 	return c.Render(http.StatusOK, "desktop/index", data)
 }
 
+func showDesktopSessionHandler(c *echo.Context) error {
+	if !IsLoggedIn(c) {
+		return c.Redirect(http.StatusSeeOther, "/sessions")
+	}
+	if err := requireDesktopToolEnabled(); err != nil {
+		return err
+	}
+
+	session, err := desktop.ShowCommand(c.Request().Context(), env, CurrentUserName(c), c.Param("sessionName"))
+	if err != nil {
+		return err
+	}
+
+	// TODO: Redirect and flash if session cannot be found or is terminated etc..
+
+	data := map[string]any{
+		"layout":         "wide",
+		"DesktopSession": session,
+	}
+	return c.Render(http.StatusOK, "desktop/show", data)
+}
+
 func destroyDesktopSessionHandler(c *echo.Context) error {
 	if !IsLoggedIn(c) {
 		return c.Redirect(http.StatusSeeOther, "/sessions")

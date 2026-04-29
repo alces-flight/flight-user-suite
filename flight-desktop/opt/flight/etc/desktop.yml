@@ -3,8 +3,9 @@ name_generator:
   # Either "absurd" or "meaningless". Default "absurd".
   strategy: "absurd"
 
-# NOTE: Keep this in sync with the dependencies entry below.
+# NOTE: Keep these in sync with the dependencies entry below.
 vncpasswd: "/usr/bin/vncpasswd"
+websockify: "/usr/bin/websockify"
 
 dependencies:
   - type: exe
@@ -31,6 +32,13 @@ dependencies:
     description: "Perl"
     paths:
       - "perl"
+
+  - type: exe
+    description: "Websockify"
+    optional: true
+    failure_message: "Accessing desktop sessions via Flight Web Suite will not be available"
+    paths:
+      - "/usr/bin/websockify"
 
 # Everything not included in this list is removed from the environment when
 # launching a new session.

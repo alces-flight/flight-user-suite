@@ -34,14 +34,16 @@ var (
 )
 
 type Session struct {
-	Name        string
-	SessionType string          `yaml:"session_type"`
-	Password    string          `yaml:"password"`
-	IP          string          `yaml:"ip"`
-	State       sessionState    `yaml:"state"`
-	Geometry    string          `yaml:"geometry"`
-	CreatedAt   time.Time       `yaml:"created_at"`
-	Metadata    sessionMetadata `yaml:"metadata"`
+	Name          string
+	SessionType   string          `yaml:"session_type"`
+	Password      string          `yaml:"password"`
+	IP            string          `yaml:"ip"`
+	State         sessionState    `yaml:"state"`
+	Geometry      string          `yaml:"geometry"`
+	CreatedAt     time.Time       `yaml:"created_at"`
+	Metadata      sessionMetadata `yaml:"metadata"`
+	WebsocketPid  int             `yaml:"websocket_pid"`
+	WebsocketPort int             `yaml:"websocket_port"`
 }
 
 func loadAllSessions() ([]*Session, error) {
@@ -120,6 +122,12 @@ func (s *Session) Start(ctx context.Context) error {
 	if err := s.startVNC(ctx, xdg.Home); err != nil {
 		s.cleanup()
 		return fmt.Errorf("staring VNC server: %w", err)
+	}
+	if err := s.startWebsockify(ctx); err != nil {
+		// Don't return an error here, as we still want to save the session and
+		// recovering from this error is possible by manually running the clean
+		// command.
+		log.Debug("Failed to start websockify process", "err", err)
 	}
 	if err := s.startCleaner(ctx); err != nil {
 		// Don't return an error here, as we still want to save the session and
@@ -401,7 +409,7 @@ func (s *Session) startCleaner(ctx context.Context) error {
 	cmd := exec.CommandContext(ctx, libexecPath("cleaner"))
 	cmd.Env = []string{
 		fmt.Sprintf("SESSION_VNC_PID=%s", pid),
-		"SESSION_PIDS=\"\"",
+		fmt.Sprintf("SESSION_PIDS=%d", s.WebsocketPid),
 		fmt.Sprintf("SESSION_DIR=%s", s.sessionDir()),
 	}
 	if os.Getenv("FLIGHT_DESKTOP_DEBUG") != "" {
@@ -412,6 +420,43 @@ func (s *Session) startCleaner(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("starting cleaner: %w", err)
 	}
+	return nil
+}
+
+func (s *Session) GetWebsocketPort() int {
+	if s.WebsocketPort != 0 {
+		return s.WebsocketPort
+	}
+	port := s.Port()
+	if port == -1 {
+		return -1
+	}
+	// TODO: Pick different port if its already taken.
+	websockifyPort := 3000 + s.Port()
+	return websockifyPort
+}
+
+func (s *Session) startWebsockify(ctx context.Context) error {
+	websockifyPort := s.GetWebsocketPort()
+	args := []string{
+		fmt.Sprintf("0.0.0.0:%d", websockifyPort),
+		fmt.Sprintf("127.0.0.1:%d", s.Port()),
+	}
+	cmd := exec.CommandContext(ctx, config.WebSockify, args...)
+	log.Debug("starting websockify", "path", config.WebSockify, "args", cmd.Args)
+	logFile, err := os.Create(filepath.Join(s.sessionDir(), "websocket.log"))
+	if err != nil {
+		return fmt.Errorf("starting websockify: %w", err)
+	}
+	cmd.Stdout = logFile
+	cmd.Dir = "/"
+	err = cmd.Start()
+	if err != nil {
+		return fmt.Errorf("starting websockify: %w", err)
+	}
+	s.WebsocketPort = websockifyPort
+	s.WebsocketPid = cmd.Process.Pid
+
 	return nil
 }
 

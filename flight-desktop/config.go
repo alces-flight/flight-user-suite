@@ -17,6 +17,7 @@ type desktopConfig struct {
 	Dependencies  []dependency        `yaml:"dependencies"`
 	EnvWhitelist  []string            `yaml:"environment_whitelist"`
 	VncPasswd     string              `yaml:"vncpasswd"`
+	WebSockify    string              `yaml:"websockify"`
 }
 
 type nameGeneratorConfig struct {
