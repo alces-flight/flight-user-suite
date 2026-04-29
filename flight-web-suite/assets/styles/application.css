@@ -15,6 +15,13 @@
 
 @font-face {
   font-family: Lexend;
+  font-style: semi-bold;
+  font-weight: 600;
+  src: url("/assets/fonts/Lexend-SemiBold.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: Lexend;
   font-style: bold;
   font-weight: 700;
   src: url("/assets/fonts/Lexend-Bold.ttf") format("truetype");
@@ -92,4 +99,17 @@ h2 {
 /* This class assumes .btn has been applied too. */
 .btn-sm {
   @apply py-1 px-2 mb-2 text-sm;
+}
+
+.dropdown-option {
+  @apply w-full px-6 py-2 text-left cursor-pointer;
+}
+
+.details-grid {
+  dd, dt {
+    @apply text-sm;
+  }
+  dt {
+    @apply font-semibold;
+  }
 }

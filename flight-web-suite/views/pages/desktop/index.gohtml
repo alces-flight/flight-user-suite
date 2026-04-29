@@ -1,54 +1,68 @@
 {{ define "content" }}
 <div class="max-w-[60rem] mx-auto">
-<div class="flex flex-wrap gap-4 items-center justify-between mx-auto my-16 w-full">
-    <p data-testid="desktop-sessions-summary">{{ .Summary }}</p>
-    <div>
-        <a class="btn" href="/desktop/new" data-testid="launch-desktop-link">
-            Launch Desktop
-        </a>
-    </div>
-</div>
-<div class="grid grid-cols-1 gap-4 xl:grid-cols-2 2xl:grid-cols-3" data-testid="desktop-session-cards">
-    {{range .DesktopSessions}}
-    <div class="border border-alces-blue-light rounded-2xl p-4 text-left" data-testid="desktop-session-card--{{ .Name }}">
-        <div class="mb-3 flex items-start justify-between gap-4">
-            <p>{{ .Name }}</p>
-            <details class="relative" data-testid="desktop-session-actions--{{ .Name }}">
-                <summary class="cursor-pointer list-none" aria-label="Session actions">☰</summary>
-                <div class="absolute top-6 right-0 z-10 min-w-32 border border-alces-blue-light bg-white p-2 shadow-md">
-                    {{if .ActionEnabled}}
-                    <form action="{{ .ActionPath }}" method="post">
-                        {{if .ActionMethodOverride}}
-                        <input type="hidden" name="_method" value="{{ .ActionMethodOverride }}">
-                        {{end}}
-                        <button class="w-full cursor-pointer text-left" type="submit"
-                            data-testid="desktop-session-action-button--{{ .Name }}">{{ .ActionLabel }}</button>
-                    </form>
-                    {{else}}
-                    <button class="w-full cursor-not-allowed text-left text-gray-500" type="button" disabled
-                        title="{{ .ActionTitle }}" data-testid="desktop-session-action-button--{{ .Name }}">{{
-                        .ActionLabel }}</button>
-                    {{end}}
-                </div>
-            </details>
+    <h1 class="text-center w-full mt-12 mb-8">My desktop sessions</h1>
+    <div class="flex flex-wrap gap-4 items-end justify-between mb-12 w-full">
+        <p data-testid="desktop-sessions-summary">{{ .Summary }}</p>
+        <div>
+            <a class="btn" href="/desktop/new" data-testid="launch-desktop-link">
+                Launch Desktop
+            </a>
         </div>
-        <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2">
-            <dt class="font-semibold">Desktop</dt>
-            <dd data-testid="desktop-session-desktop-type--{{ .Name }}">{{ .DesktopType }}</dd>
-            <dt class="font-semibold">State</dt>
-            <dd data-testid="desktop-session-state--{{ .Name }}">{{ .State }}</dd>
-            <dt class="font-semibold">Host</dt>
-            <dd data-testid="desktop-session-host--{{ .Name }}"><code class="text-fuchsia-700">{{ .Host }}</code></dd>
-            <dt class="font-semibold">Started</dt>
-            <dd data-testid="desktop-session-start-time--{{ .Name }}">{{ .StartTimeText }}</dd>
-        </dl>
-        {{ if or (eq .State "active") (eq .State "remote") }}
-        <div class="flex justify-end">
-            <a class="btn btn-sm !mb-0" href="/desktop/{{ .Name }}">View</a>
+    </div>
+    <div class="flex flex-wrap gap-4" data-testid="desktop-session-cards">
+        {{range .DesktopSessions}}
+        <div class="w-72 border border-alces-blue-light rounded-3xl py-4 px-6 text-left" data-testid="desktop-session-card--{{ .Name }}">
+            <div class="mb-4 flex items-center justify-between gap-4">
+                <p class="mb-0">{{ .Name }}</p>
+                <div class="relative">
+                    <button
+                        class="dropdown-toggle cursor-pointer text-xl"
+                        data-target-id="desktop-session-actions--{{ .Name }}"
+                        data-testid="desktop-session-actions--{{ .Name }}"
+                        aria-label="Session actions"
+                    >☰</button>
+                    <div
+                        id="desktop-session-actions--{{ .Name }}"
+                        class="hidden absolute right-0 top-6 bg-white border border-alces-blue-light rounded-3xl shadow-md min-w-32 z-10"
+                    >
+                        {{if .ActionEnabled}}
+                            <form action="/desktop/{{ .Name }}" method="post">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button
+                                    class="dropdown-option hover:bg-sky-50"
+                                    type="submit"
+                                    data-testid="desktop-session-action-button--{{ .Name }}"
+                                >{{ .ActionLabel }}</button>
+                            </form>
+                        {{else}}
+                            <button
+                                class="dropdown-option cursor-not-allowed text-slate-400"
+                                type="button"
+                                disabled
+                                title="{{ .ActionTitle }}"
+                                data-testid="desktop-session-action-button--{{ .Name }}"
+                            >{{ .ActionLabel }}</button>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+            <dl class="details-grid grid grid-cols-[auto_1fr] gap-x-6 gap-y-2">
+                <dt>Desktop</dt>
+                <dd data-testid="desktop-session-desktop-type--{{ .Name }}">{{ .DesktopType }}</dd>
+                <dt>State</dt>
+                <dd data-testid="desktop-session-state--{{ .Name }}">{{ .State }}</dd>
+                <dt>Host</dt>
+                <dd data-testid="desktop-session-host--{{ .Name }}"><code class="text-fuchsia-700">{{ .Host }}</code></dd>
+                <dt>Started</dt>
+                <dd data-testid="desktop-session-start-time--{{ .Name }}">{{ .StartTimeText }}</dd>
+            </dl>
+            {{ if or (eq .State "active") (eq .State "remote") }}
+                <div class="flex justify-end">
+                    <a class="btn btn-sm !mb-0" href="/desktop/{{ .Name }}">View</a>
+                </div>
+            {{ end }}
         </div>
         {{end}}
     </div>
-    {{end}}
-</div>
 </div>
 {{end}}

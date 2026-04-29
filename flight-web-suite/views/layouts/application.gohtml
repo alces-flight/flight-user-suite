@@ -35,7 +35,7 @@
             <div id="session-dropdown" class="hidden absolute right-0 top-[2.4rem] bg-black z-20">
                 <form action="sessions" method="post" data-testid="logout-form">
                     <input type="hidden" name="_method" value="DELETE" />
-                    <button class="text-white cursor-pointer hover:bg-slate-800 px-6 py-2" type="submit">Logout</button>
+                    <button class="dropdown-option text-white hover:bg-slate-800" type="submit">Logout</button>
                 </form>
             </div>
         </div>
@@ -44,7 +44,7 @@
     <div class="grow min-h-[calc(100vh-3.6rem)] overflow-y-auto">
         <div class="relative min-h-full flex flex-col bg-linear-to-b from-alces-blue-light to-white">
             <div class="px-[5%] lg:px-[15%] h-full flex flex-col grow">
-                <div class="bg-white p-4 h-full pb-26 grow relative">
+                <div class="bg-white py-4 px-8 h-full pb-26 grow relative">
                     {{ template "flashes" .flashes }}
                     {{ block "content" . }}{{ end }}
                 </div>
