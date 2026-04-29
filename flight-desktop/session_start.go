@@ -57,7 +57,7 @@ func startSessionCommand() *cli.Command {
 			cli.DefaultCompleteWithFlags(ctx, cmd)
 			switch cmd.NArg() {
 			case 0:
-				types, err := loadAllTypes()
+				types, err := loadAllTypes(false)
 				if err != nil {
 					return
 				}
@@ -204,7 +204,7 @@ func startSessionJSON(ctx context.Context, sessionType, nameInput, geometry stri
 }
 
 func validateSessionType(sessionType string) error {
-	availableTypes, err := loadAllTypes()
+	availableTypes, err := loadAllTypes(false)
 	if err != nil {
 		return err
 	}
@@ -288,7 +288,7 @@ func checkDependencies(ctx context.Context, sessionType string) (bool, error) {
 		return false, nil
 	}
 
-	sessionTypeDef, err := loadType(sessionType)
+	sessionTypeDef, err := loadType(sessionType, false)
 
 	if err != nil {
 		return false, err
@@ -318,7 +318,7 @@ func checkDependenciesQuiet(sessionType string) (bool, error) {
 		return false, nil
 	}
 
-	sessionTypeDef, err := loadType(sessionType)
+	sessionTypeDef, err := loadType(sessionType, false)
 	if err != nil {
 		return false, err
 	}

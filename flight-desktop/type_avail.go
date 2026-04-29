@@ -23,7 +23,7 @@ func typeAvailCommand() *cli.Command {
 		Category:    "Desktop types",
 		Flags:       []cli.Flag{formatFlag},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			types, err := loadAllTypes()
+			types, err := loadAllTypes(true)
 			if err != nil {
 				return err
 			}

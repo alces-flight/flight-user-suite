@@ -9,7 +9,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func loadAllTypes() ([]*Type, error) {
+func loadAllTypes(includeDependencies bool) ([]*Type, error) {
 	glob := filepath.Join(env.FlightRoot, "usr", "lib", "desktop", "types", "*", "metadata.yml")
 	log.Debug("Loading all desktop types", "glob", glob)
 	types := make([]*Type, 0)
@@ -19,26 +19,17 @@ func loadAllTypes() ([]*Type, error) {
 	}
 	for _, match := range matches {
 		id := filepath.Base(filepath.Dir(match))
-		typ, err := loadType(id)
+		typ, err := loadType(id, includeDependencies)
 		if err != nil {
 			log.Debug("Skipping bad type", "match", match, "err", err)
 			continue
 		}
 		types = append(types, typ)
 	}
-	for _, t := range types {
-		t.IsAvailable = false
-		t.dependenciesLoadError = t.loadDependencies()
-		if t.dependenciesLoadError == nil {
-			if _, depsOK := runDoctor(requiredDependencies(t.dependencies)); depsOK {
-				t.IsAvailable = true
-			}
-		}
-	}
 	return types, nil
 }
 
-func loadType(id string) (*Type, error) {
+func loadType(id string, includeDependencies bool) (*Type, error) {
 	typ := &Type{ID: id}
 	log.Debug("Loading desktop type", "dir", typ.dir())
 	info, err := os.Stat(typ.dir())
@@ -60,6 +51,9 @@ func loadType(id string) (*Type, error) {
 	if err != nil {
 		log.Debug("Loading desktop type metadata", "metadataFile", typ.metadataFile(), "err", err)
 		return typ, nil
+	}
+	if includeDependencies {
+		typ.checkDependencies()
 	}
 	return typ, nil
 }
@@ -89,6 +83,16 @@ func (t *Type) loadDependencies() error {
 	}
 	t.dependencies = deps
 	return nil
+}
+
+func (t *Type) checkDependencies() {
+	t.IsAvailable = false
+	t.dependenciesLoadError = t.loadDependencies()
+	if t.dependenciesLoadError == nil {
+		if _, depsOK := runDoctor(requiredDependencies(t.dependencies)); depsOK {
+			t.IsAvailable = true
+		}
+	}
 }
 
 func (t *Type) dir() string {
