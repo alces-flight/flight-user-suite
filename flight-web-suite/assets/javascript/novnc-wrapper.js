@@ -154,9 +154,8 @@ function initNoVnc() {
   console.log("initialising NoVNC")
 
   // Read parameters specified in the URL query string
-  // By default, use the host and port of server that served this file
-  const host = readDataVariable(domEl, 'Host', window.location.hostname);
-  const port = readDataVariable(domEl, 'Port', window.location.port);
+  const websockifyHost = readDataVariable(domEl, 'Host');
+  const websockifyPort = readDataVariable(domEl, 'Port');
   const password = readDataVariable(domEl, 'Password');
   const path = readDataVariable(domEl, 'Path', 'websockify');
 
@@ -167,11 +166,11 @@ function initNoVnc() {
   } else {
     url = 'ws';
   }
-  url += '://' + host;
-  if(port) {
-    url += ':' + port;
-  }
+  url += '://' + window.location.hostname
+  url += ':' + window.location.port;
   url += '/' + path;
+  url += '?host=' + websockifyHost
+  url += '&port=' + websockifyPort
 
   const vnc = new NoVncContainer(
     document.getElementById("novnc-canvas"),

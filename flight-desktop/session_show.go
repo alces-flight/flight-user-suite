@@ -48,24 +48,26 @@ func showSessionCommand() *cli.Command {
 }
 
 type shownSession struct {
-	Name        string       `json:"name"`
-	DesktopType string       `json:"desktop_type"`
-	State       sessionState `json:"state"`
-	Host        string       `json:"host"`
-	Port        int          `json:"port"`
-	Password    string       `json:"password"`
-	CreatedAt   string       `json:"created_at"`
+	Name          string       `json:"name"`
+	DesktopType   string       `json:"desktop_type"`
+	State         sessionState `json:"state"`
+	Host          string       `json:"host"`
+	Port          int          `json:"port"`
+	WebsocketPort int          `json:"websocket_port"`
+	Password      string       `json:"password"`
+	CreatedAt     string       `json:"created_at"`
 }
 
 func writeSessionJSON(session *Session) error {
 	shownSession := shownSession{
-		Name:        session.Name,
-		DesktopType: session.SessionType,
-		State:       session.ComputedState(),
-		Host:        session.Metadata.Host,
-		Password:    session.Password,
-		Port:        session.Port(),
-		CreatedAt:   session.CreatedAt.Format(time.RFC3339),
+		Name:          session.Name,
+		DesktopType:   session.SessionType,
+		State:         session.ComputedState(),
+		Host:          session.Metadata.Host,
+		Password:      session.Password,
+		Port:          session.Port(),
+		WebsocketPort: session.GetWebsocketPort(),
+		CreatedAt:     session.CreatedAt.Format(time.RFC3339),
 	}
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")

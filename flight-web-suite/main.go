@@ -119,6 +119,8 @@ func newApp() *echo.Echo {
 	e.GET("/sessions", newSessionHandler)
 	e.POST("/sessions", createSessionHandler)
 	e.DELETE("/sessions", destroySessionHandler)
+	e.GET("/websockify", func(c *echo.Context) error { return nil }, NewWSProxyMiddleware())
+
 	return e
 }
 

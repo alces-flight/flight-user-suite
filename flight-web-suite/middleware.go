@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v5"
@@ -32,3 +34,32 @@ func NewSessionMiddleware() echo.MiddlewareFunc {
 		}
 	}
 }
+
+func NewWSProxyMiddleware() echo.MiddlewareFunc {
+	return middleware.ProxyWithConfig(middleware.ProxyConfig{
+		Balancer: &WebsockifyBalancer{},
+		Skipper:  middleware.DefaultSkipper,
+	})
+}
+
+// WebsockifyBalancer dynamically determines the upstream server by examining
+// the incoming request.  It's more of a router than a balancer.
+type WebsockifyBalancer struct{}
+
+func (b *WebsockifyBalancer) Next(c *echo.Context) (*middleware.ProxyTarget, error) {
+	host := c.QueryParam("host")
+	port := c.QueryParam("port")
+	targetURL, err := url.Parse(fmt.Sprintf("http://%s:%s/", host, port))
+	c.Logger().Info("proxying websockify request", "target", targetURL.String())
+	if err != nil {
+		return nil, err
+	}
+
+	return &middleware.ProxyTarget{
+		URL: targetURL,
+	}, nil
+}
+
+// Implement remaining [middleware.ProxyBalancer] interface.
+func (b *WebsockifyBalancer) AddTarget(target *middleware.ProxyTarget) bool { return true }
+func (b *WebsockifyBalancer) RemoveTarget(name string) bool                 { return true }

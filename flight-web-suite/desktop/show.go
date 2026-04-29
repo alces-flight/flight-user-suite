@@ -30,8 +30,5 @@ func ShowCommand(ctx context.Context, env configenv.Env, username, sessionName s
 	if err := json.Unmarshal(stdout.Bytes(), &session); err != nil {
 		return nil, fmt.Errorf("decoding desktop session: %w", err)
 	}
-	if session.Port > 0 {
-		session.Port = session.Port + 3000
-	}
 	return session, nil
 }

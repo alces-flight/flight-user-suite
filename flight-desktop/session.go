@@ -34,15 +34,16 @@ var (
 )
 
 type Session struct {
-	Name         string
-	SessionType  string          `yaml:"session_type"`
-	Password     string          `yaml:"password"`
-	IP           string          `yaml:"ip"`
-	State        sessionState    `yaml:"state"`
-	Geometry     string          `yaml:"geometry"`
-	CreatedAt    time.Time       `yaml:"created_at"`
-	Metadata     sessionMetadata `yaml:"metadata"`
-	WebsocketPid int             `yaml:"websocket_pid"`
+	Name          string
+	SessionType   string          `yaml:"session_type"`
+	Password      string          `yaml:"password"`
+	IP            string          `yaml:"ip"`
+	State         sessionState    `yaml:"state"`
+	Geometry      string          `yaml:"geometry"`
+	CreatedAt     time.Time       `yaml:"created_at"`
+	Metadata      sessionMetadata `yaml:"metadata"`
+	WebsocketPid  int             `yaml:"websocket_pid"`
+	WebsocketPort int             `yaml:"websocket_port"`
 }
 
 func loadAllSessions() ([]*Session, error) {
@@ -422,10 +423,23 @@ func (s *Session) startCleaner(ctx context.Context) error {
 	return nil
 }
 
-func (s *Session) startWebsockify(ctx context.Context) error {
+func (s *Session) GetWebsocketPort() int {
+	if s.WebsocketPort != 0 {
+		return s.WebsocketPort
+	}
+	port := s.Port()
+	if port == -1 {
+		return -1
+	}
 	// TODO: Pick different port if its already taken.
+	websockifyPort := 3000 + s.Port()
+	return websockifyPort
+}
+
+func (s *Session) startWebsockify(ctx context.Context) error {
+	websockifyPort := s.GetWebsocketPort()
 	args := []string{
-		fmt.Sprintf("0.0.0.0:%d", 3000+s.Port()),
+		fmt.Sprintf("0.0.0.0:%d", websockifyPort),
 		fmt.Sprintf("127.0.0.1:%d", s.Port()),
 	}
 	cmd := exec.CommandContext(ctx, config.WebSockify, args...)
@@ -440,6 +454,7 @@ func (s *Session) startWebsockify(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("starting websockify: %w", err)
 	}
+	s.WebsocketPort = websockifyPort
 	s.WebsocketPid = cmd.Process.Pid
 
 	return nil
