@@ -91,11 +91,16 @@ func loadSession(name string) (*Session, error) {
 		session.State = Broken
 		return session, nil
 	}
-	if !session.isActive() {
-		session.State = Exited
-	}
 	// Make certain that name isn't overridden by a value in the metadata file.
 	session.Name = name
+	if session.IP == "" {
+		log.Debug("Session metadata does not contain IP. Session is broken.", "metadataFile", session.metadataFile())
+		session.State = Broken
+		return session, nil
+	}
+	if session.isLocal() && !session.isActive() {
+		session.State = Exited
+	}
 	return session, nil
 }
 
@@ -183,14 +188,23 @@ func (s Session) PrimaryIP() netip.Addr {
 	return ip
 }
 
-func (s *Session) SessionState() sessionState {
-	if !s.IsLocal() {
+// ComputedState returns the sessions state taking into account whether it is
+// broken or running on a remote machine.
+//
+// NOTE: Use this method in preference to [Session.State] or [Session.isLocal]
+func (s *Session) ComputedState() sessionState {
+	if s.State != Broken && !s.isLocal() {
 		return Remote
 	}
 	return s.State
 }
 
-func (s *Session) IsLocal() bool {
+// isLocal returns true if the VNC sesssion is running on the same machine is
+// this process.
+//
+// If the session's State is Broken, the response is undefined. A safer option
+// is to call [Session.ComputedState].
+func (s *Session) isLocal() bool {
 	return s.IP == s.PrimaryIP().String()
 }
 
@@ -204,7 +218,7 @@ func (s Session) Port() int {
 }
 
 func (s Session) PrimaryConnectionString() string {
-	if s.State == Broken {
+	if s.State == Broken || s.IP == "" || s.Port() == -1 {
 		return ""
 	}
 	return fmt.Sprintf("%s:%d", s.IP, s.Port())

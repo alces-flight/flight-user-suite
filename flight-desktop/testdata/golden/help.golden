@@ -22,7 +22,7 @@ COMMANDS:
      show   Show information about a desktop session
      logs   Show desktop session logs
      kill   Terminate an interactive desktop session
-     clean  Clean up one or more exited desktop sessions
+     clean  Clean up one or more exited or broken desktop sessions
 
 GLOBAL OPTIONS:
    --log-level LEVEL  set the log LEVEL (debug, info, warn, error, fatal). Default: warn

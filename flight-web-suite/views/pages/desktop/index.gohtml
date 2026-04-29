@@ -17,8 +17,10 @@
                 <summary class="cursor-pointer list-none" aria-label="Session actions">☰</summary>
                 <div class="absolute top-6 right-0 z-10 min-w-32 border border-alces-blue-light bg-white p-2 shadow-md">
                     {{if .ActionEnabled}}
-                    <form action="/desktop/{{ .Name }}" method="post">
-                        <input type="hidden" name="_method" value="DELETE">
+                    <form action="{{ .ActionPath }}" method="post">
+                        {{if .ActionMethodOverride}}
+                        <input type="hidden" name="_method" value="{{ .ActionMethodOverride }}">
+                        {{end}}
                         <button class="w-full cursor-pointer text-left" type="submit"
                             data-testid="desktop-session-action-button--{{ .Name }}">{{ .ActionLabel }}</button>
                     </form>

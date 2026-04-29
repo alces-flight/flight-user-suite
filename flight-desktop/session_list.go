@@ -52,7 +52,7 @@ func writeSessionsJSON(sessions []*Session) error {
 		output = append(output, listedSession{
 			Name:        session.Name,
 			DesktopType: session.SessionType,
-			State:       session.SessionState(),
+			State:       session.ComputedState(),
 			Host:        session.Metadata.Host,
 			CreatedAt:   session.CreatedAt.Format(time.RFC3339),
 		})
@@ -111,7 +111,7 @@ func sessionsTable(sessions []*Session) error {
 			s.SessionType,
 			connectionString,
 			s.Password,
-			string(s.SessionState()),
+			string(s.ComputedState()),
 		)
 	}
 	_, err := lipgloss.Println(t)
