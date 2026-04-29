@@ -1,7 +1,7 @@
 {{ define "content" }}
 <div class="max-w-[60rem] mx-auto">
     <h1 class="text-center w-full mt-12 mb-8">My desktop sessions</h1>
-    <div class="flex flex-wrap gap-4 items-end justify-between mb-12 w-full">
+    <div class="flex flex-wrap gap-4 items-end justify-between mb-8 w-full">
         <p data-testid="desktop-sessions-summary">{{ .Summary }}</p>
         <div>
             <a class="btn" href="/desktop/new" data-testid="launch-desktop-link">
@@ -23,11 +23,13 @@
                     >☰</button>
                     <div
                         id="desktop-session-actions--{{ .Name }}"
-                        class="hidden absolute right-0 top-6 bg-white border border-alces-blue-light rounded-3xl shadow-md min-w-32 z-10"
+                        class="rounded-dropdown hidden absolute right-0 top-6 bg-white border border-alces-blue-light shadow-md min-w-32 z-10"
                     >
                         {{if .ActionEnabled}}
-                            <form action="/desktop/{{ .Name }}" method="post">
-                                <input type="hidden" name="_method" value="DELETE">
+                            <form action="{{ .ActionPath }}" method="post">
+                                {{if .ActionMethodOverride}}
+                                    <input type="hidden" name="_method" value="{{ .ActionMethodOverride }}">
+                                {{end}}
                                 <button
                                     class="dropdown-option hover:bg-sky-50"
                                     type="submit"

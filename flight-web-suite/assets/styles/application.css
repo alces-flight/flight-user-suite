@@ -101,6 +101,19 @@ h2 {
   @apply py-1 px-2 mb-2 text-sm;
 }
 
+.rounded-dropdown {
+  border-radius: 1.5rem;
+
+  button:first-child {
+    border-top-left-radius: 1.5rem;
+    border-top-right-radius: 1.5rem;
+  }
+  button:last-child {
+    border-bottom-left-radius: 1.5rem;
+    border-bottom-right-radius: 1.5rem;
+  }
+}
+
 .dropdown-option {
   @apply w-full px-6 py-2 text-left cursor-pointer;
 }
