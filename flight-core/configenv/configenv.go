@@ -29,7 +29,7 @@ func InitFlightEnv() (Env, error) {
 		FlightStateRoot: os.Getenv("FLIGHT_STATE_ROOT"),
 		ClusterName:     os.Getenv("FLIGHT_STARTER_CLUSTER_NAME"),
 	}
-	if env.FlightRoot != "" && env.FlightStateRoot != "" {
+	if env.FlightRoot != "" && env.FlightStateRoot != "" && env.ClusterName != "" {
 		return env, nil
 	}
 
