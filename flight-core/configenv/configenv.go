@@ -79,18 +79,9 @@ func InitFlightEnv() (Env, error) {
 // errors are returned only for unreadable, unparseable, cyclic, or empty-after-
 // expansion configured values.
 func loadFlightConfig() (map[string]string, error) {
-	file, err := os.Open(flightConfigPath)
+	parsed, err := getParsedConfig(flightConfigPath)
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return map[string]string{}, nil
-		}
-		return nil, fmt.Errorf("opening %s: %w", flightConfigPath, err)
-	}
-	defer file.Close() // nolint:errcheck
-
-	parsed, err := envparse.Parse(file)
-	if err != nil {
-		return nil, fmt.Errorf("parsing %s: %w", flightConfigPath, err)
+		return nil, err
 	}
 
 	resolved := make(map[string]string, len(parsed))
@@ -143,17 +134,25 @@ func loadFlightConfig() (map[string]string, error) {
 
 func loadFlightStarterConfig(flightRoot string) (map[string]string, error) {
 	path := filepath.Join(flightRoot, "etc", "flight-starter.config")
-	file, err := os.Open(path)
+	parsed, err := getParsedConfig(path)
+	if err != nil {
+		return nil, err
+	}
+	return parsed, nil
+}
+
+func getParsedConfig(configPath string) (map[string]string, error) {
+	file, err := os.Open(configPath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return map[string]string{}, nil
 		}
-		return nil, fmt.Errorf("opening %s: %w", path, err)
+		return nil, fmt.Errorf("opening %s: %w", configPath, err)
 	}
 	defer file.Close()
 	parsed, err := envparse.Parse(file)
 	if err != nil {
-		return nil, fmt.Errorf("parsing %s: %w", path, err)
+		return nil, fmt.Errorf("parsing %s: %w", configPath, err)
 	}
 	return parsed, nil
 }
