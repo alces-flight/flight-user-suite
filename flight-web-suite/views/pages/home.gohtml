@@ -1,19 +1,26 @@
 {{ define "content" }}
-<h1 class="mt-20 mb-15">
-    Welcome to the <span class="text-alces-blue">{{ .EnvName }}</span> compute environment.
+<h1 class="mt-12 lg:mt-20 mb-15">
+    Welcome to
+    {{ if .UsingCustomEnvName }}
+        the <span class="text-alces-blue">{{ .EnvName }}</span>
+    {{ else }}
+        your cluster
+    {{ end }}
+    </span>
+    compute environment.
 </h1>
 
 {{ if .CurrentUserName }}
     {{ if .HasTools }}
         <p class="mb-8">Select a tool to access your cluster from within your browser.</p>
-        <div class="flex flex-wrap justify-center gap-x-4" data-testid="tool-cards">
+        <div class="flex flex-wrap justify-center gap-4" data-testid="tool-cards">
             {{range .Tools}}
             <a href="{{ .URL }}" class="block no-underline text-inherit" data-testid="tool-card--{{ .Name }}">
                 <div class="
-                flex flex-col items-center gap-y-1 justify-center
-                border border-alces-blue-light
-                w-70 p-9 px-8
-                hover:shadow hover:border-alces-blue transition-colors duration-200 cursor-pointer group
+                    flex flex-col items-center gap-y-1 justify-center
+                    border border-alces-blue-light
+                    w-70 p-9 px-8
+                    hover:shadow hover:border-alces-blue transition-colors duration-200 cursor-pointer group
                 ">
                     <div class="size-25 mb-2">
                         <img src="{{ .IconPath }}" alt="{{ .Name }} logo" class="h-full">
@@ -31,8 +38,8 @@
     {{ end }}
 {{ else }}
     <p class="mb-8">
-        <a href="/sessions" class="underline text-alces-blue">Log in</a> to your
-        cluster to access Flight Web Suite functionality.
+        <a href="/sessions" class="underline text-alces-blue">Log in</a>
+        to your cluster to access Flight Web Suite functionality.
     </p>
 {{ end }}
 {{ end }}

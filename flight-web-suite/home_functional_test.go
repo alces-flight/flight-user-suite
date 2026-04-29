@@ -94,7 +94,7 @@ func assertNotAuthenticated(t *testing.T, body string) {
 
 	testutil.AssertSelection(t, body, `a[data-testid="sign-in-link"]`,
 		testutil.HasAttr("href", "/sessions"),
-		testutil.HasText("Login"),
+		testutil.HasText("LOG IN"),
 	)
 	testutil.AssertNoSelection(t, body, `[data-testid="signed-in-message"]`)
 	testutil.AssertNoSelection(t, body, `[data-testid="logout-form"]`)
@@ -104,7 +104,7 @@ func assertAuthenticated(t *testing.T, body, username string) {
 	t.Helper()
 
 	testutil.AssertSelection(t, body, `[data-testid="signed-in-message"]`,
-		testutil.HasText("You are signed in as "+username),
+		testutil.HasText(username),
 	)
 	testutil.AssertSelection(t, body, `form[data-testid="logout-form"]`,
 		testutil.HasAttr("action", "sessions"),

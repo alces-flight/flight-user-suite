@@ -14,7 +14,15 @@ func newSessionHandler(c *echo.Context) error {
 	if IsLoggedIn(c) {
 		return c.Redirect(http.StatusSeeOther, "/")
 	}
-	return c.Render(http.StatusOK, "sessions/new", nil)
+	return c.Render(http.StatusOK, "sessions/new", newSessionData())
+}
+
+func newSessionData() map[string]any {
+	envName, usingCustomEnvName := environmentName()
+	return map[string]any{
+		"EnvName":            envName,
+		"UsingCustomEnvName": usingCustomEnvName,
+	}
 }
 
 func createSessionHandler(c *echo.Context) error {
