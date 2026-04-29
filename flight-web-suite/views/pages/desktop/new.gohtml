@@ -39,15 +39,26 @@
                                 for="{{ .ID }}"
                                 class="
                                     flex flex-col justify-between
-                                    cursor-pointer p-5 w-64 h-full
+                                    p-5 w-64 h-full
                                     bg-white border border-alces-blue-light rounded-3xl
-                                    peer-checked:border-alces-blue peer-checked:shadow transition
+                                    {{ if .IsAvailable }}
+                                        cursor-pointer peer-checked:border-alces-blue peer-checked:shadow transition
+                                    {{ else }}
+                                        text-slate-400 cursor-not-allowed
+                                    {{ end }}
                                 "
+                                {{ if eq .IsAvailable false }}title="Desktop type unavailable"{{ end }}
                             >
                                 <div class="flex items-start justify-between gap-4">
                                     <div>
-                                        <h3 class="text-xl">{{ .ID }} {{ .IsAvailable }}</h3>
-                                        <p class="mt-3 text-sm leading-6 text-slate-700">{{ .Summary }}</p>
+                                        <h3 class="text-xl">{{ .ID }}</h3>
+                                        <p class="mt-3 text-sm leading-6
+                                            {{ if .IsAvailable }}
+                                                text-slate-700
+                                            {{ else }}
+                                                text-slate-400
+                                            {{ end }}
+                                        ">{{ .Summary }}</p>
                                     </div>
                                 </div>
                                 {{if .URL}}
