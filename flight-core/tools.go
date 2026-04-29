@@ -137,6 +137,7 @@ func runTool(ctx context.Context, tool *toolset.Tool, args []string) error {
 	exe := buildToolExecCmd(ctx, tool, args)
 	exe.Stdout = os.Stdout
 	exe.Stderr = os.Stderr
+	exe.Stdin = os.Stdin
 	err := exe.Run()
 	return transformToolError(tool.Name, err)
 }

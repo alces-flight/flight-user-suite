@@ -156,6 +156,7 @@ func shellRunTool(tool string, args []string) error {
 	cmd := exec.Command(tp, args...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin
 	err := cmd.Run()
 	return transformToolError(tool, err)
 }
