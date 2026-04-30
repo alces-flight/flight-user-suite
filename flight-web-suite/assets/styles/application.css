@@ -93,12 +93,19 @@ h2 {
 }
 
 .btn {
-  @apply rounded-full py-2 px-6 mb-4 cursor-pointer text-white bg-alces-blue hover:bg-alces-blue-dark focus:bg-alces-blue-dark focus:outline-none focus-visible:outline-none;
+  @apply
+    cursor-pointer rounded-full py-2 px-6 mb-4 text-white
+    bg-alces-blue hover:bg-alces-blue-dark focus:bg-alces-blue-dark transition-colors
+    focus:outline-none focus-visible:outline-none;
 }
 
 /* This class assumes .btn has been applied too. */
 .btn-sm {
   @apply py-1 px-2 mb-2 text-sm;
+}
+
+.btn-outline {
+  @apply bg-transparent border border-alces-blue text-alces-blue hover:bg-alces-blue hover:text-white focus:bg-alces-blue focus:text-white;
 }
 
 .btn-disabled {

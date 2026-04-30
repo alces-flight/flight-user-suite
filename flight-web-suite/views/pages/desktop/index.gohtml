@@ -68,9 +68,7 @@
                 <dd data-testid="desktop-session-start-time--{{ .Name }}">{{ .StartTimeText }}</dd>
             </dl>
             {{ if or (eq .State "active") (eq .State "remote") }}
-                <div class="flex justify-end">
-                    <a class="btn btn-sm !mb-0" href="/desktop/{{ .Name }}">View</a>
-                </div>
+                <a class="btn btn-outline btn-sm block !mb-0 mt-3 w-full text-center" href="/desktop/{{ .Name }}">View</a>
             {{ end }}
         </div>
         {{end}}
