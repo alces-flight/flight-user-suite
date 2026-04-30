@@ -33,7 +33,8 @@
                                 id="{{ .ID }}"
                                 value="{{ .ID }}"
                                 class="sr-only peer"
-                                {{if eq $.Form.DesktopType .ID}}checked{{end}}
+                                {{if eq $.Form.DesktopType .ID}}{{ if .IsAvailable }}checked{{end}}{{end}}
+                                {{if eq .IsAvailable false}}disabled{{end}}
                             >
                             <label
                                 for="{{ .ID }}"
@@ -63,7 +64,11 @@
                                 </div>
                                 {{if .URL}}
                                     <p class="mt-4 text-sm">
-                                        <a href="{{ .URL }}" class="text-alces-blue underline">More info</a>
+                                        <a
+                                            href="{{ .URL }}"
+                                            class="text-alces-blue underline"
+                                            title="View the {{ .ID }} project page"
+                                        >More info</a>
                                     </p>
                                 {{end}}
                             </label>
