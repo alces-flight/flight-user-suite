@@ -117,7 +117,7 @@ func requireDesktopToolEnabled() error {
 }
 
 func validateDesktopLaunchForm(desktopTypes []*desktop.Type, form *desktopLaunchFormData) {
-	if !hasDesktopType(desktopTypes, form.DesktopType) {
+	if !hasAvailableDesktopType(desktopTypes, form.DesktopType) {
 		form.Errors.DesktopType = "Select an available desktop type."
 	}
 	if !hasDesktopGeometry(form.Geometry) {
@@ -187,10 +187,10 @@ func defaultDesktopGeometry() string {
 	return ""
 }
 
-func hasDesktopType(desktopTypes []*desktop.Type, id string) bool {
+func hasAvailableDesktopType(desktopTypes []*desktop.Type, id string) bool {
 	for _, desktopType := range desktopTypes {
 		if desktopType.ID == id {
-			return true
+			return desktopType.IsAvailable
 		}
 	}
 	return false
