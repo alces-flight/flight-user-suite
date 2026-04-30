@@ -1,5 +1,5 @@
 {{ define "content" }}
-<div class="flex justify-center">
+<div class="flex justify-center text-center">
     <div class="max-w-[26rem]">
         <h1 class="mt-20 mb-15">
             Log in
@@ -13,11 +13,11 @@
         </p>
         <form class="form" action="sessions" method="post" data-testid="new-session-form">
             <div class="field text-field">
-                <label for="username">Username</label><br>
+                <label for="username" class="text-zinc-500 text-xs">Username</label><br>
                 <input name="username" id="username" type="text" autofocus value="{{ .username }}" />
             </div>
             <div class="field text-field">
-                <label for="username">Password</label><br>
+                <label for="username" class="text-zinc-500 text-xs">Password</label><br>
                 <input name="password" id="password" type="password" />
             </div>
             <input class="btn w-full mt-10" type="submit" value="Log in" />

@@ -48,7 +48,7 @@ JSON
 	testutil.AssertSelection(t, body, `[data-testid="desktop-sessions-summary"]`,
 		testutil.HasText("You have 1 desktop session currently running and 1 stale session."),
 	)
-	testutil.AssertSelection(t, body, `[data-testid="desktop-session-card--alpha"] h2`,
+	testutil.AssertSelection(t, body, `[data-testid="desktop-session-card--alpha"] p`,
 		testutil.HasText("alpha"),
 	)
 	testutil.AssertSelection(t, body, `[data-testid="desktop-session-desktop-type--alpha"]`,
@@ -69,7 +69,7 @@ JSON
 	testutil.AssertSelection(t, body, `form[action="/desktop/alpha"] input[name="_method"]`,
 		testutil.HasAttr("value", "DELETE"),
 	)
-	testutil.AssertSelection(t, body, `[data-testid="desktop-session-card--beta"] h2`,
+	testutil.AssertSelection(t, body, `[data-testid="desktop-session-card--beta"] p`,
 		testutil.HasText("beta"),
 	)
 	testutil.AssertSelection(t, body, `form[action="/desktop/beta/clean"] [data-testid="desktop-session-action-button--beta"]`)

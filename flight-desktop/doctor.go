@@ -40,7 +40,7 @@ func doctorCommand() *cli.Command {
 				optionalDependencies(config.Dependencies),
 			)
 
-			types, err := loadAllTypes()
+			types, err := loadAllTypes(false)
 			if err != nil {
 				fmt.Print("\u274c ")
 				lipgloss.Println(redText.Render("Checking dependencies for desktop types failed"))
