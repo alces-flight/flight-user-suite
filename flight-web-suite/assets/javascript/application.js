@@ -1,2 +1,10 @@
+import { Application } from "@hotwired/stimulus"
+
 import "./dropdown";
-import "./novnc-wrapper"
+
+// Import stimulus controllers. Each entry here needs manually registering
+// below.
+import NovncController from "./controllers/novnc_controller"
+
+window.Stimulus = Application.start()
+Stimulus.register("novnc", NovncController)

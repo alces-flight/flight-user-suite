@@ -9,26 +9,35 @@ import (
 	"github.com/concertim/flight-user-suite/flight/configenv"
 )
 
-func ShowCommand(ctx context.Context, env configenv.Env, username, sessionName string) (*Session, error) {
+type showResponse struct {
+	Success bool    `json:"success"`
+	Session Session `json:"session"`
+	Error   string  `json:"error"`
+	Reason  string  `json:"reason"`
+}
+
+func ShowCommand(ctx context.Context, env configenv.Env, username, sessionName string) (showResponse, error) {
 	cmd, err := buildDesktopCommand(ctx, env, username, "show", "--format", "json", sessionName)
 	if err != nil {
-		return nil, err
+		return showResponse{}, err
 	}
 
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
-		if stderr.Len() != 0 {
-			return nil, fmt.Errorf("showing desktop session: %s", stderr.String())
-		}
-		return nil, fmt.Errorf("showing desktop session: %w", err)
+	runErr := cmd.Run()
+
+	var response showResponse
+	if decodeErr := json.Unmarshal(stdout.Bytes(), &response); decodeErr == nil {
+		return response, nil
 	}
 
-	var session *Session
-	if err := json.Unmarshal(stdout.Bytes(), &session); err != nil {
-		return nil, fmt.Errorf("decoding desktop session: %w", err)
+	if runErr != nil {
+		if stderr.Len() != 0 {
+			return showResponse{}, fmt.Errorf("showing desktop session: %s", stderr.String())
+		}
+		return showResponse{}, fmt.Errorf("showing desktop session: %w", runErr)
 	}
-	return session, nil
+	return showResponse{}, fmt.Errorf("decoding desktop show response: %s", stdout.String())
 }

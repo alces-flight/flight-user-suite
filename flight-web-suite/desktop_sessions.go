@@ -58,16 +58,27 @@ func showDesktopSessionHandler(c *echo.Context) error {
 		return err
 	}
 
-	session, err := desktop.ShowCommand(c.Request().Context(), env, CurrentUserName(c), c.Param("sessionName"))
+	response, err := desktop.ShowCommand(c.Request().Context(), env, CurrentUserName(c), c.Param("sessionName"))
 	if err != nil {
 		return err
 	}
-
-	// TODO: Redirect and flash if session cannot be found or is terminated etc..
+	sess, err := GetSession(c)
+	if err != nil {
+		return err
+	}
+	if !response.Success {
+		if response.Reason == "not_found" {
+			sess.AddFlash("Desktop session not found", "alert")
+		} else {
+			sess.AddFlash(fmt.Sprintf("Unexpected error finding desktop session: %s", response.Error), "alert")
+		}
+		SaveSession(c, sess)
+		return c.Redirect(http.StatusSeeOther, "/desktop")
+	}
 
 	data := map[string]any{
 		"layout":         "wide",
-		"DesktopSession": session,
+		"DesktopSession": response.Session,
 	}
 	return c.Render(http.StatusOK, "desktop/show", data)
 }

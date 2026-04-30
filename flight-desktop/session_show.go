@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -28,14 +29,14 @@ func showSessionCommand() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			name := cmd.StringArg("name")
 			session, err := loadSession(name)
+			if cmd.String("format") == "json" {
+				return writeSessionJSON(session, err)
+			}
 			if err != nil {
 				if err2 := session.RemoveSessionDir(); err2 != nil {
 					log.Debug("Removing session dir", "sessionDir", session.sessionDir(), "err", err2)
 				}
 				return err
-			}
-			if cmd.String("format") == "json" {
-				return writeSessionJSON(session)
 			}
 			sessionInfo(session)
 			if session.State != Exited && session.State != Broken {
@@ -45,6 +46,13 @@ func showSessionCommand() *cli.Command {
 			return nil
 		},
 	}
+}
+
+type showResponse struct {
+	Success bool         `json:"success"`
+	Session shownSession `json:"session,omitzero"`
+	Error   string       `json:"error,omitempty"`
+	Reason  string       `json:"reason,omitempty"`
 }
 
 type shownSession struct {
@@ -58,7 +66,26 @@ type shownSession struct {
 	CreatedAt     string       `json:"created_at"`
 }
 
-func writeSessionJSON(session *Session) error {
+func writeSessionJSON(session *Session, loadErr error) error {
+	if loadErr != nil {
+		var response showResponse
+		if _, ok := errors.AsType[UnknownSession](loadErr); ok {
+			response = showResponse{
+				Success: false,
+				Session: shownSession{},
+				Error:   loadErr.Error(),
+				Reason:  "not_found",
+			}
+		} else {
+			response = showResponse{
+				Success: false,
+				Session: shownSession{},
+				Error:   loadErr.Error(),
+				Reason:  "unexpected",
+			}
+		}
+		return writeShowResponse(response, 1)
+	}
 	shownSession := shownSession{
 		Name:          session.Name,
 		DesktopType:   session.SessionType,
@@ -69,9 +96,28 @@ func writeSessionJSON(session *Session) error {
 		WebsocketPort: session.GetWebsocketPort(),
 		CreatedAt:     session.CreatedAt.Format(time.RFC3339),
 	}
+	response := showResponse{
+		Success: true,
+		Session: shownSession,
+		Error:   "",
+		Reason:  "",
+	}
+	return writeShowResponse(response, 0)
+}
+
+func writeShowResponse(response showResponse, exitCode int) error {
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
-	return enc.Encode(shownSession)
+	if err := enc.Encode(response); err != nil {
+		return err
+	}
+	if exitCode == 0 {
+		return nil
+	}
+	return SilentExitError{
+		ExitCode:  exitCode,
+		exitError: errors.New("showing session failed"),
+	}
 }
 
 func completeSessionNames(ctx context.Context, cmd *cli.Command) {
