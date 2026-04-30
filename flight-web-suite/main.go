@@ -98,6 +98,7 @@ func newApp() *echo.Echo {
 
 	t := template.Must(template.ParseGlob(getDirectory("views") + "/layouts/*.gohtml"))
 	t = template.Must(t.ParseGlob(getDirectory("views") + "/partials/*.gohtml"))
+	t = template.Must(t.ParseGlob(getDirectory("assets") + "/images/icons/*.svg"))
 
 	e.Renderer = &TemplateRenderer{Template: t}
 

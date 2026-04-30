@@ -147,6 +147,8 @@ function createConnection({
       url,
       password && {credentials: {password}}
     );
+    // Don't set a background.
+    rfb.background = ""
     rfb.addEventListener('connect', onConnect);
     rfb.addEventListener('disconnect', onDisconnect);
     rfb.addEventListener('credentialsrequired', onPasswordPrompt);
