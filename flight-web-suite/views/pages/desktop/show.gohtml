@@ -1,21 +1,33 @@
 {{ define "content" }}
 {{ with .DesktopSession }}
-<div id="novnc-wrapper" class="flex flex-col h-full min-h-full" data-novnc-host="{{ .Host }}"
-    data-novnc-port="{{ .WebsocketPort }}" data-novnc-path="websockify" data-novnc-password="{{ .Password }}">
+<div id="novnc-wrapper" class="flex flex-col h-full min-h-full" data-controller="novnc"
+    data-novnc-host-value="{{ .Host }}" data-novnc-port-value="{{ .WebsocketPort }}" data-novnc-path-value="websockify" data-novnc-password-value="{{ .Password }}"
+    data-novnc-host="{{ .Host }}" data-novnc-port="{{ .WebsocketPort }}" data-novnc-path="websockify" data-novnc-password="{{ .Password }}"
+    >
     <div class="bg-alces-blue text-white flex justify-between p-2">
         <div>
             <span class="font-semibold">{{ .Name }}</span> running on <code>{{ .Host }}</code>
         </div>
+        <span data-novnc-target="status">Connecting</span>
         <div>
-            <span title="Placeholder (non-operational) close button">X</span>
+            <button class="btn btn-sm !mb-0" data-novnc-target="reconnectBtn" data-action="click->novnc#reconnect" title="Reconnect">Reconnect</button>
+            <button class="btn btn-sm !mb-0" data-novnc-target="disconnectBtn" data-action="click->novnc#disconnect" title="Disconnect">Disconnect</button>
+            {{ if eq .State "active" }}
+            <!-- Don't offer to terminate remote sessions. It's not yet implemented -->
+            <form class="inline" action="/desktop/{{ .Name }}" method="post">
+                <input type="hidden" name="_method" value="DELETE">
+                <button class="btn btn-sm !mb-0" title="Terminate" type="submit">Terminate</button>
+            </form>
+            {{ end }}
+            <a class="btn btn-sm !mb-0" href="/desktop" title="Close">X</a>
         </div>
     </div>
 
     <div class="h-full min-h-full flex-grow">
-        <div id="novnc-canvas" class="novnc h-full min-h-full w-full min-w-full">
+        <div class="novnc h-full min-h-full w-full min-w-full" data-novnc-target="canvas">
             <!-- This is where the desktop session will appear -->
         </div>
-        <div id="copy-fallback"></div>
+        <div style="display:none" data-novnc-target="copyFallback"></div>
     </div>
 </div>
 {{end}}
