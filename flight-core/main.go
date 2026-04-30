@@ -397,7 +397,7 @@ The Flight Web Suite provides in-browser access to the Flight User Suite tools.`
 }
 
 func addToolProxyCommands(cmd *cli.Command) {
-	tools, err := toolset.GetTools(env.FlightRoot, false)
+	tools, err := toolset.GetTools(env.FlightRoot, true)
 	if err != nil {
 		log.Warn("Unable to add tool proxy commands", "err", err)
 		return
