@@ -101,6 +101,10 @@ h2 {
   @apply py-1 px-2 mb-2 text-sm;
 }
 
+.btn-disabled {
+  @apply cursor-not-allowed bg-slate-300 hover:bg-slate-300 focus:bg-slate-300 focus:outline-none focus-visible:outline-none;
+}
+
 .rounded-dropdown {
   border-radius: 1.5rem;
 

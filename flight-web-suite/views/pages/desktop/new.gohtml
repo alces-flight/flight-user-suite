@@ -116,8 +116,12 @@
             </div>
             <button
                 type="submit"
-                class="btn !px-12"
+                class="btn !px-12 {{if eq .HasDesktopTypes false}}btn-disabled{{end}}"
                 data-testid="desktop-launch-submit"
+                {{if eq .HasDesktopTypes false}}
+                    disabled
+                    title="No available desktop types"
+                {{end}}
             >LAUNCH</button>
         </form>
         {{ if false }}
