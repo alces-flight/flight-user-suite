@@ -36,7 +36,7 @@ func (s *Service) Start(ctx context.Context) error {
 	extantProcess, _ := processFromPidfile(pidfilePath)
 
 	if extantProcess != nil {
-		return fmt.Errorf("Service %s is already running (PID %d)", s.ID, extantProcess.Pid)
+		return fmt.Errorf("Service %s is already running (PID %d)", s.Name, extantProcess.Pid)
 	}
 
 	args := []string{"--pidfile", pidfilePath}
@@ -51,7 +51,7 @@ func (s *Service) Start(ctx context.Context) error {
 func (s *Service) Kill() error {
 	log.Debug("Killing service process", "pidfile", s.PidfilePath(), "name", s.ID)
 	process, err := processFromPidfile(s.PidfilePath())
-	if err != nil {
+	if err != nil || process == nil {
 		return err
 	}
 	err = process.Signal(os.Interrupt)
