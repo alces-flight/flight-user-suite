@@ -4,11 +4,13 @@
     data-novnc-host-value="{{ .Host }}" data-novnc-port-value="{{ .WebsocketPort }}" data-novnc-path-value="websockify" data-novnc-password-value="{{ .Password }}"
     data-novnc-host="{{ .Host }}" data-novnc-port="{{ .WebsocketPort }}" data-novnc-path="websockify" data-novnc-password="{{ .Password }}"
     >
-    <div class="bg-alces-blue text-white flex gap-x-4 justify-between align-center p-2">
-        <div>
-            <span class="font-semibold">{{ .Name }}</span> running on <code>{{ .Host }}</code>
+    <div class="bg-alces-blue text-white flex gap-x-4 justify-between items-center px-3 py-0">
+        <div class="h-full flex items-center gap-x-1">
+            <span class="font-semibold">{{ .Name }}</span>
+            <span>running on</span>
+            <span class="mb-[-2px]"><code>{{ .Host }}</code></span>
         </div>
-        <span data-novnc-target="status">Connecting</span>
+        <span class="h-full flex items-center" data-novnc-target="status">Connecting</span>
         <div class="flex-grow flex justify-end">
             <div
               class="cursor-pointer group/menu flex items-center relative"
