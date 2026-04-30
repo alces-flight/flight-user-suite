@@ -9,6 +9,15 @@
     </a>
     <div class="flex flex-col gap-y-12 items-stretch mt-6">
         <h1 class="text-center">Launch a desktop session</h1>
+        {{ if eq .NumAvailableDesktopTypes 0 }}
+            <p>
+                There are no available desktop types. Please contact your HPC administrator.
+            </p>
+        {{ else if lt .NumAvailableDesktopTypes (len .DesktopTypes) }}
+            <p>
+                Not all desktop types are available. Please contact your HPC administrator about enabling additional desktop types.
+            </p>
+        {{ end }}
         <form
             action="/desktop"
             method="post"
@@ -117,12 +126,12 @@
             </div>
             <button
                 type="submit"
-                class="btn !px-12 uppercase {{if eq .HasDesktopTypes false}}btn-disabled{{end}}"
+                class="btn !px-12 uppercase {{if eq .NumAvailableDesktopTypes 0}}btn-disabled{{end}}"
                 data-controller="disable-with"
                 data-disable-with="Launching..."
                 data-disable-with-class="btn-disabled"
                 data-testid="desktop-launch-submit"
-                {{if eq .HasDesktopTypes false}}
+                {{if eq .NumAvailableDesktopTypes 0}}
                     disabled
                     title="No available desktop types"
                 {{end}}

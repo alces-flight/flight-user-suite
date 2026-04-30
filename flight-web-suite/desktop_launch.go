@@ -149,10 +149,10 @@ func renderDesktopLaunchPage(c *echo.Context, status int, desktopTypes []*deskto
 	}
 
 	data := map[string]any{
-		"DesktopTypes":    desktopTypes,
-		"HasDesktopTypes": anyAvailableDesktopTypes(desktopTypes),
-		"GeometryOptions": desktopGeometryOptions,
-		"Form":            form,
+		"DesktopTypes":             desktopTypes,
+		"NumAvailableDesktopTypes": numAvailableDesktopTypes(desktopTypes),
+		"GeometryOptions":          desktopGeometryOptions,
+		"Form":                     form,
 	}
 	return c.Render(status, "desktop/new", data)
 }
@@ -169,13 +169,14 @@ func defaultDesktopType(desktopTypes []*desktop.Type) string {
 	return ""
 }
 
-func anyAvailableDesktopTypes(desktopTypes []*desktop.Type) bool {
+func numAvailableDesktopTypes(desktopTypes []*desktop.Type) int {
+	numAvailable := 0
 	for _, typ := range desktopTypes {
 		if typ.IsAvailable {
-			return true
+			numAvailable++
 		}
 	}
-	return false
+	return numAvailable
 }
 
 func defaultDesktopGeometry() string {
