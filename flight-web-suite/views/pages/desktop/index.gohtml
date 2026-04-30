@@ -2,8 +2,8 @@
 <div class="max-w-[60rem] mx-auto">
     <h1 class="text-center w-full mt-12 mb-8">My desktop sessions</h1>
     <div class="flex flex-wrap gap-4 items-end justify-between mb-8 w-full">
-        <p class="text-center mx-auto" data-testid="desktop-sessions-summary">{{ .Summary }}</p>
-        <div class="text-center mx-auto">
+        <p class="text-center max-xl:mx-auto" data-testid="desktop-sessions-summary">{{ .Summary }}</p>
+        <div class="text-center max-xl:mx-auto">
             <a class="btn" href="/desktop/new" data-testid="launch-desktop-link">
                 Launch Desktop
             </a>
@@ -11,7 +11,10 @@
     </div>
     <div class="grid grid-cols-[repeat(auto-fit,_minmax(288px,_1fr))] gap-4" data-testid="desktop-session-cards">
         {{range .DesktopSessions}}
-        <div class="max-w-84 border border-alces-blue-light rounded-3xl py-4 px-6 text-left" data-testid="desktop-session-card--{{ .Name }}">
+        <div
+            class="w-full max-w-84 border border-alces-blue-light rounded-3xl pt-3 pb-4 px-5 text-left mx-auto"
+            data-testid="desktop-session-card--{{ .Name }}"
+        >
             <div class="mb-4 flex items-center justify-between gap-4">
                 <p class="mb-0">{{ .Name }}</p>
                 <div class="relative">
