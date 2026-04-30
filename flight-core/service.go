@@ -31,7 +31,15 @@ func (s *Service) Start(ctx context.Context) error {
 		return fmt.Errorf("creating pidfile directory: %w", err)
 	}
 
-	args := []string{"--pidfile", s.PidfilePath()}
+	pidfilePath := s.PidfilePath()
+
+	extantProcess, _ := processFromPidfile(pidfilePath)
+
+	if extantProcess != nil {
+		return fmt.Errorf("Service %s is already running (PID %d)", s.ID, extantProcess.Pid)
+	}
+
+	args := []string{"--pidfile", pidfilePath}
 	log.Debug("Starting", "service", s.ID, "path", s.ExePath(), "args", args)
 	execCmd := exec.CommandContext(ctx, s.ExePath(), args...)
 	execCmd.Dir = "/"
@@ -42,15 +50,7 @@ func (s *Service) Start(ctx context.Context) error {
 
 func (s *Service) Kill() error {
 	log.Debug("Killing service process", "pidfile", s.PidfilePath(), "name", s.ID)
-	pid, err := pidfile.Read(s.PidfilePath())
-	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		return err
-	}
-	if pid == 0 {
-		// Process is no longer running.
-		return nil
-	}
-	process, err := os.FindProcess(pid)
+	process, err := processFromPidfile(s.PidfilePath())
 	if err != nil {
 		return err
 	}
@@ -77,4 +77,16 @@ func (s *Service) mkPidfileDir() error {
 	dir := filepath.Dir(s.PidfilePath())
 	log.Debug("Creating pidfile directory", "path", dir)
 	return os.MkdirAll(dir, 0o755)
+}
+
+func processFromPidfile(pidfilePath string) (*os.Process, error) {
+	pid, err := pidfile.Read(pidfilePath)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return nil, err
+	}
+	if pid == 0 {
+		// Process is no longer running.
+		return nil, nil
+	}
+	return os.FindProcess(pid)
 }
