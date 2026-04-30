@@ -160,7 +160,12 @@ func defaultDesktopType(desktopTypes []*desktop.Type) string {
 	if len(desktopTypes) == 0 {
 		return ""
 	}
-	return desktopTypes[0].ID
+	for _, typ := range desktopTypes {
+		if typ.IsAvailable {
+			return typ.ID
+		}
+	}
+	return ""
 }
 
 func defaultDesktopGeometry() string {

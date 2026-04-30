@@ -33,7 +33,7 @@
                                 id="{{ .ID }}"
                                 value="{{ .ID }}"
                                 class="sr-only peer"
-                                {{if eq $.Form.DesktopType .ID}}{{ if .IsAvailable }}checked{{end}}{{end}}
+                                {{if eq $.Form.DesktopType .ID}}checked{{end}}
                                 {{if eq .IsAvailable false}}disabled{{end}}
                             >
                             <label
