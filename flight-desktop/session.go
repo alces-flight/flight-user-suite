@@ -44,6 +44,7 @@ type Session struct {
 	Metadata      sessionMetadata `yaml:"metadata"`
 	WebsocketPid  int             `yaml:"websocket_pid"`
 	WebsocketPort int             `yaml:"websocket_port"`
+	GrabberPid    int             `yaml:"grabber_pid"`
 }
 
 func loadAllSessions() ([]*Session, error) {
@@ -124,10 +125,14 @@ func (s *Session) Start(ctx context.Context) error {
 		return fmt.Errorf("staring VNC server: %w", err)
 	}
 	if err := s.startWebsockify(ctx); err != nil {
-		// Don't return an error here, as we still want to save the session and
-		// recovering from this error is possible by manually running the clean
-		// command.
+		// Don't return an error here. The session will still be available over
+		// a standard VNC viewer.
 		log.Debug("Failed to start websockify process", "err", err)
+	}
+	if err := s.startGrabber(ctx); err != nil {
+		// Don't return an error here. This session just won't have screenshot
+		// capture enabled.
+		log.Debug("Failed to start screenshot grabber script", "err", err)
 	}
 	if err := s.startCleaner(ctx); err != nil {
 		// Don't return an error here, as we still want to save the session and
@@ -333,6 +338,10 @@ func (s *Session) metadataFile() string {
 	return filepath.Join(s.sessionDir(), "metadata.yml")
 }
 
+func (s *Session) ScreenshotPath() string {
+	return filepath.Join(s.sessionDir(), "session.png")
+}
+
 func (s *Session) isActive() bool {
 	b, err := os.ReadFile(s.Metadata.Pidfile)
 	if err != nil {
@@ -407,9 +416,15 @@ func (s *Session) startCleaner(ctx context.Context) error {
 	}
 	pid := strings.TrimSpace(string(data))
 	cmd := exec.CommandContext(ctx, libexecPath("cleaner"))
+	var pids strings.Builder
+	for _, pid := range []int{s.WebsocketPid, s.GrabberPid} {
+		if pid != 0 {
+			fmt.Fprintf(&pids, "%d ", pid)
+		}
+	}
 	cmd.Env = []string{
 		fmt.Sprintf("SESSION_VNC_PID=%s", pid),
-		fmt.Sprintf("SESSION_PIDS=%d", s.WebsocketPid),
+		fmt.Sprintf("SESSION_PIDS=%s", pids.String()),
 		fmt.Sprintf("SESSION_DIR=%s", s.sessionDir()),
 	}
 	if os.Getenv("FLIGHT_DESKTOP_DEBUG") != "" {
@@ -449,6 +464,7 @@ func (s *Session) startWebsockify(ctx context.Context) error {
 		return fmt.Errorf("starting websockify: %w", err)
 	}
 	cmd.Stdout = logFile
+	cmd.Stderr = logFile
 	cmd.Dir = "/"
 	err = cmd.Start()
 	if err != nil {
@@ -456,6 +472,34 @@ func (s *Session) startWebsockify(ctx context.Context) error {
 	}
 	s.WebsocketPort = websockifyPort
 	s.WebsocketPid = cmd.Process.Pid
+
+	return nil
+}
+
+func (s *Session) startGrabber(ctx context.Context) error {
+	info, err := os.Stat(config.ScreenGrabber)
+	if err != nil {
+		return err
+	}
+	executable := info.Mode()&0o111 != 0
+	if !executable {
+		return fmt.Errorf("%s is not executable", config.ScreenGrabber)
+	}
+
+	cmd := exec.CommandContext(ctx, libexecPath("grabber"), s.Display(), s.ScreenshotPath())
+	log.Debug("starting screen grabber", "path", libexecPath("grabber"), "args", cmd.Args)
+	logFile, err := os.Create(filepath.Join(s.sessionDir(), "grabber.log"))
+	if err != nil {
+		return fmt.Errorf("starting screen grabber: %w", err)
+	}
+	cmd.Stdout = logFile
+	cmd.Stderr = logFile
+	cmd.Dir = "/"
+	err = cmd.Start()
+	if err != nil {
+		return fmt.Errorf("starting websockify: %w", err)
+	}
+	s.GrabberPid = cmd.Process.Pid
 
 	return nil
 }
