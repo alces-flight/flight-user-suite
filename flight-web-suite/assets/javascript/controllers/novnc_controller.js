@@ -4,14 +4,15 @@ import RFB from '@novnc/novnc'
 function noop() {}
 
 export default class extends Controller {
-  static targets = [ "status", "canvas", "reconnectBtn", "disconnectBtn", "copyFallback" ]
+  static targets = [ "status", "canvas", "previewImage", "reconnectBtn", "disconnectBtn", "copyFallback" ]
   static values = {
     host: String,
     port: Number,
     path: String,
     password: String,
     viewOnly: { type: Boolean, default: false },
-    status: { type: String, default: "Connecting..." },
+    // One of `connecting`, `connected`, `disconnected`.
+    status: { type: String, default: "connecting" },
   }
 
   connect() {
@@ -40,12 +41,12 @@ export default class extends Controller {
     console.log('RFB status change:', oldValue, "->", newValue)
     if (newValue != null && newValue.type === "connect") {
       this.rfb.focus();
-      this.statusValue = "Connected"
+      this.statusValue = "connected"
     }
   }
 
   onRfbDisconnect(e) {
-    this.statusValue = 'Disconnected'
+    this.statusValue = "disconnected"
   }
 
   onRfbPasswordRequired() {
@@ -88,20 +89,38 @@ export default class extends Controller {
     }
   }
 
-  statusValueChanged() {
-    this.statusTarget.innerText = this.statusValue
-    if (this.statusValue === "Connected") {
-      this.reconnectBtnTarget.classList.add("hidden")
-      this.disconnectBtnTarget.classList.remove("hidden")
+  statusValueChanged(neww, oldd) {
+    if (this.statusValue === "connected") {
+      setTimeout(() => {
+        this.statusTarget.innerText = this.statusText()
+        this.reconnectBtnTarget.classList.add("hidden")
+        this.disconnectBtnTarget.classList.remove("hidden")
+        this.previewImageTarget.classList.add("hidden")
+        this.canvasTarget.classList.remove("hidden")
+      }, 750)
     } else {
       this.reconnectBtnTarget.classList.remove("hidden")
       this.disconnectBtnTarget.classList.add("hidden")
+      this.previewImageTarget.classList.remove("hidden")
+      this.canvasTarget.classList.add("hidden")
+      this.statusTarget.innerText = this.statusText()
+    }
+  }
+
+  statusText() {
+    switch (this.statusValue) {
+      case "connecting":
+        return "Connecting..."
+      case "connected":
+        return "Connected"
+      case "disconnected":
+        return "Disconnected"
     }
   }
 
   // Call this to force a reconnection.
   reconnect() {
-    this.statusValue = "Connecting..."
+    this.statusValue = "connecting"
     this.createNoVncConnection();
   }
 
@@ -112,10 +131,11 @@ export default class extends Controller {
 
   createNoVncConnection() {
     console.log('creating RFB connection');
-    if (this.rfb != null && this.statusValue !== 'Disconnected') {
+    if (this.rfb != null && this.statusValue !== "disconnected") {
       this.rfb.disconnect();
       this.rfb = null;
     }
+    this.statusValue = "connecting"
     this.rfb = createConnection({
       url: this.url,
       domEl: this.canvasTarget,
