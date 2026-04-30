@@ -44,7 +44,11 @@ h2 {
 }
 
 .message {
-  @apply grid grid-cols-[1.5rem_auto] gap-x-3 border rounded-3xl py-2 px-4;
+  @apply grid grid-cols-[min-content_auto] gap-x-3 border rounded-3xl py-2 px-4;
+
+  svg {
+    @apply size-6;
+  }
 }
 
 .alert {
