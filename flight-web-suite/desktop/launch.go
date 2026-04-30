@@ -12,9 +12,10 @@ import (
 )
 
 type Type struct {
-	ID      string `json:"id"`
-	Summary string `json:"summary"`
-	URL     string `json:"url"`
+	ID          string `json:"id"`
+	Summary     string `json:"summary"`
+	URL         string `json:"url"`
+	IsAvailable bool   `json:"available"`
 }
 
 type StartInput struct {
@@ -65,7 +66,6 @@ func AvailCommand(ctx context.Context, env configenv.Env, username string) ([]*T
 		}
 		return nil, fmt.Errorf("listing desktop types: %w", err)
 	}
-
 	var desktopTypes []*Type
 	if err := json.Unmarshal(stdout.Bytes(), &desktopTypes); err != nil {
 		return nil, fmt.Errorf("decoding desktop types: %w", err)

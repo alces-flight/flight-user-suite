@@ -75,12 +75,14 @@ cat <<'JSON'
   {
     "id": "xterm",
     "summary": "Minimal terminal desktop.",
-    "url": "https://example.invalid/xterm"
+    "url": "https://example.invalid/xterm",
+		"available": true
   },
   {
     "id": "gnome",
     "summary": "GNOME desktop.",
-    "url": "https://example.invalid/gnome"
+    "url": "https://example.invalid/gnome",
+		"available": true
   }
 ]
 JSON

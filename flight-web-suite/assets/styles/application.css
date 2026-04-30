@@ -15,6 +15,13 @@
 
 @font-face {
   font-family: Lexend;
+  font-style: semi-bold;
+  font-weight: 600;
+  src: url("/assets/fonts/Lexend-SemiBold.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: Lexend;
   font-style: bold;
   font-weight: 700;
   src: url("/assets/fonts/Lexend-Bold.ttf") format("truetype");
@@ -33,7 +40,7 @@ h2 {
 }
 
 .flash {
-  @apply absolute top-18 right-[calc(1rem+5vw)] lg:right-[calc(1rem+15vw)] flex gap-x-3 border rounded py-2 px-4 z-10;
+  @apply max-md:mx-4 max-md:my-2 md:absolute md:top-3 md:right-4 flex gap-x-3 border rounded-full py-2 px-4 z-10;
 
   &.alert {
     @apply text-red-500 border-red-200 bg-red-50;
@@ -52,14 +59,30 @@ h2 {
   @apply w-full text-start;
 
   input {
-    @apply border-b border-alces-blue w-full py-2 px-2;
+    @apply border-b border-alces-blue w-full pb-2 pt-3 px-4;
+    border-radius: 1rem 1rem 0 0;
 
     &:focus {
       @apply outline-none bg-alces-blue-light;
     }
   }
 
-  label, em {
+  .custom-select {
+    @apply block bg-white border border-alces-blue rounded-full py-2 pl-4 pr-8;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url('/assets/images/icons/chevron-down.svg');
+    background-size: 0.75rem;
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+
+    &:focus {
+      @apply outline-none border-alces-blue bg-alces-blue-light;
+    }
+  }
+
+  em {
     @apply text-zinc-500 text-xs;
   }
 
@@ -70,10 +93,47 @@ h2 {
 }
 
 .btn {
-  @apply rounded py-2 px-4 mb-4 cursor-pointer text-white bg-alces-blue hover:bg-alces-blue-dark focus:bg-alces-blue-dark focus:outline-none focus-visible:outline-none;
+  @apply
+    cursor-pointer rounded-full py-2 px-6 mb-4 text-white
+    bg-alces-blue hover:bg-alces-blue-dark focus:bg-alces-blue-dark transition-colors
+    focus:outline-none focus-visible:outline-none;
 }
 
 /* This class assumes .btn has been applied too. */
 .btn-sm {
   @apply py-1 px-2 mb-2 text-sm;
+}
+
+.btn-outline {
+  @apply bg-transparent border border-alces-blue text-alces-blue hover:bg-alces-blue hover:text-white focus:bg-alces-blue focus:text-white;
+}
+
+.btn-disabled {
+  @apply cursor-not-allowed bg-slate-300 hover:bg-slate-300 focus:bg-slate-300 focus:outline-none focus-visible:outline-none;
+}
+
+.rounded-dropdown {
+  border-radius: 1.5rem;
+
+  button:first-child {
+    border-top-left-radius: 1.5rem;
+    border-top-right-radius: 1.5rem;
+  }
+  button:last-child {
+    border-bottom-left-radius: 1.5rem;
+    border-bottom-right-radius: 1.5rem;
+  }
+}
+
+.dropdown-option {
+  @apply w-full px-6 py-2 text-left cursor-pointer;
+}
+
+.details-grid {
+  dd, dt {
+    @apply text-sm;
+  }
+  dt {
+    @apply font-semibold;
+  }
 }

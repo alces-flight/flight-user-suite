@@ -201,9 +201,6 @@ func desktopSessionsSummary(sessions []*desktop.Session) string {
 		nonRunningString = "and 1 stale session."
 	}
 
-	if runningCount == 0 {
-		return fmt.Sprintf("You don't have any desktop sessions currently running %s", nonRunningString)
-	}
 	if runningCount == 1 {
 		return fmt.Sprintf("You have 1 desktop session currently running %s", nonRunningString)
 	}
