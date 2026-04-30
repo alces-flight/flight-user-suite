@@ -18,6 +18,7 @@ type desktopConfig struct {
 	EnvWhitelist  []string            `yaml:"environment_whitelist"`
 	VncPasswd     string              `yaml:"vncpasswd"`
 	WebSockify    string              `yaml:"websockify"`
+	ScreenGrabber string              `yaml:"screen_grabber"`
 }
 
 type nameGeneratorConfig struct {
