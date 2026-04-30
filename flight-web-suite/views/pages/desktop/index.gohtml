@@ -18,7 +18,7 @@
     <div class="grid grid-cols-[repeat(auto-fit,_minmax(288px,_1fr))] gap-4" data-testid="desktop-session-cards">
         {{range .DesktopSessions}}
         <div
-            class="w-full max-w-84 border border-alces-blue-light rounded-3xl pt-3 pb-4 px-5 text-left mx-auto"
+            class="w-full max-w-84 border border-alces-blue-light rounded-corners pt-3 pb-4 px-5 text-left mx-auto"
             data-testid="desktop-session-card--{{ .Name }}"
         >
             <div class="mb-4 flex items-center justify-between gap-4">
@@ -32,7 +32,7 @@
                     >☰</button>
                     <div
                         id="desktop-session-actions--{{ .Name }}"
-                        class="rounded-dropdown overflow-hidden hidden absolute right-0 top-6 bg-white border border-alces-blue-light shadow-md min-w-32 z-10"
+                        class="rounded-corners overflow-hidden hidden absolute right-0 top-6 bg-white border border-alces-blue-light shadow-md min-w-32 z-10"
                     >
                         {{if .ActionEnabled}}
                             <form action="{{ .ActionPath }}" method="post">

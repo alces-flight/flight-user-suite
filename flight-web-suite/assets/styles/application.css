@@ -112,17 +112,8 @@ h2 {
   @apply cursor-not-allowed bg-slate-300 hover:bg-slate-300 focus:bg-slate-300 focus:outline-none focus-visible:outline-none;
 }
 
-.rounded-dropdown {
-  border-radius: 1.5rem;
-
-  button:first-child {
-    border-top-left-radius: 1.5rem;
-    border-top-right-radius: 1.5rem;
-  }
-  button:last-child {
-    border-bottom-left-radius: 1.5rem;
-    border-bottom-right-radius: 1.5rem;
-  }
+.rounded-corners {
+  @apply rounded-3xl;
 }
 
 .dropdown-option {
