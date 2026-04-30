@@ -34,17 +34,17 @@ func startCommand() *cli.Command {
 			// Pause for better spinner UX
 			<-time.After(1 * time.Second)
 
-			err := service.Start(ctx)
+			response, err := service.Start(ctx)
 			if err != nil {
 				p.Fail(fmt.Sprintf("Starting %s service failed: %s", service.Name, err))
 				os.Exit(1)
 			}
-			// TODO: Wait for process to have started and reported the address
-			// its listening on.
-			// * Could create a file descriptor and have process report on that.
-			// * Could have the process save its URL to a file.
-			address := fmt.Sprintf("0.0.0.0:%d", 8080)
-			p.Stop(fmt.Sprintf("Started %s. Listening on %s\n", service.Name, address))
+
+			if response.Success {
+				p.Stop(response.Message)
+			} else {
+				p.Fail(response.Message)
+			}
 			return nil
 		},
 	}

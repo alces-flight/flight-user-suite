@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -10,6 +12,7 @@ import (
 
 	"charm.land/log/v2"
 	"github.com/concertim/flight-user-suite/flight/pidfile"
+	"github.com/concertim/flight-user-suite/flight/process"
 )
 
 type Service struct {
@@ -25,10 +28,10 @@ func (s *Service) PidfilePath() string {
 	return filepath.Join("/", "var", "run", "flight", fmt.Sprintf("%s.pid", s.ID))
 }
 
-func (s *Service) Start(ctx context.Context) error {
+func (s *Service) Start(ctx context.Context) (*process.Response, error) {
 	err := s.mkPidfileDir()
 	if err != nil {
-		return fmt.Errorf("creating pidfile directory: %w", err)
+		return nil, fmt.Errorf("creating pidfile directory: %w", err)
 	}
 
 	pidfilePath := s.PidfilePath()
@@ -36,16 +39,31 @@ func (s *Service) Start(ctx context.Context) error {
 	extantProcess, _ := processFromPidfile(pidfilePath)
 
 	if extantProcess != nil {
-		return fmt.Errorf("Service %s is already running (PID %d)", s.Name, extantProcess.Pid)
+		return nil, fmt.Errorf("Service %s is already running (PID %d)", s.Name, extantProcess.Pid)
 	}
 
 	args := []string{"--pidfile", pidfilePath}
-	log.Debug("Starting", "service", s.ID, "path", s.ExePath(), "args", args)
+	log.Info("Starting", "service", s.ID, "path", s.ExePath(), "args", args)
 	execCmd := exec.CommandContext(ctx, s.ExePath(), args...)
 	execCmd.Dir = "/"
+	cmdStdErr, err := execCmd.StderrPipe()
 	// TODO: What environment do we want to run in? What did flight-service do?
 	// cmd.Env = s.cleanEnvironment()
-	return execCmd.Start()
+	startErr := execCmd.Start()
+
+	if startErr != nil {
+		return nil, startErr
+	}
+
+	reader := bufio.NewReader(cmdStdErr)
+
+	var response process.Response
+	decoder := json.NewDecoder(reader)
+	if err := decoder.Decode(&response); err != nil {
+		return nil, fmt.Errorf("Failed to read response from service process: %w", err)
+	}
+
+	return &response, nil
 }
 
 func (s *Service) Kill() error {

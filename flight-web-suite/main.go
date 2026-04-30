@@ -5,14 +5,15 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"path"
 	"path/filepath"
 
 	"github.com/concertim/flight-user-suite/flight/configenv"
 	"github.com/concertim/flight-user-suite/flight/pidfile"
+	"github.com/concertim/flight-user-suite/flight/process"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
 )
@@ -82,12 +83,31 @@ func main() {
 	}
 
 	address := fmt.Sprintf("0.0.0.0:%d", config.Port)
-	log.Printf("Starting Web Suite on %s\n", address)
 
 	e := newApp()
-	if err := e.Start(address); err != nil {
-		e.Logger.Error("failed to start server", "error", err)
+
+	// Run the server in a gofunc so we can subsequently report that it's started
+	go func() {
+		if err := e.Start(address); err != nil {
+			e.Logger.Error("failed to start server", "error", err)
+			os.Exit(1)
+		}
+	}()
+
+	response := process.Response{
+		Success: true,
+		Message: fmt.Sprintf("Started Web Suite on %s", address),
 	}
+	responseJson, _ := response.ToJSON()
+	fmt.Fprintln(os.Stderr, responseJson)
+
+	c := make(chan os.Signal, 1)
+
+	// Accept graceful shutdowns
+	signal.Notify(c, os.Interrupt)
+
+	// Block until signal so the server doesn't terminate immediately!
+	<-c
 }
 
 func newApp() *echo.Echo {
