@@ -99,7 +99,16 @@ func main() {
 				Message: fmt.Sprintf("Started Web Suite on %s", addr),
 			}
 			responseJson, _ := successResponse.ToJSON()
-			fmt.Fprintln(os.Stderr, responseJson)
+
+			// The additional file handle passed from parent process will be ID 3
+			responseFile, err := os.OpenFile("/proc/self/fd/3", os.O_WRONLY, 0644)
+			if err != nil {
+				e.Logger.Error("failed to return response to calling process", "error", err)
+			} else {
+				fmt.Fprintln(responseFile, responseJson)
+				responseFile.Close()
+			}
+
 		},
 	}
 

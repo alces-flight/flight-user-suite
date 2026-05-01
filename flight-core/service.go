@@ -46,7 +46,15 @@ func (s *Service) Start(ctx context.Context) (*process.Response, error) {
 	log.Info("Starting", "service", s.ID, "path", s.ExePath(), "args", args)
 	execCmd := exec.CommandContext(ctx, s.ExePath(), args...)
 	execCmd.Dir = "/"
-	cmdStdErr, err := execCmd.StderrPipe()
+
+	pipeRead, pipeWrite, err := os.Pipe()
+	if err != nil {
+		log.Fatalf("os.Pipe() failed: %s\n", err)
+	}
+	defer pipeRead.Close()
+	defer pipeWrite.Close()
+	execCmd.ExtraFiles = []*os.File{pipeWrite}
+
 	// TODO: What environment do we want to run in? What did flight-service do?
 	// cmd.Env = s.cleanEnvironment()
 	startErr := execCmd.Start()
@@ -55,7 +63,9 @@ func (s *Service) Start(ctx context.Context) (*process.Response, error) {
 		return nil, startErr
 	}
 
-	reader := bufio.NewReader(cmdStdErr)
+	pipeWrite.Close()
+
+	reader := bufio.NewReader(pipeRead)
 
 	var response process.Response
 	decoder := json.NewDecoder(reader)
