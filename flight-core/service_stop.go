@@ -29,10 +29,11 @@ func stopCommand() *cli.Command {
 			cancel := p.Start(ctx)
 			defer cancel()
 
-			// Pause for better spinner UX
-			<-time.After(1 * time.Second)
+			timer := time.After(1 * time.Second)
 
 			err := service.Kill()
+			// Pause for better spinner UX
+			<- timer
 			if err != nil {
 				p.Fail(fmt.Sprintf("Stopping %s service failed: %s", service.Name, err))
 				os.Exit(1)
