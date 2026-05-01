@@ -1,15 +1,18 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
 	"html/template"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"path"
 	"path/filepath"
+	"syscall"
 
 	"github.com/concertim/flight-user-suite/flight/configenv"
 	"github.com/concertim/flight-user-suite/flight/pidfile"
@@ -82,32 +85,28 @@ func main() {
 		}
 	}
 
+	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+
 	address := fmt.Sprintf("0.0.0.0:%d", config.Port)
 
 	e := newApp()
 
-	// Run the server in a gofunc so we can subsequently report that it's started
-	go func() {
-		if err := e.Start(address); err != nil {
-			e.Logger.Error("failed to start server", "error", err)
-			os.Exit(1)
-		}
-	}()
-
-	response := process.Response{
-		Success: true,
-		Message: fmt.Sprintf("Started Web Suite on %s", address),
+	sc := echo.StartConfig{
+		Address: address,
+		ListenerAddrFunc: func(addr net.Addr) {
+			successResponse := process.Response{
+				Success: true,
+				Message: fmt.Sprintf("Started Web Suite on %s", addr),
+			}
+			responseJson, _ := successResponse.ToJSON()
+			fmt.Fprintln(os.Stderr, responseJson)
+		},
 	}
-	responseJson, _ := response.ToJSON()
-	fmt.Fprintln(os.Stderr, responseJson)
 
-	c := make(chan os.Signal, 1)
-
-	// Accept graceful shutdowns
-	signal.Notify(c, os.Interrupt)
-
-	// Block until signal so the server doesn't terminate immediately!
-	<-c
+	if err := sc.Start(ctx, e); err != nil {
+		e.Logger.Error("failed to start server", "error", err)
+		os.Exit(1)
+	}
 }
 
 func newApp() *echo.Echo {
