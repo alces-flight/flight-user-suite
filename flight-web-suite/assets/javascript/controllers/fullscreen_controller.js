@@ -25,6 +25,11 @@ export default class extends Controller {
         }
       )
     }
+    else if (this.fullscreenableTarget === document.fullscreenElement) {
+      // Not sure how this would be triggered given the fullscreen VNC canvas
+      // covers the button, but for completeness:
+      document.exitFullscreen()
+    }
   }
 
   toggle() {
