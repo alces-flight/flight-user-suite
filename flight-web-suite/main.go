@@ -12,7 +12,6 @@ import (
 	"os/signal"
 	"path"
 	"path/filepath"
-	"strings"
 	"syscall"
 
 	"github.com/concertim/flight-user-suite/flight/configenv"
@@ -99,24 +98,23 @@ func main() {
 				Success: true,
 				Message: fmt.Sprintf("Started Web Suite on %s", addr),
 			}
-			responseJson, _ := successResponse.ToJSON()
-
-			// The additional file handle passed from parent process will be ID 3
-			responseFile, err := os.OpenFile("/proc/self/fd/3", os.O_WRONLY, 0644)
+			err := successResponse.WriteToParentFD()
 			if err != nil {
-				if !strings.Contains(err.Error(), "no such device or address") {
-					e.Logger.Error("failed to return response to calling process", "error", err)
-				}
-			} else {
-				fmt.Fprintln(responseFile, responseJson)
-				responseFile.Close()
+				e.Logger.Error(err.Error())
 			}
-
 		},
 	}
 
 	if err := sc.Start(ctx, e); err != nil {
 		e.Logger.Error("failed to start server", "error", err)
+		failureResponse := process.Response{
+			Success: false,
+			Message: fmt.Sprintf("Failed to start server: %s", err),
+		}
+		err := failureResponse.WriteToParentFD()
+		if err != nil {
+			e.Logger.Error(err.Error())
+		}
 		os.Exit(1)
 	}
 }
