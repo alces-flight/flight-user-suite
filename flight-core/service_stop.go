@@ -3,9 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"time"
 
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/urfave/cli/v3"
+	"github.com/yarlson/pin"
 )
 
 func stopCommand() *cli.Command {
@@ -15,12 +18,27 @@ func stopCommand() *cli.Command {
 		Description: wordwrap.String("Stops the Flight Web Suite service, if it is running.", maxTextWidth),
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			service := Service{ID: "web-suite", Name: "Web Suite"}
-			fmt.Printf("Stopping %s service...\n", service.Name)
+			p := pin.New(
+				fmt.Sprintf("Stopping %s service...", service.Name),
+				pin.WithSpinnerColor(pin.ColorCyan),
+				pin.WithTextColor(pin.ColorGreen),
+				pin.WithDoneSymbol('\u2705'),
+				pin.WithFailSymbol('\u274c'),
+				pin.WithFailColor(pin.ColorRed),
+			)
+			cancel := p.Start(ctx)
+			defer cancel()
+
+			timer := time.After(1 * time.Second)
+
 			err := service.Kill()
+			// Pause for better spinner UX
+			<- timer
 			if err != nil {
-				return cli.Exit(fmt.Sprintf("Error stopping service: %s", err.Error()), 1)
+				p.Fail(fmt.Sprintf("Stopping %s service failed: %s", service.Name, err))
+				os.Exit(1)
 			}
-			fmt.Printf("%s service stopped\n", service.Name)
+			p.Stop(fmt.Sprintf("%s service stopped\n", service.Name))
 			return nil
 		},
 	}

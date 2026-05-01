@@ -1,18 +1,22 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
 	"html/template"
-	"log"
+	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"path"
 	"path/filepath"
+	"syscall"
 
 	"github.com/concertim/flight-user-suite/flight/configenv"
 	"github.com/concertim/flight-user-suite/flight/pidfile"
+	"github.com/concertim/flight-user-suite/flight/process"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
 )
@@ -81,12 +85,37 @@ func main() {
 		}
 	}
 
+	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+
 	address := fmt.Sprintf("0.0.0.0:%d", config.Port)
-	log.Printf("Starting Web Suite on %s\n", address)
 
 	e := newApp()
-	if err := e.Start(address); err != nil {
+
+	sc := echo.StartConfig{
+		Address: address,
+		ListenerAddrFunc: func(addr net.Addr) {
+			successResponse := process.Response{
+				Success: true,
+				Message: fmt.Sprintf("Started Web Suite on %s", addr),
+			}
+			err := successResponse.WriteToParentFD()
+			if err != nil {
+				e.Logger.Error(err.Error())
+			}
+		},
+	}
+
+	if err := sc.Start(ctx, e); err != nil {
 		e.Logger.Error("failed to start server", "error", err)
+		failureResponse := process.Response{
+			Success: false,
+			Message: fmt.Sprintf("Failed to start server: %s", err),
+		}
+		err := failureResponse.WriteToParentFD()
+		if err != nil {
+			e.Logger.Error(err.Error())
+		}
+		os.Exit(1)
 	}
 }
 

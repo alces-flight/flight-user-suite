@@ -1,15 +1,19 @@
 package main
 
 import (
+	"bufio"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"charm.land/log/v2"
 	"github.com/concertim/flight-user-suite/flight/pidfile"
+	"github.com/concertim/flight-user-suite/flight/process"
 )
 
 type Service struct {
@@ -25,31 +29,64 @@ func (s *Service) PidfilePath() string {
 	return filepath.Join("/", "var", "run", "flight", fmt.Sprintf("%s.pid", s.ID))
 }
 
-func (s *Service) Start(ctx context.Context) error {
+func (s *Service) Start(ctx context.Context) (*process.Response, error) {
 	err := s.mkPidfileDir()
 	if err != nil {
-		return fmt.Errorf("creating pidfile directory: %w", err)
+		return nil, fmt.Errorf("creating pidfile directory: %w", err)
 	}
 
-	args := []string{"--pidfile", s.PidfilePath()}
+	pidfilePath := s.PidfilePath()
+
+	extantProcess, _ := pidfile.Read(pidfilePath)
+
+	if extantProcess != 0 {
+		return nil, fmt.Errorf("Service %s is already running (PID %d)", s.Name, extantProcess)
+	}
+
+	args := []string{"--pidfile", pidfilePath}
 	log.Debug("Starting", "service", s.ID, "path", s.ExePath(), "args", args)
 	execCmd := exec.CommandContext(ctx, s.ExePath(), args...)
 	execCmd.Dir = "/"
+
+	pipeRead, pipeWrite, err := os.Pipe()
+	if err != nil {
+		return nil, fmt.Errorf("os.Pipe() failed: %w", err)
+	}
+	defer pipeRead.Close()
+	defer pipeWrite.Close()
+	execCmd.ExtraFiles = []*os.File{pipeWrite}
+
 	// TODO: What environment do we want to run in? What did flight-service do?
 	// cmd.Env = s.cleanEnvironment()
-	return execCmd.Start()
+	startErr := execCmd.Start()
+
+	if startErr != nil {
+		return nil, startErr
+	}
+
+	pipeWrite.Close()
+
+	reader := bufio.NewReader(pipeRead)
+
+	var response process.Response
+	decoder := json.NewDecoder(reader)
+	if err := decoder.Decode(&response); err != nil {
+		return nil, fmt.Errorf("Failed to read response from service process: %w", err)
+	}
+
+	return &response, nil
 }
 
 func (s *Service) Kill() error {
 	log.Debug("Killing service process", "pidfile", s.PidfilePath(), "name", s.ID)
 	pid, err := pidfile.Read(s.PidfilePath())
-	if err != nil && !errors.Is(err, os.ErrNotExist) {
+	if err != nil && !strings.Contains(err.Error(), "no such file or directory") {
 		return err
 	}
 	if pid == 0 {
-		// Process is no longer running.
-		return nil
+		return errors.New("No running process found")
 	}
+
 	process, err := os.FindProcess(pid)
 	if err != nil {
 		return err
