@@ -13,6 +13,11 @@
             <span class="mb-[-2px]"><code>{{ .Host }}</code></span>
         </div>
         <div class="flex-grow flex justify-end">
+
+            <button class="btn btn-sm !mb-0 text-white" data-action="fullscreen#toggle" title="Full screen">
+                {{ template "arrows-pointing-out.svg" }}
+            </button>
+
             <div
               class="cursor-pointer group/menu flex items-center relative"
               data-controller="menu-toggle"
@@ -20,7 +25,7 @@
               id="toolbar-actions-dropdown-2"
             >
               <button
-                class="flex items-center mx-0 link size-6 cursor-pointer"
+                class="btn btn-sm !mb-0 text-white"
                 data-action="click->menu-toggle#toggle click@window->menu-toggle#close"
                 type="button"
                 >
@@ -53,10 +58,6 @@
                 </div>
               </div>
             </div>
-
-            <button class="btn btn-sm !mb-0 text-white" data-action="fullscreen#toggle">
-                fs
-            </button>
 
             <a class="btn btn-sm !mb-0 text-white" href="/desktop" title="Close">
                 {{ template "x-mark.svg" }}
