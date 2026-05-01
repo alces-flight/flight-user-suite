@@ -1,17 +1,12 @@
 import { Controller } from "@hotwired/stimulus"
 import { enter, leave } from "el-transition"
 
-// const enter = () => {}
-// const leave = () => { return new Promise((resolve) => { resolve() }) }
 
 // Connects to data-controller="menu-toggle"
 export default class extends Controller {
     static targets = ["openIcon", "closeIcon", "menu", "trigger"];
     static values = { isOpen: { type: Boolean, default: false } }
     static classes = ["active"];
-
-    connect() {
-    }
 
     isOpenValueChanged(isOpen) {
         if (isOpen) {
