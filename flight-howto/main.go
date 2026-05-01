@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -29,6 +30,18 @@ var (
 	termWidth        int = 80
 	maxTextWidth     int = 80
 )
+
+var formatFlag = &cli.StringFlag{
+	Name:  "format",
+	Value: "pretty",
+	Usage: "use specified `FORMAT` for the output (pretty, json).",
+	Validator: func(format string) error {
+		if format != "pretty" && format != "json" {
+			return fmt.Errorf("%s is not a known format (pretty, json)", format)
+		}
+		return nil
+	},
+}
 
 func init() {
 	log.SetReportTimestamp(false)
@@ -60,6 +73,7 @@ func main() {
 				Name:    "list",
 				Aliases: []string{"l", "ls"},
 				Usage:   "List available user guides",
+				Flags:   []cli.Flag{formatFlag},
 				Action:  list,
 			},
 			{
@@ -67,6 +81,7 @@ func main() {
 				Aliases:   []string{"s"},
 				Usage:     "Open a user guide for viewing in the terminal",
 				ArgsUsage: "<index>",
+				Flags:     []cli.Flag{formatFlag},
 				Action:    show,
 				Before:    assertArgPresent("index"),
 			},
@@ -94,38 +109,56 @@ func main() {
 			os.Exit(1)
 		}
 
+		if exitError, ok := errors.AsType[SilentExitError](err); ok {
+			os.Exit(exitError.ExitCode)
+		}
+
 		log.Printf("%s\n", err)
 		os.Exit(1)
 	}
 }
 
 func list(ctx context.Context, cmd *cli.Command) error {
+	wantsJSON := wantsJSONOutput(cmd)
 	user, err := user.Current()
 	if err != nil {
 		log.Warn("Unable to determine user: including admin guides", "err", err)
 	}
 	howtos, err := loadHowtos(howtoDir, user)
 	if err != nil {
+		if wantsJSON {
+			return writeListHowtosJSONError(err)
+		}
 		return err
+	}
+	if wantsJSON {
+		return writeListHowtosJSON(howtos)
 	}
 	return entriesTable(howtos)
 }
 
 func show(ctx context.Context, cmd *cli.Command) error {
+	wantsJSON := wantsJSONOutput(cmd)
 	user, err := user.Current()
 	if err != nil {
 		log.Warn("Unable to determine user: including admin guides", "err", err)
 	}
 	howtos, err := loadHowtos(howtoDir, user)
 	if err != nil {
-		return fmt.Errorf("collecting guide files: %w", err)
+		err = fmt.Errorf("collecting guide files: %w", err)
+		if wantsJSON {
+			return writeShowHowtoJSON(nil, err)
+		}
+		return err
 	}
 
 	howtoIndex, err := strconv.Atoi(cmd.Args().First())
 	if err != nil || howtoIndex < 1 || howtoIndex > len(howtos) {
-		return fmt.Errorf(
-			"invalid input: '%s' is not a valid guide index. Use `flight howto list` to view the index for each user guide.",
-			cmd.Args().First())
+		err = InvalidIndex{Input: cmd.Args().First()}
+		if wantsJSON {
+			return writeShowHowtoJSON(nil, err)
+		}
+		return err
 	}
 
 	howto := howtos[howtoIndex-1]
@@ -133,10 +166,25 @@ func show(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		if pathError, ok := errors.AsType[*fs.PathError](err); ok {
 			if pathError.Err.Error() == "no such file or directory" {
-				return UnknownHowto{Howto: howto.Path}
+				err = UnknownHowto{Howto: howto.Path}
+				if wantsJSON {
+					return writeShowHowtoJSON(nil, err)
+				}
+				return err
 			}
 		}
-		return fmt.Errorf("reading howto: %w", err)
+		err = fmt.Errorf("reading howto: %w", err)
+		if wantsJSON {
+			return writeShowHowtoJSON(nil, err)
+		}
+		return err
+	}
+
+	if wantsJSON {
+		return writeShowHowtoJSON(&shownHowto{
+			Title:       howto.Name(),
+			RawMarkdown: string(markdown),
+		}, nil)
 	}
 
 	isDark := lipgloss.HasDarkBackground(os.Stdin, os.Stdout)
@@ -152,6 +200,39 @@ func show(ctx context.Context, cmd *cli.Command) error {
 
 	fmt.Print(rendered)
 	return nil
+}
+
+// Work around a limitation in how urfave/cli processes arguments and flags.
+//
+// If an argument starting with `-`, e.g., `-1` comes prior to the flags, the
+// flags may not be processed correctly.  So the following both work:
+//
+//	show --format json -1
+//	show 1 --format json
+//
+// but not this
+//
+//	show -1 --format json
+//
+// This function jumps through hoops to make the latter work.
+func wantsJSONOutput(cmd *cli.Command) bool {
+	if cmd.String("format") == "json" {
+		return true
+	}
+
+	format := ""
+	for index := 0; index < len(os.Args); index++ {
+		arg := os.Args[index]
+		if value, ok := strings.CutPrefix(arg, "--format="); ok {
+			format = value
+			continue
+		}
+		if arg == "--format" && index+1 < len(os.Args) {
+			format = os.Args[index+1]
+			index++
+		}
+	}
+	return format == "json"
 }
 
 func loadHowtos(dirPath string, user *user.User) ([]*Howto, error) {
@@ -224,6 +305,103 @@ func entriesTable(howtos []*Howto) error {
 	return err
 }
 
+type listedHowto struct {
+	Index int    `json:"index"`
+	Title string `json:"title"`
+}
+
+type listHowtoResponse struct {
+	Success bool          `json:"success"`
+	Guides  []listedHowto `json:"guides"`
+	Error   string        `json:"error,omitempty"`
+	Reason  string        `json:"reason,omitempty"`
+}
+
+type showHowtoResponse struct {
+	Success bool       `json:"success"`
+	Guide   shownHowto `json:"guide"`
+	Error   string     `json:"error,omitempty"`
+	Reason  string     `json:"reason,omitempty"`
+}
+
+type shownHowto struct {
+	Title       string `json:"title"`
+	RawMarkdown string `json:"raw_markdown"`
+}
+
+func writeListHowtosJSON(howtos []*Howto) error {
+	guides := make([]listedHowto, 0, len(howtos))
+	for index, howto := range howtos {
+		guides = append(guides, listedHowto{
+			Index: index + 1,
+			Title: howto.Name(),
+		})
+	}
+	response := listHowtoResponse{
+		Success: true,
+		Guides:  guides,
+	}
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	return enc.Encode(response)
+}
+
+func writeListHowtosJSONError(listErr error) error {
+	response := listHowtoResponse{
+		Success: false,
+		Guides:  []listedHowto{},
+		Error:   listErr.Error(),
+		Reason:  "unexpected",
+	}
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(response); err != nil {
+		return err
+	}
+	return SilentExitError{
+		ExitCode:  1,
+		exitError: errors.New("listing howtos failed"),
+	}
+}
+
+func writeShowHowtoJSON(guide *shownHowto, showErr error) error {
+	if showErr != nil {
+		response := showHowtoResponse{
+			Success: false,
+			Guide:   shownHowto{},
+			Error:   showErr.Error(),
+			Reason:  "unexpected",
+		}
+		if _, ok := errors.AsType[InvalidIndex](showErr); ok {
+			response.Reason = "invalid_index"
+		} else if _, ok := errors.AsType[UnknownHowto](showErr); ok {
+			response.Reason = "not_found"
+		}
+		return writeHowtoShowResponse(response, 1)
+	}
+
+	response := showHowtoResponse{
+		Success: true,
+		Guide:   *guide,
+	}
+	return writeHowtoShowResponse(response, 0)
+}
+
+func writeHowtoShowResponse(response showHowtoResponse, exitCode int) error {
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(response); err != nil {
+		return err
+	}
+	if exitCode == 0 {
+		return nil
+	}
+	return SilentExitError{
+		ExitCode:  exitCode,
+		exitError: errors.New("showing howto failed"),
+	}
+}
+
 // TODO properly share these with flight-core
 type MissingArguments struct {
 	Args []string
@@ -241,6 +419,9 @@ func assertArgPresent(argNames ...string) cli.BeforeFunc {
 	return func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
 		if cmd.NArg() < len(argNames) {
 			missing := argNames[cmd.NArg():]
+			if wantsJSONOutput(cmd) {
+				return ctx, writeShowHowtoJSON(nil, MissingArguments{Args: missing})
+			}
 			return ctx, MissingArguments{Args: missing}
 		}
 		return ctx, nil
@@ -253,4 +434,24 @@ type UnknownHowto struct {
 
 func (ut UnknownHowto) Error() string {
 	return fmt.Sprintf("Unknown howto: %s", ut.Howto)
+}
+
+type InvalidIndex struct {
+	Input string
+}
+
+func (ii InvalidIndex) Error() string {
+	return fmt.Sprintf(
+		"invalid input: '%s' is not a valid guide index. Use `flight howto list` to view the index for each user guide.",
+		ii.Input,
+	)
+}
+
+type SilentExitError struct {
+	ExitCode  int
+	exitError error
+}
+
+func (ee SilentExitError) Error() string {
+	return ee.exitError.Error()
 }
