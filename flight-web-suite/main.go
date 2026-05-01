@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"path"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	"github.com/concertim/flight-user-suite/flight/configenv"
@@ -103,7 +104,9 @@ func main() {
 			// The additional file handle passed from parent process will be ID 3
 			responseFile, err := os.OpenFile("/proc/self/fd/3", os.O_WRONLY, 0644)
 			if err != nil {
-				e.Logger.Error("failed to return response to calling process", "error", err)
+				if !strings.Contains(err.Error(), "no such device or address") {
+					e.Logger.Error("failed to return response to calling process", "error", err)
+				}
 			} else {
 				fmt.Fprintln(responseFile, responseJson)
 				responseFile.Close()
