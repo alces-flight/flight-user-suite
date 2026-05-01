@@ -56,14 +56,15 @@ type showResponse struct {
 }
 
 type shownSession struct {
-	Name          string       `json:"name"`
-	DesktopType   string       `json:"desktop_type"`
-	State         sessionState `json:"state"`
-	Host          string       `json:"host"`
-	Port          int          `json:"port"`
-	WebsocketPort int          `json:"websocket_port"`
-	Password      string       `json:"password"`
-	CreatedAt     string       `json:"created_at"`
+	Name           string       `json:"name"`
+	DesktopType    string       `json:"desktop_type"`
+	State          sessionState `json:"state"`
+	Host           string       `json:"host"`
+	Port           int          `json:"port"`
+	WebsocketPort  int          `json:"websocket_port"`
+	Password       string       `json:"password"`
+	CreatedAt      string       `json:"created_at"`
+	ScreenshotPath string       `json:"screenshot_path"`
 }
 
 func writeSessionJSON(session *Session, loadErr error) error {
@@ -87,14 +88,15 @@ func writeSessionJSON(session *Session, loadErr error) error {
 		return writeShowResponse(response, 1)
 	}
 	shownSession := shownSession{
-		Name:          session.Name,
-		DesktopType:   session.SessionType,
-		State:         session.ComputedState(),
-		Host:          session.Metadata.Host,
-		Password:      session.Password,
-		Port:          session.Port(),
-		WebsocketPort: session.GetWebsocketPort(),
-		CreatedAt:     session.CreatedAt.Format(time.RFC3339),
+		Name:           session.Name,
+		DesktopType:    session.SessionType,
+		State:          session.ComputedState(),
+		Host:           session.Metadata.Host,
+		Password:       session.Password,
+		Port:           session.Port(),
+		WebsocketPort:  session.GetWebsocketPort(),
+		CreatedAt:      session.CreatedAt.Format(time.RFC3339),
+		ScreenshotPath: session.ScreenshotPath(),
 	}
 	response := showResponse{
 		Success: true,
