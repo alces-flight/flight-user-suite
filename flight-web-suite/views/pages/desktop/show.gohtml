@@ -1,6 +1,6 @@
 {{ define "content" }}
 {{ with .DesktopSession }}
-<div id="novnc-wrapper" class="flex flex-col h-full min-h-full" data-controller="novnc"
+<div id="novnc-wrapper" class="absolute top-0 bottom-22 left-0 right-0" data-controller="novnc"
     data-novnc-host-value="{{ .Host }}" data-novnc-port-value="{{ .WebsocketPort }}" data-novnc-path-value="websockify" data-novnc-password-value="{{ .Password }}"
     data-novnc-host="{{ .Host }}" data-novnc-port="{{ .WebsocketPort }}" data-novnc-path="websockify" data-novnc-password="{{ .Password }}"
     >
@@ -59,8 +59,8 @@
         </div>
     </div>
 
-    <div class="h-full min-h-full flex-grow">
-        <div class="novnc h-full min-h-full w-full min-w-full" data-novnc-target="canvas">
+    <div class="h-[calc(100%_-_var(--spacing)_*_10)]">
+        <div class="novnc h-full" data-novnc-target="canvas">
             <!-- This is where the desktop session will appear -->
         </div>
         <div style="display:none" data-novnc-target="copyFallback"></div>
