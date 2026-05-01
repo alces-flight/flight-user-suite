@@ -107,7 +107,7 @@ func assertAuthenticated(t *testing.T, body, username string) {
 		testutil.HasText(username),
 	)
 	testutil.AssertSelection(t, body, `form[data-testid="logout-form"]`,
-		testutil.HasAttr("action", "sessions"),
+		testutil.HasAttr("action", "/sessions"),
 		testutil.HasAttr("method", "post"),
 	)
 	testutil.AssertSelection(t, body, `form[data-testid="logout-form"] input[name="_method"]`,
