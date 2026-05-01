@@ -11,14 +11,15 @@ import (
 )
 
 type Session struct {
-	Name          string    `json:"name"`
-	DesktopType   string    `json:"desktop_type"`
-	State         string    `json:"state"`
-	Host          string    `json:"host"`
-	Port          int       `json:"port,omitempty"`
-	WebsocketPort int       `json:"websocket_port,omitempty"`
-	Password      string    `json:"password,omitempty"`
-	CreatedAt     time.Time `json:"created_at"`
+	Name           string    `json:"name"`
+	DesktopType    string    `json:"desktop_type"`
+	State          string    `json:"state"`
+	Host           string    `json:"host"`
+	Port           int       `json:"port,omitempty"`
+	WebsocketPort  int       `json:"websocket_port,omitempty"`
+	Password       string    `json:"password,omitempty"`
+	CreatedAt      time.Time `json:"created_at"`
+	ScreenshotPath string    `json:"screenshot_path"`
 }
 
 func ListCommand(ctx context.Context, env configenv.Env, username string) ([]*Session, error) {
