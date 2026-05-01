@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"charm.land/log/v2"
 	"github.com/concertim/flight-user-suite/flight/pidfile"
@@ -36,10 +37,10 @@ func (s *Service) Start(ctx context.Context) (*process.Response, error) {
 
 	pidfilePath := s.PidfilePath()
 
-	extantProcess, _ := processFromPidfile(pidfilePath)
+	extantProcess, _ := pidfile.Read(pidfilePath)
 
-	if extantProcess != nil {
-		return nil, fmt.Errorf("Service %s is already running (PID %d)", s.Name, extantProcess.Pid)
+	if extantProcess != 0 {
+		return nil, fmt.Errorf("Service %s is already running (PID %d)", s.Name, extantProcess)
 	}
 
 	args := []string{"--pidfile", pidfilePath}
@@ -78,8 +79,16 @@ func (s *Service) Start(ctx context.Context) (*process.Response, error) {
 
 func (s *Service) Kill() error {
 	log.Debug("Killing service process", "pidfile", s.PidfilePath(), "name", s.ID)
-	process, err := processFromPidfile(s.PidfilePath())
-	if err != nil || process == nil {
+	pid, err := pidfile.Read(s.PidfilePath())
+	if err != nil && !strings.Contains(err.Error(), "no such file or directory") {
+		return err
+	}
+	if pid == 0 {
+		return errors.New("No running process found")
+	}
+
+	process, err := os.FindProcess(pid)
+	if err != nil {
 		return err
 	}
 	err = process.Signal(os.Interrupt)
@@ -105,16 +114,4 @@ func (s *Service) mkPidfileDir() error {
 	dir := filepath.Dir(s.PidfilePath())
 	log.Debug("Creating pidfile directory", "path", dir)
 	return os.MkdirAll(dir, 0o755)
-}
-
-func processFromPidfile(pidfilePath string) (*os.Process, error) {
-	pid, err := pidfile.Read(pidfilePath)
-	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		return nil, err
-	}
-	if pid == 0 {
-		// Process is no longer running.
-		return nil, nil
-	}
-	return os.FindProcess(pid)
 }
