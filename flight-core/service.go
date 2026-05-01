@@ -43,7 +43,7 @@ func (s *Service) Start(ctx context.Context) (*process.Response, error) {
 	}
 
 	args := []string{"--pidfile", pidfilePath}
-	log.Info("Starting", "service", s.ID, "path", s.ExePath(), "args", args)
+	log.Debug("Starting", "service", s.ID, "path", s.ExePath(), "args", args)
 	execCmd := exec.CommandContext(ctx, s.ExePath(), args...)
 	execCmd.Dir = "/"
 
