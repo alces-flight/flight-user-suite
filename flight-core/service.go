@@ -49,7 +49,7 @@ func (s *Service) Start(ctx context.Context) (*process.Response, error) {
 
 	pipeRead, pipeWrite, err := os.Pipe()
 	if err != nil {
-		log.Fatalf("os.Pipe() failed: %s\n", err)
+		return nil, fmt.Errorf("os.Pipe() failed: %w", err)
 	}
 	defer pipeRead.Close()
 	defer pipeWrite.Close()
