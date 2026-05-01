@@ -38,21 +38,18 @@ func statusTable() error {
 			default:
 				style = cliui.TableOddRowStyle
 			}
-			switch col {
-			case 0:
+			if col == 0 {
 				return style.Width(namecolWidth)
-			case 1:
-				return style.Width(9)
 			}
 			return style
 		}).
 		Width(termWidth)
-	t.Headers("Name", "Status", "URL")
+	t.Headers("Name", "Status")
 
 	service := Service{ID: "web-suite", Name: "Web Suite"}
 	namecolWidth = min(max(namecolWidth, len(service.Name)+2), maxNamecolWidth)
 	namecolWidth = max(namecolWidth, len(service.Name)+2)
-	t.Row(service.Name, service.State(), "-")
+	t.Row(service.Name, service.State())
 
 	_, err := lipgloss.Println(t)
 	return err
