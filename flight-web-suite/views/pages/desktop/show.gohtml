@@ -1,8 +1,10 @@
 {{ define "content" }}
 {{ with .DesktopSession }}
 <div id="novnc-wrapper" class="absolute top-0 bottom-22 left-0 right-0" data-controller="novnc"
-    data-novnc-host-value="{{ .Host }}" data-novnc-port-value="{{ .WebsocketPort }}" data-novnc-path-value="websockify" data-novnc-password-value="{{ .Password }}"
-    data-novnc-host="{{ .Host }}" data-novnc-port="{{ .WebsocketPort }}" data-novnc-path="websockify" data-novnc-password="{{ .Password }}"
+    data-novnc-host-value="{{ .Host }}"
+    data-novnc-port-value="{{ .WebsocketPort }}"
+    data-novnc-path-value="websockify"
+    data-novnc-password-value="{{ .Password }}"
     >
     <div class="bg-alces-blue text-white flex gap-x-4 justify-between items-center px-3 py-0">
         <div class="h-full flex items-center gap-x-1">
@@ -10,7 +12,6 @@
             <span>running on</span>
             <span class="mb-[-2px]"><code>{{ .Host }}</code></span>
         </div>
-        <span class="h-full flex items-center" data-novnc-target="status">Connecting</span>
         <div class="flex-grow flex justify-end">
             <div
               class="cursor-pointer group/menu flex items-center relative"
@@ -60,6 +61,12 @@
     </div>
 
     <div class="h-[calc(100%_-_var(--spacing)_*_10)]">
+        <div class="h-full min-h-full w-full min-w-full relative cursor-pointer" data-novnc-target="previewImage" data-action="click->novnc#reconnect">
+            <img class="m-auto opacity-60 saturate-30" src="/desktop/{{ .Name }}/screenshot" data-controller="refresh" data-refresh-interval-value="{{300000}}" />
+            <div class="absolute top-0 bottom-0 left-0 right-0 flex items-center justify-center">
+                <span class="px-6 py-2 bg-white rounded-full font-semibold text-xl" data-novnc-target="status">Connecting...</span>
+            </div>
+        </div>
         <div class="novnc h-full" data-novnc-target="canvas">
             <!-- This is where the desktop session will appear -->
         </div>

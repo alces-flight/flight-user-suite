@@ -6,6 +6,7 @@ name_generator:
 # NOTE: Keep these in sync with the dependencies entry below.
 vncpasswd: "/usr/bin/vncpasswd"
 websockify: "/usr/bin/websockify"
+screen_grabber: "/usr/bin/import"
 
 dependencies:
   - type: exe
@@ -39,6 +40,13 @@ dependencies:
     failure_message: "Accessing desktop sessions via Flight Web Suite will not be available"
     paths:
       - "/usr/bin/websockify"
+
+  - type: exe
+    description: "Screen shot support"
+    optional: true
+    failure_message: "Display of screenshots in Flight Web Suite will not be available"
+    paths:
+      - "/usr/bin/import"
 
 # Everything not included in this list is removed from the environment when
 # launching a new session.
