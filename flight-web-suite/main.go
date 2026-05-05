@@ -140,6 +140,8 @@ func newApp() *echo.Echo {
 		}
 		return c.Render(http.StatusOK, "home", data)
 	})
+	e.GET("/howto", indexHowtoHandler)
+	e.GET("/howto/:index", showHowtoHandler)
 	e.GET("/desktop", indexDesktopSessionsHandler)
 	e.GET("/desktop/new", newDesktopSessionHandler)
 	e.POST("/desktop", createDesktopSessionHandler)

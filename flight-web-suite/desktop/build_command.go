@@ -21,7 +21,7 @@ func desktopToolPath(env configenv.Env) string {
 	return filepath.Join(env.FlightRoot, "usr", "lib", "flight-core", "flight-desktop")
 }
 
-func buildDesktopCommand(ctx context.Context, env configenv.Env, username string, args ...string) (*exec.Cmd, error) {
+func BuildCommand(ctx context.Context, toolPath, username string, args ...string) (*exec.Cmd, error) {
 	userInfo, err := user.Lookup(username)
 	if err != nil {
 		return nil, fmt.Errorf("looking up user %q: %w", username, err)
@@ -49,7 +49,7 @@ func buildDesktopCommand(ctx context.Context, env configenv.Env, username string
 		groups = append(groups, uint32(parsed))
 	}
 
-	cmd := exec.CommandContext(ctx, desktopToolPath(env), args...)
+	cmd := exec.CommandContext(ctx, toolPath, args...)
 	cmd.Dir = userInfo.HomeDir
 	cmd.Env = commandEnv(userInfo)
 	if os.Geteuid() == 0 {
@@ -61,9 +61,13 @@ func buildDesktopCommand(ctx context.Context, env configenv.Env, username string
 			},
 		}
 	} else if os.Geteuid() != uid {
-		return nil, fmt.Errorf("cannot run desktop command as %q without root privileges", userInfo.Username)
+		return nil, fmt.Errorf("cannot run command as %q without root privileges", userInfo.Username)
 	}
 	return cmd, nil
+}
+
+func buildDesktopCommand(ctx context.Context, env configenv.Env, username string, args ...string) (*exec.Cmd, error) {
+	return BuildCommand(ctx, desktopToolPath(env), username, args...)
 }
 
 func commandEnv(userInfo *user.User) []string {

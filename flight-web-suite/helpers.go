@@ -1,13 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"html/template"
 	"strings"
 
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v5"
+	"github.com/yuin/goldmark"
 )
 
 const sessionContextKey = "_session"
@@ -112,4 +115,12 @@ func AddCommonData(c *echo.Context, data map[string]any) map[string]any {
 		"alert":  strings.Join(Flashes(c, "alert"), ", "),
 	}
 	return data
+}
+
+func renderMarkdown(raw string) (template.HTML, error) {
+	var output bytes.Buffer
+	if err := goldmark.Convert([]byte(raw), &output); err != nil {
+		return "", err
+	}
+	return template.HTML(output.String()), nil
 }

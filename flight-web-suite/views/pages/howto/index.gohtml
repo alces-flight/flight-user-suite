@@ -1,0 +1,50 @@
+{{ define "sidebar" }}
+    {{ if .HasGuides }}
+        <nav aria-label="Howto guides">
+            <ul class="space-y-2">
+                {{ range .Guides }}
+                    <li>
+                        <a
+                            href="{{ .URL }}"
+                            class="block rounded-2xl border px-4 py-3 transition-colors {{ if .IsSelected }}border-alces-blue bg-white text-alces-blue-dark{{ else }}border-transparent hover:border-alces-blue-light hover:bg-white{{ end }}"
+                            data-testid="howto-guide-link--{{ .Index }}"
+                            {{ if .IsSelected }}aria-current="page"{{ end }}
+                        >{{ .Title }}</a>
+                    </li>
+                {{ end }}
+            </ul>
+        </nav>
+    {{ else }}
+        <p class="m-0 text-sm text-slate-600" data-testid="howto-sidebar-empty">No guides are currently available.</p>
+    {{ end }}
+{{ end }}
+
+{{ define "content" }}
+<div class="max-w-[60rem] mx-auto">
+    <div class="flex gap-x-4 items-center justify-center w-full mt-12 mb-12">
+        <img src="/assets/images/howto.png" class="size-16" alt="">
+        <div>
+            <h1 class="mb-1">Flight Howto</h1>
+            <p class="m-0">Learn about the Flight User Suite and using your cluster</p>
+        </div>
+    </div>
+
+    <main class="bg-white p-6 lg:p-8 pt-0 lg:pt-0" data-testid="howto-main-pane">
+        {{ if .ShowEmptyState }}
+            <div class="max-w-2xl">
+                <h2 class="mb-3">No howto guides available</h2>
+                <p class="m-0 text-slate-600" data-testid="howto-empty-state">Return later or contact your administrator for more information.</p>
+            </div>
+        {{ else if .ShowSelectState }}
+            <div class="max-w-2xl">
+                <h2 class="mb-3">Select a howto guide</h2>
+                <p class="m-0 text-slate-600" data-testid="howto-selection-prompt">Choose a guide from the sidebar to view its contents.</p>
+            </div>
+        {{ else }}
+            <article class="markdown" data-testid="howto-guide-content">
+                {{ .GuideContent }}
+            </article>
+        {{ end }}
+    </main>
+</div>
+{{ end }}
