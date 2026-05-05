@@ -490,7 +490,7 @@ func (s *Session) startGrabber(ctx context.Context) error {
 	log.Debug("starting screen grabber", "path", libexecPath("grabber"), "args", cmd.Args)
 	logFile, err := os.Create(filepath.Join(s.sessionDir(), "grabber.log"))
 	if err != nil {
-		return fmt.Errorf("starting screen grabber: %w", err)
+		return fmt.Errorf("preparing to start screen grabber: %w", err)
 	}
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
