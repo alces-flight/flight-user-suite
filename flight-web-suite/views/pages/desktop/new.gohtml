@@ -12,7 +12,17 @@
         {{ if eq .CoreDependenciesOK false }}
             <div class="message alert max-w-[45rem] mx-auto">
                 {{ template "exclamation-triangle.svg" }}
-                <p>Flight Desktop is not available due to missing core dependencies. Please contact your HPC administrator.</p>
+                <div>
+                <p class="mb-3">Flight Desktop is not available due to missing core dependencies. Please contact your HPC administrator.</p>
+                <p>
+                    Missing dependencies:
+                    <ul>
+                        {{ range .MissingDependencies }}
+                            <li>- {{.}}</li>
+                        {{end}}
+                    </ul>
+                </p>
+                </div>
             </div>
         {{ else if eq .NumAvailableDesktopTypes 0 }}
             <div class="message alert max-w-[45rem] mx-auto">

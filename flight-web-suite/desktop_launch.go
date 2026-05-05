@@ -153,12 +153,19 @@ func renderDesktopLaunchPage(c *echo.Context, status int, desktopTypes []*deskto
 		form.Geometry = defaultDesktopGeometry()
 	}
 	coreDependenciesOK := false
+	missingDependencies := []string{}
 	if doctorReport != nil {
 	    coreDependenciesOK = doctorReport.Core.OK
+	    for _, dep := range doctorReport.Core.Checks {
+	        if dep.Found != true {
+	            missingDependencies = append(missingDependencies, dep.Description)
+	        }
+	    }
 	}
 
 	data := map[string]any{
 	    "CoreDependenciesOK":       coreDependenciesOK,
+	    "MissingDependencies":      missingDependencies,
 		"DesktopTypes":             desktopTypes,
 		"NumAvailableDesktopTypes": numAvailableDesktopTypes(desktopTypes),
 		"GeometryOptions":          desktopGeometryOptions,
