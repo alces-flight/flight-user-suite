@@ -49,7 +49,7 @@ JSON
 		"geometry":     {"1024x768"},
 	})
 
-	client.AssertRedirect(t, http.StatusSeeOther, "/desktop")
+	client.AssertRedirect(t, http.StatusSeeOther, "/desktop/named-session")
 	_, body := client.FollowRedirect()
 	testutil.AssertSelection(t, body, `div.flash.notice`,
 		testutil.HasText("Desktop session 'named-session' launched."),
