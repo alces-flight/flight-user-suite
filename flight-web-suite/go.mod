@@ -10,6 +10,7 @@ require (
 	github.com/gorilla/securecookie v1.1.2
 	github.com/gorilla/sessions v1.4.0
 	github.com/labstack/echo/v5 v5.1.0
+	github.com/yuin/goldmark v1.7.13
 	gopkg.in/yaml.v3 v3.0.1
 )
 
