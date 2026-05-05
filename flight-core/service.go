@@ -48,6 +48,19 @@ func (s *Service) Start(ctx context.Context) (*process.Response, error) {
 	execCmd := exec.CommandContext(ctx, s.ExePath(), args...)
 	execCmd.Dir = "/"
 
+	logfilePath := filepath.Join(env.FlightRoot, "var", "log", fmt.Sprintf("%s.log", s.ID))
+	err = os.MkdirAll(filepath.Dir(logfilePath), 0o755)
+	if err != nil {
+		return nil, fmt.Errorf("creating log director: %w", err)
+	}
+	logfile, err := os.OpenFile(logfilePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+	if err != nil {
+		return nil, fmt.Errorf("opening log file: %w", err)
+	}
+	defer logfile.Close()
+	execCmd.Stdout = logfile
+	execCmd.Stderr = logfile
+
 	pipeRead, pipeWrite, err := os.Pipe()
 	if err != nil {
 		return nil, fmt.Errorf("os.Pipe() failed: %w", err)
