@@ -62,7 +62,7 @@
 
     <div class="h-[calc(100%_-_var(--spacing)_*_10)]">
         <div class="h-full min-h-full w-full min-w-full relative cursor-pointer" data-novnc-target="previewImage" data-action="click->novnc#reconnect">
-            <img class="m-auto" src="/desktop/{{ .Name }}/screenshot" data-controller="refresh" data-refresh-interval-value="{{300000}}" />
+            <img class="m-auto opacity-60 saturate-30" src="/desktop/{{ .Name }}/screenshot" data-controller="refresh" data-refresh-interval-value="{{300000}}" />
             <div class="absolute top-0 bottom-0 left-0 right-0 flex items-center justify-center">
                 <span class="px-6 py-2 bg-white rounded-full font-semibold text-xl" data-novnc-target="status">Connecting...</span>
             </div>
