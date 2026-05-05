@@ -1,4 +1,4 @@
-{{define "layouts.wide"}}
+{{define "layouts.vnc_session"}}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -14,7 +14,7 @@
 
 <body class="flex flex-col h-screen m-0 p-0 font-sans">
     <div
-        class="flex items-center w-full h-[3.6rem] bg-black py-2 px-3 box-border border-b-4 border-alces-blue justify-between">
+        class="flex items-center w-full h-[3.6rem] bg-black py-2 px-3 box-border justify-between">
         <a href="/" class="h-full">
             <img src="/assets/images/logo.png" alt="Flight Web Suite Logo" class="h-full">
         </a>
@@ -44,11 +44,7 @@
     {{ template "flashes" .flashes }}
     <div class="grow min-h-[calc(100vh-3.6rem)] overflow-y-auto">
         <div class="relative min-h-full flex flex-col bg-linear-to-b from-alces-blue-light to-white">
-            <div class="px-[5%] lg:px-[15%] h-full flex flex-col grow">
-                <div class="bg-white p-4 text-center h-full pb-26 grow">
-                    {{ block "content" . }}{{ end }}
-                </div>
-            </div>
+            {{ block "content" . }}{{ end }}
             <div class="absolute bottom-0 w-full h-22">
                 <div class="bg-[url(/assets/images/cloud_bar.svg)] bg-size-[auto_100%] bg-bottom-left bg-repeat-x w-full h-full"></div>
             </div>

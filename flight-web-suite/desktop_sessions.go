@@ -77,7 +77,7 @@ func showDesktopSessionHandler(c *echo.Context) error {
 	}
 
 	data := map[string]any{
-		"layout":         "wide",
+		"layout":         "vnc_session",
 		"DesktopSession": response.Session,
 	}
 	return c.Render(http.StatusOK, "desktop/show", data)

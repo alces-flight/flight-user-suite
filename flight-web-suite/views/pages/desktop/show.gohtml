@@ -1,30 +1,66 @@
 {{ define "content" }}
 {{ with .DesktopSession }}
-<div id="novnc-wrapper" class="flex flex-col h-full min-h-full" data-controller="novnc"
+<div id="novnc-wrapper" class="absolute top-0 bottom-22 left-0 right-0" data-controller="novnc"
     data-novnc-host-value="{{ .Host }}" data-novnc-port-value="{{ .WebsocketPort }}" data-novnc-path-value="websockify" data-novnc-password-value="{{ .Password }}"
     data-novnc-host="{{ .Host }}" data-novnc-port="{{ .WebsocketPort }}" data-novnc-path="websockify" data-novnc-password="{{ .Password }}"
     >
-    <div class="bg-alces-blue text-white flex justify-between p-2">
-        <div>
-            <span class="font-semibold">{{ .Name }}</span> running on <code>{{ .Host }}</code>
+    <div class="bg-alces-blue text-white flex gap-x-4 justify-between items-center px-3 py-0">
+        <div class="h-full flex items-center gap-x-1">
+            <span class="font-semibold">{{ .Name }}</span>
+            <span>running on</span>
+            <span class="mb-[-2px]"><code>{{ .Host }}</code></span>
         </div>
-        <span data-novnc-target="status">Connecting</span>
-        <div>
-            <button class="btn btn-sm !mb-0" data-novnc-target="reconnectBtn" data-action="click->novnc#reconnect" title="Reconnect">Reconnect</button>
-            <button class="btn btn-sm !mb-0" data-novnc-target="disconnectBtn" data-action="click->novnc#disconnect" title="Disconnect">Disconnect</button>
-            {{ if eq .State "active" }}
-            <!-- Don't offer to terminate remote sessions. It's not yet implemented -->
-            <form class="inline" action="/desktop/{{ .Name }}" method="post">
-                <input type="hidden" name="_method" value="DELETE">
-                <button class="btn btn-sm !mb-0" title="Terminate" type="submit">Terminate</button>
-            </form>
-            {{ end }}
-            <a class="btn btn-sm !mb-0" href="/desktop" title="Close">X</a>
+        <span class="h-full flex items-center" data-novnc-target="status">Connecting</span>
+        <div class="flex-grow flex justify-end">
+            <div
+              class="cursor-pointer group/menu flex items-center relative"
+              data-controller="menu-toggle"
+              data-menu-toggle-active-class="group-data-[menu-toggle-is-open-value=true]/menu:text-alces-blue"
+              id="toolbar-actions-dropdown-2"
+            >
+              <button
+                class="flex items-center mx-0 link size-6 cursor-pointer"
+                data-action="click->menu-toggle#toggle click@window->menu-toggle#close"
+                type="button"
+                >
+                {{ template "bars-3.svg" }}
+              </button>
+              <div
+                class="absolute z-10 top-[32px] right-0 bg-white shadow-sm hidden"
+                data-menu-toggle-target="menu"
+                data-transition-enter="transition-opacity ease-in-out duration-200"
+                data-transition-enter-start="opacity-0"
+                data-transition-enter-end="opacity-100"
+                data-transition-leave="transition-opacity ease-in-out duration-200"
+                data-transition-leave-start="opacity-100"
+                data-transition-leave-end="opacity-0"
+                role="menu"
+                aria-orientation="vertical"
+                aria-labelledby="toolbar-actions-dropdown-2"
+                tabindex="-1"
+              >
+                <div class="text-sm flex flex-col" role="none">
+                    <button class="btn btn-sm !rounded-none !mb-0" data-novnc-target="reconnectBtn" data-action="click->novnc#reconnect">Reconnect</button>
+                    <button class="btn btn-sm !rounded-none !mb-0" data-novnc-target="disconnectBtn" data-action="click->novnc#disconnect">Disconnect</button>
+                    {{ if eq .State "active" }}
+                    <!-- Don't offer to terminate remote sessions. It's not yet implemented -->
+                    <form class="inline" action="/desktop/{{ .Name }}" method="post">
+                        <input type="hidden" name="_method" value="DELETE">
+                        <button class="btn btn-sm !rounded-none !mb-0 w-full" type="submit">Terminate</button>
+                    </form>
+                    {{ end }}
+                </div>
+              </div>
+            </div>
+
+            <a class="btn btn-sm !mb-0 text-white" href="/desktop" title="Close">
+                {{ template "x-mark.svg" }}
+            </a>
         </div>
     </div>
 
-    <div class="h-full min-h-full flex-grow">
-        <div class="novnc h-full min-h-full w-full min-w-full" data-novnc-target="canvas">
+    <div class="h-[calc(100%_-_var(--spacing)_*_10)]">
+        <div class="novnc h-full" data-novnc-target="canvas">
             <!-- This is where the desktop session will appear -->
         </div>
         <div style="display:none" data-novnc-target="copyFallback"></div>

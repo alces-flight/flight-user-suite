@@ -147,12 +147,13 @@ function createConnection({
       url,
       password && {credentials: {password}}
     );
+    // Don't set a background.
+    rfb.background = ""
     rfb.addEventListener('connect', onConnect);
     rfb.addEventListener('disconnect', onDisconnect);
     rfb.addEventListener('credentialsrequired', onPasswordPrompt);
     rfb.addEventListener('clipboard', onClipboard);
-    // TODO: Add this back. Requires set height and width for domEl (not just 100%).
-    // rfb.scaleViewport = true;
+    rfb.scaleViewport = true;
     rfb.resizeSession = false;
     rfb.viewOnly = viewOnly;
   } catch (err) {
