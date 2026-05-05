@@ -1,50 +1,91 @@
 ---
 admin: true
 ---
-# What is Flight Web?
+# Flight Web Suite
 
-* Provides browser access to the Flight User Suite, including desktop and howto guides.
+Flight Web Suite provides browser access to the Flight User Suite. Users can log
+in using their cluster credentials and gain access to Flight User Suite tools
+(where enabled) including Flight Desktop and howto guides.
 
-## Setup
+## Prerequisites
 
-Requires:
+Flight Web Suite requires:
 
-* Python3
-* The [python-pam](https://pypi.org/project/python-pam/) library. Known as `python3-pampy` on Ubuntu. Known as `python3-pam` on Rocky 9 available from EPEL.
+* Python 3
+* The [python-pam](https://pypi.org/project/python-pam/) library. Known as
+  `python3-pampy` on Ubuntu. Known as `python3-pam` on Rocky 9 available from
+  EPEL.
 
 ## Configuration
 
-* Edit config file at `/opt/flight/etc/web-suite.yml` directly.
-  * What do the different values mean?
-  * What are the permitted values for each setting?
+Configuration is via a file located at `/opt/flight/etc/web-suite.yml`. The
+default configuration file describes the available options.
 
-The session secret is stored in at
-`/opt/flight/var/lib/web-suite/session-secret`. It will be created
-automatically when web suite starts for the first time.  Changing it will
-invalidate all sessions.
+User sessions are secured via a session secret, stored at
+`/opt/flight/var/lib/web-suite/session-secret`. If this file is not present then
+a random secret will be created automatically when Flight Web Suite starts for
+the first time.  Changing the secret will invalidate all current sessions.
+
+See below for details of configuring a reverse proxy, which is our recommended
+deployment configuration.
 
 ## Usage
 
 * **Start:** as `root` run
+
   ```bash
   flight web start
   ```
+
 * **Stop:** as `root` run
+
   ```bash
   flight web stop
   ```
+
 * **Get status:** as `root` run
+
   ```bash
   flight web status
   ```
 
 ## Accessing Flight Web
 
-* Port and interface are configured in "Configuring Flight Web"
-* URL is printed in output of `flight web start`.  It will be the same each time unless reconfigured.
-* URL can be obtained from `flight web status`.
+The output of `flight web start` will include the URL at which Flight Web Suite
+can be accessed. Flight Web Suite uses the PAM `login` module to provide user
+authentication; users can log in with their cluster username and password.
 
-## User authentication
+In order to access Flight tools via Web Suite, the CLI counterparts to those
+tools will need to be enabled in the User Suite CLI tool (i.e. with
+`flight tool enable`). You do not separately enable a tool in the CLI and Web
+Suite.
 
-* Uses PAM `login` module.
-* Users provide cluster username and password.
+## Reverse proxy
+
+We recommend deployment behind a reverse proxy to provide TLS termination, and
+not exposing the Flight Web Suite instance directly (especially if it is to be
+made available over public Internet).
+
+`nginx` is a suitable reverse proxy, for which an example configuration is
+given below. You will need to ensure the values of `server_name`,
+`ssl_certificate` and `ssl_certificate_key` are correct for your environment,
+and that the value of `proxy_pass` points to the correct Flight Web Suite URL.
+
+```text
+# /etc/nginx/conf.d/web-suite.conf
+server {
+    listen 443 ssl;
+    server_name login1.cluster.network;
+
+    location / {
+        proxy_pass http://localhost:8080;
+        proxy_http_version 1.1;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+    ssl_certificate /etc/nginx/certs/localhost.crt;
+    ssl_certificate_key /etc/nginx/certs/localhost.key;
+}
+```
