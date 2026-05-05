@@ -497,7 +497,7 @@ func (s *Session) startGrabber(ctx context.Context) error {
 	cmd.Dir = "/"
 	err = cmd.Start()
 	if err != nil {
-		return fmt.Errorf("starting websockify: %w", err)
+		return fmt.Errorf("starting screen grabber: %w", err)
 	}
 	s.GrabberPid = cmd.Process.Pid
 
