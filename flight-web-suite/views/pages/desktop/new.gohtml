@@ -9,7 +9,12 @@
     </a>
     <div class="flex flex-col gap-y-12 items-stretch mt-6">
         <h1 class="text-center">Launch a desktop session</h1>
-        {{ if eq .NumAvailableDesktopTypes 0 }}
+        {{ if eq .CoreDependenciesOK false }}
+            <div class="message alert max-w-[45rem] mx-auto">
+                {{ template "exclamation-triangle.svg" }}
+                <p>Flight Desktop is not available due to missing core dependencies. Please contact your HPC administrator.</p>
+            </div>
+        {{ else if eq .NumAvailableDesktopTypes 0 }}
             <div class="message alert max-w-[45rem] mx-auto">
                 {{ template "exclamation-triangle.svg" }}
                 <p>There are no available desktop types. Please contact your HPC administrator.</p>

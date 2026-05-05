@@ -42,6 +42,11 @@ func newDesktopSessionHandler(c *echo.Context) error {
 		return err
 	}
 
+	dependencyReport, err := desktop.DoctorCommand(c.Request().Context(), env, CurrentUserName(c))
+	if err != nil {
+		return err
+	}
+
 	desktopTypes, err := desktop.AvailCommand(c.Request().Context(), env, CurrentUserName(c))
 	if err != nil {
 		return err
@@ -51,7 +56,7 @@ func newDesktopSessionHandler(c *echo.Context) error {
 		DesktopType: defaultDesktopType(desktopTypes),
 		Geometry:    defaultDesktopGeometry(),
 	}
-	return renderDesktopLaunchPage(c, http.StatusOK, desktopTypes, form)
+	return renderDesktopLaunchPage(c, http.StatusOK, desktopTypes, dependencyReport, form)
 }
 
 func createDesktopSessionHandler(c *echo.Context) error {
@@ -105,7 +110,7 @@ func createDesktopSessionHandler(c *echo.Context) error {
 	}
 	sess.AddFlash(alert, "alert")
 	SaveSession(c, sess)
-	return renderDesktopLaunchPage(c, http.StatusUnprocessableEntity, desktopTypes, form)
+	return renderDesktopLaunchPage(c, http.StatusUnprocessableEntity, desktopTypes, nil, form)
 }
 
 func requireDesktopToolEnabled() error {
@@ -140,15 +145,20 @@ func applyDesktopStartErrors(form *desktopLaunchFormData, response desktop.Start
 	}
 }
 
-func renderDesktopLaunchPage(c *echo.Context, status int, desktopTypes []*desktop.Type, form desktopLaunchFormData) error {
+func renderDesktopLaunchPage(c *echo.Context, status int, desktopTypes []*desktop.Type, doctorReport *desktop.DoctorReport, form desktopLaunchFormData) error {
 	if form.DesktopType == "" {
 		form.DesktopType = defaultDesktopType(desktopTypes)
 	}
 	if form.Geometry == "" {
 		form.Geometry = defaultDesktopGeometry()
 	}
+	coreDependenciesOK := false
+	if doctorReport != nil {
+	    coreDependenciesOK = doctorReport.Core.OK
+	}
 
 	data := map[string]any{
+	    "CoreDependenciesOK":       coreDependenciesOK,
 		"DesktopTypes":             desktopTypes,
 		"NumAvailableDesktopTypes": numAvailableDesktopTypes(desktopTypes),
 		"GeometryOptions":          desktopGeometryOptions,
