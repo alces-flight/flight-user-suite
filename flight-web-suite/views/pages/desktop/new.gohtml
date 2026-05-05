@@ -60,7 +60,7 @@
                                 value="{{ .ID }}"
                                 class="sr-only peer"
                                 {{if eq $.Form.DesktopType .ID}}checked{{end}}
-                                {{if eq .IsAvailable false}}disabled{{end}}
+                                {{if or (eq $.CoreDependenciesOK false) (eq .IsAvailable false)}}disabled{{end}}
                             >
                             <label
                                 for="{{ .ID }}"
@@ -68,19 +68,21 @@
                                     flex flex-col justify-between
                                     p-5 w-64 h-full
                                     bg-white border border-alces-blue-light rounded-corners
-                                    {{ if .IsAvailable }}
+                                    {{ if and $.CoreDependenciesOK .IsAvailable }}
                                         cursor-pointer peer-checked:border-alces-blue peer-checked:shadow transition
                                     {{ else }}
                                         text-slate-400 cursor-not-allowed
                                     {{ end }}
                                 "
-                                {{ if eq .IsAvailable false }}title="Desktop type unavailable"{{ end }}
+                                {{if or (eq $.CoreDependenciesOK false) (eq .IsAvailable false)}}
+                                    title="Desktop type unavailable"
+                                {{ end }}
                             >
                                 <div class="flex items-start justify-between gap-4">
                                     <div>
                                         <h3 class="text-xl">{{ .ID }}</h3>
                                         <p class="mt-3 text-sm leading-6
-                                            {{ if .IsAvailable }}
+                                            {{ if and $.CoreDependenciesOK .IsAvailable }}
                                                 text-slate-700
                                             {{ else }}
                                                 text-slate-400
@@ -143,14 +145,18 @@
             </div>
             <button
                 type="submit"
-                class="btn !px-12 uppercase {{if eq .NumAvailableDesktopTypes 0}}btn-disabled{{end}}"
+                class="btn !px-12 uppercase {{if or (eq .CoreDependenciesOK false) (eq .NumAvailableDesktopTypes 0)}}btn-disabled{{end}}"
                 data-controller="disable-with"
                 data-disable-with="Launching..."
                 data-disable-with-class="btn-disabled"
                 data-testid="desktop-launch-submit"
-                {{if eq .NumAvailableDesktopTypes 0}}
+                {{if or (eq .CoreDependenciesOK false) (eq .NumAvailableDesktopTypes 0)}}
                     disabled
-                    title="No available desktop types"
+                    {{ if eq .CoreDependenciesOK false }}
+                        title="Flight Desktop unavailable"
+                    {{ else }}
+                        title="No available desktop types"
+                    {{ end }}
                 {{end}}
             >Launch</button>
         </form>
