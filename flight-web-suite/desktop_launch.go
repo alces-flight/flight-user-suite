@@ -90,7 +90,7 @@ func createDesktopSessionHandler(c *echo.Context) error {
 			}
 			sess.AddFlash(fmt.Sprintf("Desktop session '%s' launched.", response.SessionName), "notice")
 			SaveSession(c, sess)
-			return c.Redirect(http.StatusSeeOther, "/desktop")
+			return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/desktop/%s", response.SessionName))
 		}
 		applyDesktopStartErrors(&form, response)
 	}
