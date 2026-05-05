@@ -42,11 +42,18 @@ export default class extends Controller {
     if (newValue != null && newValue.type === "connect") {
       this.rfb.focus();
       this.statusValue = "connected"
+      this.autoreconnecting = false
     }
   }
 
   onRfbDisconnect(e) {
     this.statusValue = "disconnected"
+    if (e.detail.clean != null && !e.detail.clean && !this.autoreconnecting) {
+      setTimeout(() => {
+        this.autoreconnecting = true
+        this.reconnect()
+      }, 500)
+    }
   }
 
   onRfbPasswordRequired() {
