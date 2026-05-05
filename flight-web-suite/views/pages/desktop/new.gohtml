@@ -117,13 +117,16 @@
             </div>
             <button
                 type="submit"
-                class="btn !px-12 {{if eq .HasDesktopTypes false}}btn-disabled{{end}}"
+                class="btn !px-12 uppercase {{if eq .HasDesktopTypes false}}btn-disabled{{end}}"
+                data-controller="disable-with"
+                data-disable-with="Launching..."
+                data-disable-with-class="btn-disabled"
                 data-testid="desktop-launch-submit"
                 {{if eq .HasDesktopTypes false}}
                     disabled
                     title="No available desktop types"
                 {{end}}
-            >LAUNCH</button>
+            >Launch</button>
         </form>
         {{ if false }}
             <aside class="border border-alces-blue-light bg-sky-50 p-6">
