@@ -16,7 +16,7 @@ export default class extends Controller {
   }
 
   refresh() {
-    const cacheBuster = new Date().getTime()
+    const cacheBuster = Date.now()
     this.element.src = `${this.initialSrc}?t=${cacheBuster}`
   }
 }
