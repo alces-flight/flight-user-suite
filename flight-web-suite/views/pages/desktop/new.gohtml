@@ -149,20 +149,22 @@
                         Custom resolution:
                     </label>
                     <input
-                        id="custom_resolution_x"
-                        name="custom_x"
                         class="max-w-32"
-                        type="number"
-                        min="0"
                         data-geometry-inputs-target="input"
+                        id="custom_resolution_x"
+                        min="0"
+                        name="custom_x"
+                        placeholder="Width"
+                        type="number"
                     />
                         x
                     <input
-                        name="custom_y"
                         class="max-w-32"
-                        type="number"
-                        min="0"
                         data-geometry-inputs-target="input"
+                        min="0"
+                        name="custom_y"
+                        placeholder="Height"
+                        type="number"
                     />
                 </div>
                 {{if .Form.Errors.Geometry}}
