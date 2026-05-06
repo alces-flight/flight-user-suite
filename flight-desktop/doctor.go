@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -21,7 +22,12 @@ func doctorCommand() *cli.Command {
 		Usage:       "System health check",
 		Description: wordwrap.String("Perform a health check on the system to check that all dependencies are present.", maxTextWidth),
 		Category:    "Desktop types",
+		Flags:       []cli.Flag{formatFlag},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
+			if cmd.String("format") == "json" {
+				report := buildDoctorReport(ctx)
+				return writeChecksJSON(report)
+			}
 			greenText := lipgloss.NewStyle().Foreground(lipgloss.Green)
 			redText := lipgloss.NewStyle().Foreground(lipgloss.Red)
 			fmt.Println()
@@ -88,6 +94,59 @@ func doctorCommand() *cli.Command {
 	}
 }
 
+type doctorReport struct {
+	OK     bool              `json:"ok"`
+	Checks []checkResultJSON `json:"checks"`
+}
+
+type checkResultJSON struct {
+	Description string   `json:"description,omitempty"`
+	Paths       []string `json:"paths"`
+	Optional    bool     `json:"optional"`
+	Found       bool     `json:"found"`
+	Error       string   `json:"error,omitempty"`
+}
+
+type checkResult struct {
+	dependency dependency
+	found      bool
+	foundAt    string
+	err        error
+}
+
+func writeChecksJSON(report doctorReport) error {
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	return enc.Encode(report)
+}
+
+func toJSONResults(results []checkResult) []checkResultJSON {
+	jsonResults := make([]checkResultJSON, 0, len(results))
+	for _, r := range results {
+		item := checkResultJSON{
+			Description: r.dependency.Description,
+			Paths:       r.dependency.Paths,
+			Optional:    r.dependency.Optional,
+			Found:       r.found,
+		}
+		if r.err != nil {
+			item.Error = r.err.Error()
+		}
+		jsonResults = append(jsonResults, item)
+	}
+	return jsonResults
+}
+
+func buildDoctorReport(ctx context.Context) doctorReport {
+	coreRequired := requiredDependencies(config.Dependencies)
+	coreResults, coreOK := runDoctor(coreRequired)
+	report := doctorReport{
+		OK:     coreOK,
+		Checks: toJSONResults(coreResults),
+	}
+	return report
+}
+
 func checkRequiredDeps(ctx context.Context, spinnerText string, doneText string, failText string, deps []dependency) bool {
 	allOK := true
 	p := pin.New(spinnerText,
@@ -133,13 +192,6 @@ func checkOptionalDeps(ctx context.Context, spinnerText string, doneText string,
 		p.Fail(failText)
 	}
 	printCheckResults(checkResults)
-}
-
-type checkResult struct {
-	dependency dependency
-	found      bool
-	foundAt    string
-	err        error
 }
 
 func runDoctor(dependencies []dependency) ([]checkResult, bool) {

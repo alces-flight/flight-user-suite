@@ -76,6 +76,41 @@ func AvailCommand(ctx context.Context, env configenv.Env, username string) ([]*T
 	return desktopTypes, nil
 }
 
+type DoctorReport struct {
+	OK     bool              `json:"ok"`
+	Checks []CheckResultJSON `json:"checks"`
+}
+
+type CheckResultJSON struct {
+	Description string   `json:"description"`
+	Paths       []string `json:"paths"`
+	Optional    bool     `json:"optional"`
+	Found       bool     `json:"found"`
+	Error       string   `json:"error"`
+}
+
+func DoctorCommand(ctx context.Context, env configenv.Env, username string) (*DoctorReport, error) {
+	cmd, err := buildDesktopCommand(ctx, env, username, "doctor", "--format", "json")
+	if err != nil {
+		return nil, err
+	}
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		if stderr.Len() != 0 {
+			return nil, fmt.Errorf("running desktop doctor: %s", stderr.String())
+		}
+		return nil, fmt.Errorf("running desktop doctor: %w", err)
+	}
+	var dependencyReport DoctorReport
+	if err := json.Unmarshal(stdout.Bytes(), &dependencyReport); err != nil {
+		return nil, fmt.Errorf("decoding dependency checks: %w", err)
+	}
+	return &dependencyReport, nil
+}
+
 func StartCommand(ctx context.Context, env configenv.Env, username string, input StartInput) (StartResponse, error) {
 	args := []string{"start", input.DesktopType, "--format", "json", "--geometry", input.Geometry}
 	if input.Name != "" {
