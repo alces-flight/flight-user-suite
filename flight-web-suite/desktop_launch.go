@@ -92,8 +92,6 @@ func createDesktopSessionHandler(c *echo.Context) error {
 		CustomY:     customY,
 	}
 
-	fmt.Printf("%+v", form)
-
 	desktopTypes, err := desktop.AvailCommand(c.Request().Context(), env, CurrentUserName(c))
 	if err != nil {
 		return err
