@@ -129,7 +129,12 @@ func createDesktopSessionHandler(c *echo.Context) error {
 	}
 	sess.AddFlash(alert, "alert")
 	SaveSession(c, sess)
-	return renderDesktopLaunchPage(c, http.StatusUnprocessableEntity, desktopTypes, nil, form)
+	dependencyReport, err := desktop.DoctorCommand(c.Request().Context(), env, CurrentUserName(c))
+	if err != nil {
+		return err
+	}
+
+	return renderDesktopLaunchPage(c, http.StatusUnprocessableEntity, desktopTypes, dependencyReport, form)
 }
 
 func requireDesktopToolEnabled() error {
@@ -174,17 +179,17 @@ func renderDesktopLaunchPage(c *echo.Context, status int, desktopTypes []*deskto
 	coreDependenciesOK := false
 	missingDependencies := []string{}
 	if doctorReport != nil {
-	    coreDependenciesOK = doctorReport.OK
-	    for _, dep := range doctorReport.Checks {
-	        if dep.Found != true {
-	            missingDependencies = append(missingDependencies, dep.Description)
-	        }
-	    }
+		coreDependenciesOK = doctorReport.OK
+		for _, dep := range doctorReport.Checks {
+			if dep.Found != true {
+				missingDependencies = append(missingDependencies, dep.Description)
+			}
+		}
 	}
 
 	data := map[string]any{
-	    "CoreDependenciesOK":       coreDependenciesOK,
-	    "MissingDependencies":      missingDependencies,
+		"CoreDependenciesOK":       coreDependenciesOK,
+		"MissingDependencies":      missingDependencies,
 		"DesktopTypes":             desktopTypes,
 		"NumAvailableDesktopTypes": numAvailableDesktopTypes(desktopTypes),
 		"GeometryOptions":          desktopGeometryOptions,

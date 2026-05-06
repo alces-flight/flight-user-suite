@@ -60,6 +60,15 @@ func TestCreateDesktopSessionFailureAddsFlashAndRedisplaysForm(t *testing.T) {
 	currentUser := currentUserForTest(t)
 	setAuthenticatorPathForTest(t, filepath.Join("testdata", "authenticator_success.sh"))
 	setFlightRootForDesktopTest(t, desktopToolFixture(t, 0o755, `#!/bin/sh
+if [ "$1" = "doctor" ]; then
+cat <<'JSON'
+{
+	"ok": true,
+	"checks": []
+}
+JSON
+exit 0
+fi
 if [ "$1" = "avail" ]; then
 cat <<'JSON'
 [
