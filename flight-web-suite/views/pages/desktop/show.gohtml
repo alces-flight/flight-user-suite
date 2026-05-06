@@ -1,6 +1,6 @@
 {{ define "content" }}
 {{ with .DesktopSession }}
-<div id="novnc-wrapper" class="absolute top-0 bottom-22 left-0 right-0" data-controller="novnc"
+<div id="novnc-wrapper" class="absolute top-0 bottom-22 left-0 right-0" data-controller="novnc fullscreen"
     data-novnc-host-value="{{ .Host }}"
     data-novnc-port-value="{{ .WebsocketPort }}"
     data-novnc-path-value="websockify"
@@ -13,6 +13,11 @@
             <span class="mb-[-2px]"><code>{{ .Host }}</code></span>
         </div>
         <div class="flex-grow flex justify-end">
+
+            <button class="btn btn-sm !mb-0 text-white" data-action="fullscreen#toggle" title="Full screen">
+                {{ template "arrows-pointing-out.svg" }}
+            </button>
+
             <div
               class="cursor-pointer group/menu flex items-center relative"
               data-controller="menu-toggle"
@@ -20,7 +25,7 @@
               id="toolbar-actions-dropdown-2"
             >
               <button
-                class="flex items-center mx-0 link size-6 cursor-pointer"
+                class="btn btn-sm !mb-0 text-white"
                 data-action="click->menu-toggle#toggle click@window->menu-toggle#close"
                 type="button"
                 >
@@ -72,7 +77,7 @@
                 <span class="px-6 py-2 bg-white rounded-full font-semibold text-xl" data-novnc-target="status">Connecting...</span>
             </div>
         </div>
-        <div class="novnc h-full" data-novnc-target="canvas">
+        <div class="novnc h-full" data-novnc-target="canvas" data-fullscreen-target="fullscreenable">
             <!-- This is where the desktop session will appear -->
         </div>
         <div style="display:none" data-novnc-target="copyFallback"></div>
