@@ -25,8 +25,17 @@ type desktopLaunchFormData struct {
 	DesktopType string
 	Name        string
 	Geometry    string
+	CustomX     int
+	CustomY     int
 	Errors      desktopLaunchFieldErrors
 	Alert       string
+}
+
+func (data *desktopLaunchFormData) getComputedGeometry() string {
+	if data.Geometry == "custom" {
+		return fmt.Sprintf("%dx%d", data.CustomX, data.CustomY)
+	}
+	return data.Geometry
 }
 
 var desktopGeometryOptions = []desktopGeometryOption{
@@ -36,6 +45,7 @@ var desktopGeometryOptions = []desktopGeometryOption{
 	{Value: "1280x1024", Label: "1280 x 1024"},
 	{Value: "1920x1080", Label: "1920 x 1080"},
 	{Value: "1600x1200", Label: "1600 x 1200"},
+	{Value: "custom", Label: "Custom"},
 }
 
 func newDesktopSessionHandler(c *echo.Context) error {
@@ -71,11 +81,18 @@ func createDesktopSessionHandler(c *echo.Context) error {
 		return err
 	}
 
+	customX, _ := echo.FormValue[int](c, "custom_x")
+	customY, _ := echo.FormValue[int](c, "custom_y")
+
 	form := desktopLaunchFormData{
 		DesktopType: c.FormValue("desktop_type"),
 		Name:        c.FormValue("name"),
 		Geometry:    c.FormValue("geometry"),
+		CustomX:     customX,
+		CustomY:     customY,
 	}
+
+	fmt.Printf("%+v", form)
 
 	desktopTypes, err := desktop.AvailCommand(c.Request().Context(), env, CurrentUserName(c))
 	if err != nil {
@@ -87,7 +104,7 @@ func createDesktopSessionHandler(c *echo.Context) error {
 		response, err := desktop.StartCommand(c.Request().Context(), env, CurrentUserName(c), desktop.StartInput{
 			DesktopType: form.DesktopType,
 			Name:        form.Name,
-			Geometry:    form.Geometry,
+			Geometry:    form.getComputedGeometry(),
 		})
 		if err != nil {
 			return err
@@ -129,7 +146,7 @@ func validateDesktopLaunchForm(desktopTypes []*desktop.Type, form *desktopLaunch
 	if !hasDesktopType(desktopTypes, form.DesktopType) {
 		form.Errors.DesktopType = "Select an available desktop type."
 	}
-	if !hasDesktopGeometry(form.Geometry) {
+	if !hasDesktopGeometry(form.Geometry, form.CustomX, form.CustomY) {
 		form.Errors.Geometry = "Select a supported geometry."
 	}
 }
@@ -218,9 +235,12 @@ func hasDesktopType(desktopTypes []*desktop.Type, id string) bool {
 	return false
 }
 
-func hasDesktopGeometry(geometry string) bool {
+func hasDesktopGeometry(geometry string, customX, customY int) bool {
 	for _, option := range desktopGeometryOptions {
 		if option.Value == geometry {
+			if geometry == "custom" {
+				return customX > 0 && customY > 0
+			}
 			return true
 		}
 	}

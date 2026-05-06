@@ -139,6 +139,28 @@
                         >{{ .Label }}</option>
                     {{end}}
                 </select>
+                <div
+                    class="flex gap-2 items-center"
+                    id="custom-resolution-fields"
+                >
+                    <label for="custom_resolution_x">
+                        Custom resolution:
+                    </label>
+                    <input
+                        id="custom_resolution_x"
+                        name="custom_x"
+                        class="max-w-32"
+                        type="number"
+                        min="0"
+                    />
+                    x
+                    <input
+                        name="custom_y"
+                        class="max-w-32"
+                        type="number"
+                        min="0"
+                    />
+                </div>
                 {{if .Form.Errors.Geometry}}
                     <p class="mt-2 text-sm text-red-700" data-testid="desktop-launch-geometry-error">{{ .Form.Errors.Geometry }}</p>
                 {{end}}
