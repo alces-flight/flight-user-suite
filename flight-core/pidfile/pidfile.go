@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"syscall"
+
+	"github.com/concertim/flight-user-suite/flight/process"
 )
 
 // Read the PID file at path. Return the PID contained in the file if it
@@ -23,12 +24,7 @@ func Read(path string) (int, error) {
 	if pid == 0 {
 		return 0, fmt.Errorf("invalid content: pid=0")
 	}
-	process, err := os.FindProcess(pid)
-	if err != nil {
-		return 0, nil
-	}
-	err = process.Signal(syscall.Signal(0))
-	if err != nil {
+	if !process.IsRunning(pid) {
 		return 0, nil
 	}
 	return pid, nil

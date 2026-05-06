@@ -114,6 +114,7 @@ func main() {
 			listSessionsCommand(),
 			showSessionCommand(),
 			showSessionLogsCommand(),
+			webifySessionCommand(),
 			killSessionCommand(),
 			cleanSessionCommand(),
 		},
