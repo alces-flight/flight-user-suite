@@ -131,7 +131,7 @@ h2 {
 
 .markdown {
   h1, h2, h3, h4, h5, h6 {
-    @apply text-slate-600;
+    @apply text-slate-500;
   }
 
   h1 {
