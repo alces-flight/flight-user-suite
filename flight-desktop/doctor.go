@@ -25,9 +25,9 @@ func doctorCommand() *cli.Command {
 		Flags:       []cli.Flag{formatFlag},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			if cmd.String("format") == "json" {
-            	report := buildDoctorReport(ctx)
-            	return writeChecksJSON(report)
-            }
+				report := buildDoctorReport(ctx)
+				return writeChecksJSON(report)
+			}
 			greenText := lipgloss.NewStyle().Foreground(lipgloss.Green)
 			redText := lipgloss.NewStyle().Foreground(lipgloss.Red)
 			fmt.Println()
@@ -100,11 +100,11 @@ type doctorReport struct {
 }
 
 type checkResultJSON struct {
-	Description    string   `json:"description,omitempty"`
-	Paths          []string `json:"paths"`
-	Optional       bool     `json:"optional"`
-	Found          bool     `json:"found"`
-	Error          string   `json:"error,omitempty"`
+	Description string   `json:"description,omitempty"`
+	Paths       []string `json:"paths"`
+	Optional    bool     `json:"optional"`
+	Found       bool     `json:"found"`
+	Error       string   `json:"error,omitempty"`
 }
 
 type checkResult struct {
@@ -124,10 +124,10 @@ func toJSONResults(results []checkResult) []checkResultJSON {
 	jsonResults := make([]checkResultJSON, 0, len(results))
 	for _, r := range results {
 		item := checkResultJSON{
-			Description:    r.dependency.Description,
-			Paths:          r.dependency.Paths,
-			Optional:       r.dependency.Optional,
-			Found:          r.found,
+			Description: r.dependency.Description,
+			Paths:       r.dependency.Paths,
+			Optional:    r.dependency.Optional,
+			Found:       r.found,
 		}
 		if r.err != nil {
 			item.Error = r.err.Error()
@@ -137,12 +137,12 @@ func toJSONResults(results []checkResult) []checkResultJSON {
 	return jsonResults
 }
 
-func buildDoctorReport(ctx context.Context) (doctorReport) {
+func buildDoctorReport(ctx context.Context) doctorReport {
 	coreRequired := requiredDependencies(config.Dependencies)
 	coreResults, coreOK := runDoctor(coreRequired)
 	report := doctorReport{
-        OK: coreOK,
-    	Checks: toJSONResults(coreResults),
+		OK:     coreOK,
+		Checks: toJSONResults(coreResults),
 	}
 	return report
 }
