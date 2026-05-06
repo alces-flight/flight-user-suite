@@ -57,13 +57,29 @@
                     </div>
                 </div>
             </div>
-            <dl class="details-grid grid grid-cols-[auto_1fr] gap-x-6 gap-y-2">
+            <a
+                class="mb-4 flex justify-center h-40 overflow-clip"
+                href="/desktop/{{ .Name }}"
+            >
+                <img
+                    class="h-full max-w-fit"
+                    src="/desktop/{{ .Name }}/screenshot"
+                    data-controller="refresh"
+                    data-refresh-interval-value="{{300000}}"
+                />
+            </a>
+            <dl class="details-grid grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 overflow-hidden">
                 <dt>Desktop</dt>
                 <dd data-testid="desktop-session-desktop-type--{{ .Name }}">{{ .DesktopType }}</dd>
                 <dt>State</dt>
                 <dd data-testid="desktop-session-state--{{ .Name }}">{{ .State }}</dd>
                 <dt>Host</dt>
-                <dd data-testid="desktop-session-host--{{ .Name }}"><code class="text-fuchsia-700">{{ .Host }}</code></dd>
+                <dd
+                    data-testid="desktop-session-host--{{ .Name }}"
+                    title="{{ .Host }}"
+                >
+                    <code class="text-fuchsia-700">{{ .Host }}</code>
+                </dd>
                 <dt>Started</dt>
                 <dd data-testid="desktop-session-start-time--{{ .Name }}">{{ .StartTimeText }}</dd>
             </dl>
