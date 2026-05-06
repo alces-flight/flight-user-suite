@@ -173,8 +173,8 @@ JSON
 		testutil.WithSessionCookie(currentUser.Username, config.Session.Secret),
 	)
 
-	if resp.Header.Get("location") != "/desktop" {
-		t.Fatalf("expected redirect to /desktop, got %q", resp.Header.Get("location"))
+	if resp.Header.Get("location") != "/desktop/xterm.abc123" {
+		t.Fatalf("expected redirect to /desktop/xterm.abc123, got %q", resp.Header.Get("location"))
 	}
 
 	data, err := os.ReadFile(argsFile)
