@@ -25,10 +25,7 @@ func doctorCommand() *cli.Command {
 		Flags:       []cli.Flag{formatFlag},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			if cmd.String("format") == "json" {
-            	report, err := buildDoctorReport(ctx)
-            	if err != nil {
-            		return err
-            	}
+            	report := buildDoctorReport(ctx)
             	return writeChecksJSON(report)
             }
 			greenText := lipgloss.NewStyle().Foreground(lipgloss.Green)
@@ -140,13 +137,14 @@ func toJSONResults(results []checkResult) []checkResultJSON {
 	return jsonResults
 }
 
-func buildDoctorReport(ctx context.Context) (doctorReport, error) {
-	report := doctorReport{}
+func buildDoctorReport(ctx context.Context) (doctorReport) {
 	coreRequired := requiredDependencies(config.Dependencies)
 	coreResults, coreOK := runDoctor(coreRequired)
-	report.OK = coreOK
-	report.Checks = toJSONResults(coreResults)
-	return report, nil
+	report := doctorReport{
+        OK: coreOK,
+    	Checks: toJSONResults(coreResults),
+	}
+	return report
 }
 
 func checkRequiredDeps(ctx context.Context, spinnerText string, doneText string, failText string, deps []dependency) bool {
