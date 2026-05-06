@@ -32,11 +32,11 @@
     <main class="bg-white p-2 lg:p-8 pt-0 lg:pt-8" data-testid="howto-main-pane">
         {{ if .ShowEmptyState }}
             <p class="m-0 text-xl" data-testid="howto-empty-state">
-                There are no user guides available. Return later or contact your administrator for more information.
+                There are no user guides currently available. Return later or contact your administrator for more information.
             </p>
         {{ else if .ShowSelectState }}
-            <div data-testid="howto-selection-prompt">
-                <h1 class="mb-6">Welcome to Flight Howto!</h1>
+            <div>
+                <h1 class="mb-6" data-testid="howto-welcome">Welcome to Flight Howto!</h1>
                 <p class="mb-0">
                     Begin learning how to get the most out of Flight User Suite and your cluster
                     by selecting a user guide
