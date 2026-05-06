@@ -15,7 +15,7 @@
             </a>
         </div>
     </div>
-    <div class="grid grid-cols-[repeat(auto-fit,_minmax(288px,_1fr))] gap-4" data-testid="desktop-session-cards">
+    <div class="grid grid-cols-[repeat(auto-fill,_minmax(288px,_1fr))] gap-4" data-testid="desktop-session-cards">
         {{range .DesktopSessions}}
         <div
             class="w-full max-w-84 border border-alces-blue-light rounded-corners pt-3 pb-4 px-5 text-left mx-auto"
@@ -58,7 +58,7 @@
                 </div>
             </div>
             <a
-                class="mb-4 flex justify-center h-40 overflow-clip"
+                class="mb-4 flex justify-center h-46 overflow-clip"
                 href="/desktop/{{ .Name }}"
             >
                 <img
