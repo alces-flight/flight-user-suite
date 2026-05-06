@@ -15,6 +15,7 @@ import (
 	"charm.land/log/v2"
 	"github.com/adrg/xdg"
 	"github.com/concertim/flight-user-suite/flight/cliui"
+	"github.com/concertim/flight-user-suite/flight/userroles"
 	"github.com/hashicorp/go-envparse"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/urfave/cli/v3"
@@ -162,7 +163,15 @@ func configSet(ctx context.Context, cmd *cli.Command) error {
 	if !slices.Contains(permittedValues, value) {
 		return cli.Exit(fmt.Sprintf("Value '%s' is not a valid value for '%s'", value, key), 1)
 	}
-	return saveConfig(key, value, cmd.Bool("global"))
+
+	continuation := func(ctx context.Context, cmd *cli.Command) error {
+		return saveConfig(key, value, cmd.Bool("global"))
+	}
+	if cmd.Bool("global") {
+		return userroles.AsRoot(continuation)(ctx, cmd)
+	} else {
+		return continuation(ctx, cmd)
+	}
 }
 
 func configGet(ctx context.Context, cmd *cli.Command) error {
