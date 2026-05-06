@@ -6,7 +6,7 @@
                     <li>
                         <a
                             href="{{ .URL }}"
-                            class="block rounded-2xl border px-4 py-3 transition-colors {{ if .IsSelected }}border-alces-blue bg-white text-alces-blue-dark{{ else }}border-transparent hover:border-alces-blue-light hover:bg-white{{ end }}"
+                            class="block rounded-full border px-4 py-2 transition-colors {{ if .IsSelected }}border-alces-blue bg-white text-alces-blue-dark{{ else }}border-transparent hover:border-alces-blue-light hover:bg-white{{ end }}"
                             data-testid="howto-guide-link--{{ .Index }}"
                             {{ if .IsSelected }}aria-current="page"{{ end }}
                         >{{ .Title }}</a>
@@ -20,25 +20,28 @@
 {{ end }}
 
 {{ define "content" }}
-<div class="max-w-[60rem] mx-auto">
-    <div class="flex gap-x-4 items-center justify-center w-full mt-12 mb-12">
-        <img src="/assets/images/howto.png" class="size-16" alt="">
+<div class="w-[min(60rem,100%)] mx-auto">
+    <div class="flex gap-x-4 items-center justify-center w-full mt-6 mb-12 lg:mt-12 px-2 lg:px-8">
+        <img src="/assets/images/howto.png" class="size-20" alt="">
         <div>
             <h1 class="mb-1">Flight Howto</h1>
             <p class="m-0">Learn about the Flight User Suite and using your cluster</p>
         </div>
     </div>
 
-    <main class="bg-white p-6 lg:p-8 pt-0 lg:pt-0" data-testid="howto-main-pane">
+    <main class="bg-white p-2 lg:p-8 pt-0 lg:pt-8" data-testid="howto-main-pane">
         {{ if .ShowEmptyState }}
-            <div class="max-w-2xl">
-                <h2 class="mb-3">No howto guides available</h2>
-                <p class="m-0 text-slate-600" data-testid="howto-empty-state">Return later or contact your administrator for more information.</p>
-            </div>
+            <p class="m-0 text-xl" data-testid="howto-empty-state">
+                There are no user guides currently available. Return later or contact your administrator for more information.
+            </p>
         {{ else if .ShowSelectState }}
-            <div class="max-w-2xl">
-                <h2 class="mb-3">Select a howto guide</h2>
-                <p class="m-0 text-slate-600" data-testid="howto-selection-prompt">Choose a guide from the sidebar to view its contents.</p>
+            <div>
+                <h1 class="mb-6" data-testid="howto-welcome">Welcome to Flight Howto!</h1>
+                <p class="mb-0">
+                    Begin learning how to get the most out of Flight User Suite and your cluster
+                    by selecting a user guide
+                    <span class="lg:hidden">above</span><span class="max-lg:hidden">from the sidebar</span>.
+                </p>
             </div>
         {{ else }}
             <article class="markdown" data-testid="howto-guide-content">

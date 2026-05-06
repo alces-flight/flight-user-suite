@@ -75,8 +75,8 @@ JSON
 		testutil.HasText("Cluster Basics"),
 		testutil.HasNoAttr("aria-current"),
 	)
-	testutil.AssertSelection(t, body, `[data-testid="howto-selection-prompt"]`,
-		testutil.HasText("Choose a guide from the sidebar to view its contents."),
+	testutil.AssertSelection(t, body, `[data-testid="howto-welcome"]`,
+		testutil.HasText("Welcome to Flight Howto!"),
 	)
 }
 
@@ -97,7 +97,7 @@ JSON
 		testutil.HasText("No guides are currently available."),
 	)
 	testutil.AssertSelection(t, body, `[data-testid="howto-empty-state"]`,
-		testutil.HasText("Return later or contact your administrator for more information."),
+		testutil.HasText("There are no user guides currently available. Return later or contact your administrator for more information."),
 	)
 }
 

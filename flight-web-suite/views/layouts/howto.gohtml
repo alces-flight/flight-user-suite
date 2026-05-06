@@ -41,8 +41,13 @@
         {{ end }}
     </div>
     <div class="grow min-h-[calc(100vh-3.6rem)] overflow-y-auto">
-        <div class="relative min-h-full lg:grid lg:grid-cols-[16rem_minmax(0,_1fr)] bg-linear-to-b from-alces-blue-light to-white">
-            <div class="mx-1 mt-0 mb-4 lg:mx-2 lg:my-8">
+        <div class="
+            relative min-h-full
+            flex flex-col
+            lg:grid lg:grid-cols-[16rem_minmax(0,_1fr)]
+            bg-linear-to-b from-alces-blue-light to-white
+        ">
+            <div class="mt-0 py-3 mx-2 lg:my-8">
                 {{ block "sidebar" . }}{{ end }}
             </div>
             <div class="h-full flex flex-col grow">
