@@ -6,6 +6,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/table"
 	"github.com/concertim/flight-user-suite/flight/cliui"
+	"github.com/concertim/flight-user-suite/flight/userroles"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/urfave/cli/v3"
 )
@@ -15,9 +16,9 @@ func statusCommand() *cli.Command {
 		Name:        "status",
 		Usage:       "Print the status of the Flight Web Suite service",
 		Description: wordwrap.String("Prints the status of the Flight Web Suite service, including whether it is running and if so the address it is listening on.", maxTextWidth),
-		Action: func(ctx context.Context, cmd *cli.Command) error {
+		Action: userroles.AsRoot(func(ctx context.Context, cmd *cli.Command) error {
 			return statusTable()
-		},
+		}),
 	}
 }
 
