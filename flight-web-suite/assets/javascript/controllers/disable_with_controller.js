@@ -4,22 +4,28 @@ export default class extends Controller {
   connect() {
     const button = this.element
     if (button.dataset.disableWith) {
-      button.addEventListener('click', () => {
 
-        if (!button.form || button.form.checkValidity()) {
-          // Delay actually disabling the button until the form submission has
-          // gone through.
-          setTimeout(
-            () => { button.disabled = true },
-            1
-          )
+      if (button.form) {
+        button.form.addEventListener('submit', () => this.disable(button))
+      }
+      else {
+        button.addEventListener('click', () => this.disable(button))
+      }
 
-          button.innerText = button.dataset.disableWith
-          if (button.dataset.disableWithClass) {
-            button.classList.add(button.dataset.disableWithClass)
-          }
-        }
-      })
+    }
+  }
+
+  disable(button) {
+    // Delay actually disabling the button until the form submission has
+    // gone through.
+    setTimeout(
+      () => { button.disabled = true },
+      1
+    )
+
+    button.innerText = button.dataset.disableWith
+    if (button.dataset.disableWithClass) {
+      button.classList.add(button.dataset.disableWithClass)
     }
   }
 }
