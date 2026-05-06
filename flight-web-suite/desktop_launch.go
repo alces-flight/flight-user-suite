@@ -155,8 +155,8 @@ func renderDesktopLaunchPage(c *echo.Context, status int, desktopTypes []*deskto
 	coreDependenciesOK := false
 	missingDependencies := []string{}
 	if doctorReport != nil {
-	    coreDependenciesOK = doctorReport.Core.OK
-	    for _, dep := range doctorReport.Core.Checks {
+	    coreDependenciesOK = doctorReport.OK
+	    for _, dep := range doctorReport.Checks {
 	        if dep.Found != true {
 	            missingDependencies = append(missingDependencies, dep.Description)
 	        }

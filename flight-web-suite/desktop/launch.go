@@ -77,18 +77,6 @@ func AvailCommand(ctx context.Context, env configenv.Env, username string) ([]*T
 }
 
 type DoctorReport struct {
-	OK    bool         `json:"ok"`
-	Core  DepGroup     `json:"core"`
-	Types []TypeReport `json:"types"`
-}
-
-type TypeReport struct {
-	ID       string   `json:"id"`
-	Required DepGroup `json:"required"`
-	Optional DepGroup `json:"optional"`
-}
-
-type DepGroup struct {
 	OK     bool              `json:"ok"`
 	Checks []CheckResultJSON `json:"checks"`
 }

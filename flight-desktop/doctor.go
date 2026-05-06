@@ -98,18 +98,6 @@ func doctorCommand() *cli.Command {
 }
 
 type doctorReport struct {
-	OK    bool                 `json:"ok"`
-	Core  depGroup             `json:"core"`
-	Types []typeReport         `json:"types"`
-}
-
-type typeReport struct {
-	ID       string   `json:"id"`
-	Required depGroup `json:"required"`
-	Optional depGroup `json:"optional"`
-}
-
-type depGroup struct {
 	OK     bool              `json:"ok"`
 	Checks []checkResultJSON `json:"checks"`
 }
@@ -153,47 +141,11 @@ func toJSONResults(results []checkResult) []checkResultJSON {
 }
 
 func buildDoctorReport(ctx context.Context) (doctorReport, error) {
-	report := doctorReport{OK: true}
-
+	report := doctorReport{}
 	coreRequired := requiredDependencies(config.Dependencies)
 	coreResults, coreOK := runDoctor(coreRequired)
-	report.Core = depGroup{
-		OK:     coreOK,
-		Checks: toJSONResults(coreResults),
-	}
-	report.OK = report.OK && coreOK
-
-	types, err := loadAllTypes(false)
-	if err != nil {
-		return report, err
-	}
-	for _, typ := range types {
-		tr := typeReport{ID: typ.ID}
-		if err := typ.loadDependencies(); err != nil {
-			tr.Required = depGroup{
-				OK: false,
-				Checks: []checkResultJSON{ {Error: err.Error()} },
-			}
-			report.OK = false
-			report.Types = append(report.Types, tr)
-			continue
-		}
-		reqDeps := requiredDependencies(typ.dependencies)
-		reqResults, reqOK := runDoctor(reqDeps)
-		tr.Required = depGroup{
-			OK:     reqOK,
-			Checks: toJSONResults(reqResults),
-		}
-		optDeps := optionalDependencies(typ.dependencies)
-		optResults, optOK := runDoctor(optDeps)
-		tr.Optional = depGroup{
-			OK:     optOK,
-			Checks: toJSONResults(optResults),
-		}
-
-		report.OK = report.OK && reqOK
-		report.Types = append(report.Types, tr)
-	}
+	report.OK = coreOK
+	report.Checks = toJSONResults(coreResults)
 	return report, nil
 }
 
