@@ -76,15 +76,22 @@ cat <<'JSON'
     "id": "xterm",
     "summary": "Minimal terminal desktop.",
     "url": "https://example.invalid/xterm",
-		"available": true
+	"available": true
   },
   {
     "id": "gnome",
     "summary": "GNOME desktop.",
     "url": "https://example.invalid/gnome",
-		"available": true
+	"available": true
   }
 ]
+JSON
+fi
+if [ "$1" = "doctor" ]; then
+cat << 'JSON'
+{
+    "OK": true
+}
 JSON
 fi
 `))
@@ -118,8 +125,17 @@ func TestNewDesktopSessionInvokesAvailWithJSONFormat(t *testing.T) {
 	currentUser := currentUserForTest(t)
 	argsFile := filepath.Join(t.TempDir(), "desktop-args.txt")
 	setFlightRootForDesktopTest(t, desktopToolFixture(t, 0o755, `#!/bin/sh
-printf '%s\n' "$@" > "`+argsFile+`"
-echo '[]'
+if [ "$1" = "avail" ]; then
+    printf '%s\n' "$@" > "`+argsFile+`"
+    echo '[]'
+fi
+if [ "$1" = "doctor" ]; then
+cat << 'JSON'
+{
+    "OK": true
+}
+JSON
+fi
 `))
 
 	testutil.RenderPage(t, newApp(), http.MethodGet, "/desktop/new", nil, http.StatusOK, testutil.WithSessionCookie(currentUser.Username, config.Session.Secret))
