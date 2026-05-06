@@ -171,7 +171,7 @@ h2 {
   }
 
   code {
-    @apply rounded bg-slate-100 px-1 py-0.5 text-sm text-fuchsia-700;
+    @apply rounded-lg bg-sky-100 px-1.5 pb-0.5 pt-1 text-sm text-slate-600;
   }
 
   pre {
