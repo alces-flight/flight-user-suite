@@ -17,12 +17,13 @@ COMMANDS:
      doctor  System health check
 
    Sessions:
-     start  Start an interactive desktop session
-     list   List interactive desktop sessions
-     show   Show information about a desktop session
-     logs   Show desktop session logs
-     kill   Terminate an interactive desktop session
-     clean  Clean up one or more exited or broken desktop sessions
+     start   Start an interactive desktop session
+     list    List interactive desktop sessions
+     show    Show information about a desktop session
+     logs    Show desktop session logs
+     webify  Start web access support for an active desktop session
+     kill    Terminate an interactive desktop session
+     clean   Clean up one or more exited or broken desktop sessions
 
 GLOBAL OPTIONS:
    --log-level LEVEL  set the log LEVEL (debug, info, warn, error, fatal). Default: warn

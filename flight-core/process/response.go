@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"syscall"
 )
 
 type Response struct {
@@ -34,4 +35,13 @@ func (response *Response) WriteToParentFD() error {
 		responseFile.Close()
 	}
 	return nil
+}
+
+func IsRunning(pid int) bool {
+	process, err := os.FindProcess(pid)
+	if err != nil {
+		return false
+	}
+	err = process.Signal(syscall.Signal(0))
+	return err == nil
 }

@@ -20,6 +20,7 @@ import (
 
 	"charm.land/log/v2"
 	"github.com/adrg/xdg"
+	"github.com/concertim/flight-user-suite/flight/process"
 	"gopkg.in/yaml.v3"
 )
 
@@ -124,21 +125,10 @@ func (s *Session) Start(ctx context.Context) error {
 		s.cleanup()
 		return fmt.Errorf("staring VNC server: %w", err)
 	}
-	if err := s.startWebsockify(ctx); err != nil {
-		// Don't return an error here. The session will still be available over
-		// a standard VNC viewer.
-		log.Debug("Failed to start websockify process", "err", err)
-	}
-	if err := s.startGrabber(ctx); err != nil {
-		// Don't return an error here. This session just won't have screenshot
-		// capture enabled.
-		log.Debug("Failed to start screenshot grabber script", "err", err)
-	}
-	if err := s.startCleaner(ctx); err != nil {
-		// Don't return an error here, as we still want to save the session and
-		// recovering from this error is possible by manually running the clean
-		// command.
-		log.Debug("Failed to start cleaner script", "err", err)
+	if err := s.startWebAccessSupport(ctx); err != nil {
+		// Don't return. The session will still be available over a standard
+		// VNC viewer, and the user can run `webify` to recover.
+		log.Debug("Starting web support services", "err", err)
 	}
 	s.State = Active
 	s.IP = s.PrimaryIP().String()
@@ -147,6 +137,48 @@ func (s *Session) Start(ctx context.Context) error {
 		return fmt.Errorf("saving session: %w", err)
 	}
 	return nil
+}
+
+func (s *Session) Webify(ctx context.Context) error {
+	err := s.startWebAccessSupport(ctx)
+	if saveErr := s.Save(); saveErr != nil {
+		return fmt.Errorf("saving session: %w", saveErr)
+	}
+	if err != nil {
+		return fmt.Errorf("starting web access support: %w", err)
+	}
+	return nil
+}
+
+func (s *Session) startWebAccessSupport(ctx context.Context) error {
+	var websockifyErr error
+	var newProcessStarted bool
+
+	if s.WebsocketPid == 0 || !process.IsRunning(s.WebsocketPid) {
+		if err := s.startWebsockify(ctx); err != nil {
+			websockifyErr = fmt.Errorf("starting websockify process: %w", err)
+		} else {
+			newProcessStarted = true
+		}
+	}
+	if s.GrabberPid == 0 || !process.IsRunning(s.GrabberPid) {
+		if err := s.startGrabber(ctx); err != nil {
+			// Don't return an error here. This session just won't have screenshot
+			// capture enabled. It is still accessible in the browser with
+			// websocket support alone.
+			log.Debug("Failed to start screenshot grabber script", "err", err)
+		} else {
+			newProcessStarted = true
+		}
+	}
+	if newProcessStarted {
+		if err := s.startCleaner(ctx); err != nil {
+			// Don't return an error here. Recovering from this error is possible
+			// by manually running the `clean` command.
+			log.Debug("Failed to start cleaner script", "err", err)
+		}
+	}
+	return websockifyErr
 }
 
 func (s *Session) cleanup() {
