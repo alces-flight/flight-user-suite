@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"os/user"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -19,6 +18,7 @@ import (
 	"charm.land/log/v2"
 	"github.com/concertim/flight-user-suite/flight/cliui"
 	"github.com/concertim/flight-user-suite/flight/configenv"
+	"github.com/concertim/flight-user-suite/flight/userroles"
 	"github.com/urfave/cli/v3"
 	"golang.org/x/term"
 )
@@ -120,11 +120,7 @@ func main() {
 
 func list(ctx context.Context, cmd *cli.Command) error {
 	wantsJSON := wantsJSONOutput(cmd)
-	user, err := user.Current()
-	if err != nil {
-		log.Warn("Unable to determine user: including admin guides", "err", err)
-	}
-	howtos, err := loadHowtos(howtoDir, user)
+	howtos, err := loadHowtos(howtoDir)
 	if err != nil {
 		if wantsJSON {
 			return writeListHowtosJSONError(err)
@@ -139,11 +135,7 @@ func list(ctx context.Context, cmd *cli.Command) error {
 
 func show(ctx context.Context, cmd *cli.Command) error {
 	wantsJSON := wantsJSONOutput(cmd)
-	user, err := user.Current()
-	if err != nil {
-		log.Warn("Unable to determine user: including admin guides", "err", err)
-	}
-	howtos, err := loadHowtos(howtoDir, user)
+	howtos, err := loadHowtos(howtoDir)
 	if err != nil {
 		err = fmt.Errorf("collecting guide files: %w", err)
 		if wantsJSON {
@@ -235,7 +227,7 @@ func wantsJSONOutput(cmd *cli.Command) bool {
 	return format == "json"
 }
 
-func loadHowtos(dirPath string, user *user.User) ([]*Howto, error) {
+func loadHowtos(dirPath string) ([]*Howto, error) {
 	entries, err := os.ReadDir(dirPath)
 	if err != nil {
 		return nil, fmt.Errorf("reading directory: %w", err)
@@ -246,7 +238,7 @@ func loadHowtos(dirPath string, user *user.User) ([]*Howto, error) {
 		filePath := filepath.Join(dirPath, entry.Name())
 
 		if entry.IsDir() {
-			subFiles, err := loadHowtos(filePath, user)
+			subFiles, err := loadHowtos(filePath)
 			if err != nil {
 				return nil, err
 			}
@@ -260,7 +252,7 @@ func loadHowtos(dirPath string, user *user.User) ([]*Howto, error) {
 				return nil, err
 			}
 			howto := &Howto{Path: relPath}
-			if (user == nil || user.Uid == "0") || !howto.IsAdminOnly() {
+			if userroles.IsAdmin() || !howto.IsAdminOnly() {
 				howtos = append(howtos, howto)
 			}
 		}

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/user"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -15,6 +14,7 @@ import (
 	"github.com/concertim/flight-user-suite/flight/cliui"
 	"github.com/concertim/flight-user-suite/flight/configenv"
 	"github.com/concertim/flight-user-suite/flight/toolset"
+	"github.com/concertim/flight-user-suite/flight/userroles"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/urfave/cli/v3"
 	"golang.org/x/term"
@@ -55,11 +55,6 @@ func init() {
 }
 
 func main() {
-	user, err := user.Current()
-	if err != nil {
-		log.Warn("Unable to determine user: not adding admin commands", "err", err)
-	}
-
 	cli.VersionPrinter = func(cmd *cli.Command) {
 		fmt.Printf("version=%s revision=%s date=%s\n", version, commit, date)
 	}
@@ -71,7 +66,7 @@ func main() {
 		Copyright:              "(c) 2026 Stephen F Norledge & Alces Software Ltd & Concertim Ltd.",
 		UseShortOptionHandling: true,
 		HideHelpCommand:        true,
-		Description:            rootDescription(user, maxTextWidth),
+		Description:            rootDescription(maxTextWidth),
 		EnableShellCompletion:  true,
 		ShellComplete: func(ctx context.Context, cmd *cli.Command) {
 			cli.DefaultCompleteWithFlags(ctx, cmd)
@@ -128,7 +123,7 @@ func main() {
 			configCommand(),
 		},
 	}
-	if user != nil && user.Uid == "0" {
+	if userroles.IsAdmin() {
 		addAdminCommands(cmd, maxTextWidth)
 	}
 	addToolProxyCommands(cmd)
@@ -162,9 +157,9 @@ func main() {
 	}
 }
 
-func rootDescription(user *user.User, maxTextWidth int) string {
+func rootDescription(maxTextWidth int) string {
 	var desc string
-	if user != nil && user.Uid == "0" {
+	if userroles.IsAdmin() {
 		desc = fmt.Sprintf(
 			"Manage the Flight User Suite tools and hooks and access enabled tools.\n\nTools can be managed with the '%s tools' command and any enabled tools can be accessed as '%s <tool>'. A list of enabled tools can be found with '%s tools list --enabled'.\n\nHooks can be managed with the '%s hooks' command. Enabled hooks are executed either when a login shell is started or the Flight environment is activated.  See '%s hooks --help' for more details.",
 			progName, progName, progName, progName, progName,
@@ -231,7 +226,7 @@ func addAdminCommands(cmd *cli.Command, maxTextWidth int) {
 							}
 						}
 					},
-					Action: enableTool,
+					Action: userroles.AsRoot(enableTool),
 				},
 				{
 					Name:  "disable",
@@ -259,7 +254,7 @@ func addAdminCommands(cmd *cli.Command, maxTextWidth int) {
 							}
 						}
 					},
-					Action: disableTool,
+					Action: userroles.AsRoot(disableTool),
 				},
 			},
 		},
@@ -338,7 +333,7 @@ Valid events are %s.`,
 							}
 						}
 					},
-					Action: enableHook,
+					Action: userroles.AsRoot(enableHook),
 				},
 				{
 					Name:  "disable",
@@ -371,7 +366,7 @@ Valid events are %s.`,
 							}
 						}
 					},
-					Action: disableHook,
+					Action: userroles.AsRoot(disableHook),
 				},
 			},
 		},
