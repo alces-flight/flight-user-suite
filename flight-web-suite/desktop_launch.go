@@ -30,8 +30,12 @@ type desktopLaunchFormData struct {
 }
 
 var desktopGeometryOptions = []desktopGeometryOption{
+	{Value: "1280x720", Label: "1280 x 720"},
 	{Value: "1024x768", Label: "1024 x 768 (default)", Default: true},
+	{Value: "1600x900", Label: "1600 x 900"},
 	{Value: "1280x1024", Label: "1280 x 1024"},
+	{Value: "1920x1080", Label: "1920 x 1080"},
+	{Value: "1600x1200", Label: "1600 x 1200"},
 }
 
 func newDesktopSessionHandler(c *echo.Context) error {
