@@ -22,6 +22,9 @@ export default class extends Controller {
   }
 
   srcValueChanged() {
+    // Jump through hoops to get a, hopefully cached, image displayed ASAP and
+    // then replace it with an updated image.  Using a cached image (instead of
+    // whitespace) results in less visual "flicker".
     const initial = this.element.src == null || this.element.src == ""
     if (initial && this.srcValue != null) {
       this.element.src = this.srcValue
