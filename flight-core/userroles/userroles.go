@@ -2,9 +2,11 @@ package userroles
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"slices"
 
 	"charm.land/log/v2"
@@ -38,10 +40,31 @@ func AsRoot(wrapped cli.ActionFunc) cli.ActionFunc {
 			return fmt.Errorf("command '%s' not available to non-admin users", cmd.Name)
 		}
 
+		// Jump through hoops to re-exec with an absolute path. Handle the case
+		// where the binary is ran as `./opt/flight/bin/flight ...` as that is
+		// common in development.
+		var path string
+		if filepath.IsAbs(os.Args[0]) {
+			path = os.Args[0]
+		} else {
+			var err error
+			path, err = exec.LookPath(os.Args[0])
+			if errors.Is(err, exec.ErrDot) {
+				dir, err := os.Getwd()
+				if err != nil {
+					return fmt.Errorf("unexpected error trying to run as root: %w", err)
+				}
+				path = filepath.Join(dir, path)
+			} else if err != nil {
+				// This should not have happened.
+				return fmt.Errorf("unexpected error trying to run as root: %w", err)
+			}
+		}
+
 		// Let's re-exec with sudo, preserving just enough of the environment
 		// to function.
-		args := []string{"--preserve-env=FLIGHT_ROOT,FLIGHT_STATE_ROOT"}
-		args = append(args, os.Args...)
+		args := []string{"--preserve-env=FLIGHT_ROOT,FLIGHT_STATE_ROOT", path}
+		args = append(args, os.Args[1:len(os.Args)]...)
 
 		exe := exec.CommandContext(ctx, "sudo", args...)
 		exe.Env = slices.Clone(os.Environ())
