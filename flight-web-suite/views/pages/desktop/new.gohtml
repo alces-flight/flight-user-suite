@@ -156,6 +156,7 @@
                         name="custom_x"
                         placeholder="Width"
                         type="number"
+                        value="{{ .Form.CustomX }}"
                     />
                         x
                     <input
@@ -165,6 +166,7 @@
                         name="custom_y"
                         placeholder="Height"
                         type="number"
+                        value="{{ .Form.CustomY }}"
                     />
                 </div>
                 {{if .Form.Errors.Geometry}}
