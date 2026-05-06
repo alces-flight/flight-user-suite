@@ -94,12 +94,10 @@ type DepGroup struct {
 }
 
 type CheckResultJSON struct {
-	Type        string   `json:"type"`
-	Paths       []string `json:"paths"`
 	Description string   `json:"description"`
+	Paths       []string `json:"paths"`
 	Optional    bool     `json:"optional"`
 	Found       bool     `json:"found"`
-	FoundAt     string   `json:"found_at"`
 	Error       string   `json:"error"`
 }
 

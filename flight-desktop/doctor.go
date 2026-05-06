@@ -115,15 +115,18 @@ type depGroup struct {
 }
 
 type checkResultJSON struct {
-	Type           string   `json:"type"`
-	Paths          []string `json:"paths"`
 	Description    string   `json:"description,omitempty"`
+	Paths          []string `json:"paths"`
 	Optional       bool     `json:"optional"`
 	Found          bool     `json:"found"`
-	FoundAt        string   `json:"found_at,omitempty"`
-	SuccessMessage string   `json:"success_message,omitempty"`
-	FailureMessage string   `json:"failure_message,omitempty"`
 	Error          string   `json:"error,omitempty"`
+}
+
+type checkResult struct {
+	dependency dependency
+	found      bool
+	foundAt    string
+	err        error
 }
 
 func writeChecksJSON(report doctorReport) error {
@@ -133,82 +136,56 @@ func writeChecksJSON(report doctorReport) error {
 }
 
 func toJSONResults(results []checkResult) []checkResultJSON {
-	out := make([]checkResultJSON, 0, len(results))
-
+	jsonResults := make([]checkResultJSON, 0, len(results))
 	for _, r := range results {
 		item := checkResultJSON{
-			Type:           r.dependency.Type,
-			Paths:          r.dependency.Paths,
 			Description:    r.dependency.Description,
+			Paths:          r.dependency.Paths,
 			Optional:       r.dependency.Optional,
 			Found:          r.found,
-			FoundAt:        r.foundAt,
-			SuccessMessage: r.dependency.SuccessMessage,
-			FailureMessage: r.dependency.FailureMessage,
 		}
-
 		if r.err != nil {
 			item.Error = r.err.Error()
 		}
-
-		out = append(out, item)
+		jsonResults = append(jsonResults, item)
 	}
-
-	return out
+	return jsonResults
 }
 
 func buildDoctorReport(ctx context.Context) (doctorReport, error) {
 	report := doctorReport{OK: true}
 
-	// --- Core required deps
 	coreRequired := requiredDependencies(config.Dependencies)
 	coreResults, coreOK := runDoctor(coreRequired)
-
 	report.Core = depGroup{
 		OK:     coreOK,
 		Checks: toJSONResults(coreResults),
 	}
-
 	report.OK = report.OK && coreOK
 
-	// --- Load desktop types
 	types, err := loadAllTypes(false)
 	if err != nil {
 		return report, err
 	}
-
 	for _, typ := range types {
 		tr := typeReport{ID: typ.ID}
-
 		if err := typ.loadDependencies(); err != nil {
-			// treat as failed type
 			tr.Required = depGroup{
 				OK: false,
-				Checks: []checkResultJSON{
-					{
-						Type:  typ.ID,
-						Error: err.Error(),
-					},
-				},
+				Checks: []checkResultJSON{ {Error: err.Error()} },
 			}
 			report.OK = false
 			report.Types = append(report.Types, tr)
 			continue
 		}
-
-		// required
 		reqDeps := requiredDependencies(typ.dependencies)
 		reqResults, reqOK := runDoctor(reqDeps)
-
 		tr.Required = depGroup{
 			OK:     reqOK,
 			Checks: toJSONResults(reqResults),
 		}
-
-		// optional
 		optDeps := optionalDependencies(typ.dependencies)
 		optResults, optOK := runDoctor(optDeps)
-
 		tr.Optional = depGroup{
 			OK:     optOK,
 			Checks: toJSONResults(optResults),
@@ -217,7 +194,6 @@ func buildDoctorReport(ctx context.Context) (doctorReport, error) {
 		report.OK = report.OK && reqOK
 		report.Types = append(report.Types, tr)
 	}
-
 	return report, nil
 }
 
@@ -266,13 +242,6 @@ func checkOptionalDeps(ctx context.Context, spinnerText string, doneText string,
 		p.Fail(failText)
 	}
 	printCheckResults(checkResults)
-}
-
-type checkResult struct {
-	dependency dependency
-	found      bool
-	foundAt    string
-	err        error
 }
 
 func runDoctor(dependencies []dependency) ([]checkResult, bool) {
