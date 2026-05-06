@@ -143,7 +143,7 @@ h2 {
   }
 
   h3 {
-    @apply text-xl mt-6 mb-3;
+    @apply text-xl mt-8 mb-3;
   }
 
   p, ul, ol, blockquote, pre {
@@ -160,6 +160,10 @@ h2 {
 
   ol {
     @apply list-decimal;
+  }
+
+  li {
+    @apply marker:text-alces-blue;
   }
 
   li + li {
