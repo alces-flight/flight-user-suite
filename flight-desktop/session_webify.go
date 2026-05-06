@@ -14,7 +14,7 @@ func webifySessionCommand() *cli.Command {
 	return &cli.Command{
 		Name:        "webify",
 		Usage:       "Start web access support for an active desktop session",
-		Description: wordwrap.String("Start required and optional web support programs for an active interactive desktop session.", maxTextWidth),
+		Description: wordwrap.String("Start required and optional web support programs for an active interactive desktop session. Can be used to add web support to sessions that were started before web dependencies were installed.", maxTextWidth),
 		Category:    "Sessions",
 		// Flags:       []cli.Flag{formatFlag},
 		Arguments: []cli.Argument{
