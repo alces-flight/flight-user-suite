@@ -10,6 +10,11 @@ export default class extends Controller {
 
   geometrySelectTargetConnected(elem) {
     elem.addEventListener('change', this.updateVisibility);
+    this.updateVisibility()
+  }
+
+  customFieldsTargetConnected() {
+    this.updateVisibility()
   }
 
   geometrySelectTargetDisconnected(elem) {
@@ -17,7 +22,9 @@ export default class extends Controller {
   }
 
   updateVisibility() {
-    this.showCustomValue = this.geometrySelectTarget.value == "custom";
+    if (this.hasGeometrySelectTarget) {
+      this.showCustomValue = this.geometrySelectTarget.value == "custom";
+    }
   }
 
   showCustomValueChanged(newValue) {
