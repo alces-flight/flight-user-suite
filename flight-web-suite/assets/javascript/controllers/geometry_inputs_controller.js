@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = [ "geometrySelect", "customFields" ]
+  static targets = [ "geometrySelect", "customFields", "input" ]
   static values = { showCustom: { type: Boolean, default: false } }
 
   initialize() {
@@ -26,6 +26,9 @@ export default class extends Controller {
     }
     else {
       this.customFieldsTarget.classList.add('hidden')
+    }
+    for (const ip of this.inputTargets) {
+      ip.required = newValue
     }
   }
 }
