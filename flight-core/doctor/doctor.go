@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	TypeExecutable = "exe"
-	TypeDirectory  = "dir"
+	TypeExecutable   = "exe"
+	TypeDirectory    = "dir"
+	TypePythonModule = "python_module"
 )
 
 var SpinnerDelay = 1 * time.Second
@@ -116,6 +117,8 @@ func Run(dependencies []Dependency) ([]CheckResult, bool) {
 			result = checkExeAvailable(dep)
 		case TypeDirectory:
 			result = checkDirNonEmpty(dep)
+		case TypePythonModule:
+			result = checkPythonModule(dep)
 		default:
 			result = CheckResult{
 				Dependency: dep,
@@ -206,5 +209,34 @@ func checkDirNonEmpty(dep Dependency) CheckResult {
 	return CheckResult{
 		Dependency: dep,
 		Err:        errs,
+	}
+}
+
+func checkPythonModule(dep Dependency) CheckResult {
+	exeResult := checkExeAvailable(Dependency{Paths: dep.Paths})
+	if exeResult.Err != nil {
+		return CheckResult{
+			Dependency: dep,
+			Err:        exeResult.Err,
+		}
+	}
+
+	cmd := exec.Command(exeResult.FoundAt, "-c", fmt.Sprintf("import %s", dep.Module))
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		msg := strings.TrimSpace(string(output))
+		if msg == "" {
+			msg = err.Error()
+		}
+		return CheckResult{
+			Dependency: dep,
+			Err:        errors.New(msg),
+		}
+	}
+
+	return CheckResult{
+		Dependency: dep,
+		Found:      true,
+		FoundAt:    fmt.Sprintf("%s imports %s", exeResult.FoundAt, dep.Module),
 	}
 }
