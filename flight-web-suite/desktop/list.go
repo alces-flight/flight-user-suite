@@ -20,6 +20,7 @@ type Session struct {
 	Password       string    `json:"password,omitempty"`
 	CreatedAt      time.Time `json:"created_at"`
 	ScreenshotPath string    `json:"screenshot_path"`
+	IsWebified     bool      `json:"is_webified"`
 }
 
 func ListCommand(ctx context.Context, env configenv.Env, username string) ([]*Session, error) {

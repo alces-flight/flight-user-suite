@@ -29,6 +29,19 @@ cat <<'JSON'
 JSON
   exit 0
 fi
+if [ "$1" = "show" ]; then
+cat <<'JSON'
+{
+  "success": true,
+  "session": {
+	  "name": "named-session",
+	  "state": "active",
+	  "is_webified": true
+  }
+}
+JSON
+  exit 0
+fi
 cat <<'JSON'
 {
   "success": true,

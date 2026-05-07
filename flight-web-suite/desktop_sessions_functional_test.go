@@ -29,7 +29,8 @@ cat <<'JSON'
     "desktop_type": "Gnome",
     "state": "active",
     "host": "host-a",
-    "created_at": "2026-04-20T10:00:00Z"
+    "created_at": "2026-04-20T10:00:00Z",
+		"is_webified": true
   },
   {
     "name": "beta",
