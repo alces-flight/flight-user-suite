@@ -69,7 +69,8 @@ made available over public Internet).
 `nginx` is a suitable reverse proxy, for which an example configuration is
 given below. You will need to ensure the values of `server_name`,
 `ssl_certificate` and `ssl_certificate_key` are correct for your environment,
-and that the value of `proxy_pass` points to the correct Flight Web Suite URL.
+and that the value of `proxy_pass` (both occurrences) points to the correct
+Flight Web Suite URL.
 
 ```text
 # /etc/nginx/conf.d/web-suite.conf
@@ -78,14 +79,30 @@ server {
     server_name login1.cluster.network;
 
     location / {
+      proxy_pass http://localhost:8080;
+      proxy_set_header X-Forwarded-For $remote_addr;
+      proxy_set_header Host $host;
+    }
+
+    location /websockify {
         proxy_pass http://localhost:8080;
         proxy_http_version 1.1;
         proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
+
+        # Wait 24 hours without response before closing connection
+        proxy_read_timeout 86400s;  # == 24 hours
+        proxy_send_timeout 86400s;
     }
     ssl_certificate /etc/nginx/certs/localhost.crt;
     ssl_certificate_key /etc/nginx/certs/localhost.key;
 }
 ```
+
+Per nginx defaults, desktop sessions may disconnect if left idle within 60s of
+inactivity. This will not harm the desktop session as it can be immediately
+reconnected to. The `proxy_read_timeout` and `proxy_send_timeout` lines above
+extend this idle period to 24 hours and can be adjusted to suit your environment
+and requirements.
