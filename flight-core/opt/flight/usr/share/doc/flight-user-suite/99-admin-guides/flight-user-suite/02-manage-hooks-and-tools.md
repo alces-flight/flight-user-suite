@@ -45,6 +45,11 @@ An interface for Flight User Suite documentation. Enabled by default.
 **desktop**
 Create and manage virtual desktop sessions across multiple hosts.
 
+**mfa**
+Manages multi-factor authentication configuration for end users. Additional 
+system integration is required and is outlined in "Admin Guides > Flight MFA"
+as part of `howto` when the tool has been enabled.
+
 ## Configuration
 
 ### Hooks
