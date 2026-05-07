@@ -56,4 +56,9 @@ flight config set OPTION VALUE
 ## Admin Help
 
 If you're the admin of the system you can view administrative documentation by 
-running `flight howto list` in an active flight environment as the `root` user.
+running `flight howto list` in an active flight environment.
+
+Flight User Suite considers a user an admin if they:
+- Are `root`
+- Have passwordless sudo (which includes if sudo is currently passwordless due
+  to having a cached password)
