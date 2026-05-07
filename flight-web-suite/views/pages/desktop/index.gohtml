@@ -78,7 +78,7 @@
                 <dt>State</dt>
                 <dd data-testid="desktop-session-state--{{ .Name }}">
                     {{ .State }}
-                    {{ if not .IsWebified }}
+                    {{ if and (not .IsWebified) (or (eq .State "active") (eq .State "remote")) }}
                         <span title="Run `flight desktop webify {{ .Name }}` on the server to make this session available">
                             (not available in Flight Web Suite)
                         </span>
