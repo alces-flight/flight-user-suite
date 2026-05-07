@@ -21,7 +21,7 @@ func desktopToolPath(env configenv.Env) string {
 	return filepath.Join(env.FlightRoot, "usr", "lib", "flight-core", "flight-desktop")
 }
 
-func BuildCommand(ctx context.Context, toolPath, username string, args ...string) (*exec.Cmd, error) {
+func BuildLocalCommand(ctx context.Context, toolPath, username string, args ...string) (*exec.Cmd, error) {
 	userInfo, err := user.Lookup(username)
 	if err != nil {
 		return nil, fmt.Errorf("looking up user %q: %w", username, err)
@@ -66,8 +66,8 @@ func BuildCommand(ctx context.Context, toolPath, username string, args ...string
 	return cmd, nil
 }
 
-func buildDesktopCommand(ctx context.Context, env configenv.Env, username string, args ...string) (*exec.Cmd, error) {
-	return BuildCommand(ctx, desktopToolPath(env), username, args...)
+func buildLocalDesktopCommand(ctx context.Context, env configenv.Env, username string, args ...string) (*exec.Cmd, error) {
+	return BuildLocalCommand(ctx, desktopToolPath(env), username, args...)
 }
 
 func commandEnv(userInfo *user.User) []string {

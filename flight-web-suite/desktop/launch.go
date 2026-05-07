@@ -51,7 +51,7 @@ type startErrorDocument struct {
 }
 
 func AvailCommand(ctx context.Context, env configenv.Env, username string) ([]*Type, error) {
-	cmd, err := buildDesktopCommand(ctx, env, username, "avail", "--format", "json")
+	cmd, err := buildLocalDesktopCommand(ctx, env, username, "avail", "--format", "json")
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ type CheckResultJSON struct {
 }
 
 func DoctorCommand(ctx context.Context, env configenv.Env, username string) (*DoctorReport, error) {
-	cmd, err := buildDesktopCommand(ctx, env, username, "doctor", "--format", "json")
+	cmd, err := buildLocalDesktopCommand(ctx, env, username, "doctor", "--format", "json")
 	if err != nil {
 		return nil, err
 	}
@@ -112,12 +112,17 @@ func DoctorCommand(ctx context.Context, env configenv.Env, username string) (*Do
 }
 
 func StartCommand(ctx context.Context, env configenv.Env, username string, input StartInput) (StartResponse, error) {
+	// TODO:
+	// * Add support for round robin over remote hosts.
+	// E.g., FWS is installed on infra node. Sessions it starts should be installed on `login1`, `login2`, etc..
+	// * If remote launch is configured into remote host and launch it. Otherwise, run command locally.
+	// * Ensure we use the same host as DoctorCommand. Perhaps a hidden form field.
 	args := []string{"start", input.DesktopType, "--format", "json", "--geometry", input.Geometry}
 	if input.Name != "" {
 		args = append(args, "--name", input.Name)
 	}
 
-	cmd, err := buildDesktopCommand(ctx, env, username, args...)
+	cmd, err := buildLocalDesktopCommand(ctx, env, username, args...)
 	if err != nil {
 		return StartResponse{}, err
 	}

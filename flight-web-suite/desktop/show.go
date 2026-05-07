@@ -1,10 +1,7 @@
 package desktop
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
 
 	"github.com/concertim/flight-user-suite/flight/configenv"
 )
@@ -17,27 +14,16 @@ type showResponse struct {
 }
 
 func ShowCommand(ctx context.Context, env configenv.Env, username, sessionName string) (showResponse, error) {
-	cmd, err := buildDesktopCommand(ctx, env, username, "show", "--format", "json", sessionName)
+	cmd, err := buildLocalDesktopCommand(ctx, env, username, "show", "--format", "json", sessionName)
 	if err != nil {
 		return showResponse{}, err
 	}
-
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	runErr := cmd.Run()
-
-	var response showResponse
-	if decodeErr := json.Unmarshal(stdout.Bytes(), &response); decodeErr == nil {
-		return response, nil
+	response, err := RunLocal[showResponse]("showing desktop session", cmd)
+	if err != nil {
+		return showResponse{}, err
 	}
-
-	if runErr != nil {
-		if stderr.Len() != 0 {
-			return showResponse{}, fmt.Errorf("showing desktop session: %s", stderr.String())
-		}
-		return showResponse{}, fmt.Errorf("showing desktop session: %w", runErr)
-	}
-	return showResponse{}, fmt.Errorf("decoding desktop show response: %s", stdout.String())
+	// TODO:
+	// * If session has websockify pid of 0 and is either active or remote.
+	// Webify it, locally or remotely as appropriate.
+	return response, nil
 }

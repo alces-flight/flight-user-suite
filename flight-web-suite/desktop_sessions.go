@@ -18,8 +18,6 @@ type desktopSessionCard struct {
 	IsWebified           bool
 	StartTimeText        string
 	ActionLabel          string
-	ActionTitle          string
-	ActionEnabled        bool
 	ActionPath           string
 	ActionMethodOverride string
 }
@@ -146,25 +144,16 @@ func buildDesktopSessionCards(sessions []*desktop.Session) []desktopSessionCard 
 	cards := make([]desktopSessionCard, 0, len(sessions))
 	for _, session := range sessions {
 		actionLabel := ""
-		actionTitle := ""
-		actionEnabled := false
 		actionPath := ""
 		actionMethodOverride := ""
 		switch session.State {
-		case "active":
+		case "active", "remote":
 			actionLabel = "Terminate"
-			actionTitle = ""
-			actionEnabled = true
 			actionPath = fmt.Sprintf("/desktop/%s", session.Name)
 			actionMethodOverride = "DELETE"
 		case "broken", "exited":
 			actionLabel = "Remove"
-			actionTitle = ""
-			actionEnabled = true
 			actionPath = fmt.Sprintf("/desktop/%s/clean", session.Name)
-		case "remote":
-			actionLabel = "Terminate"
-			actionTitle = "Termination of remote sessions is not yet implemented."
 		}
 
 		cards = append(cards, desktopSessionCard{
@@ -175,8 +164,6 @@ func buildDesktopSessionCards(sessions []*desktop.Session) []desktopSessionCard 
 			IsWebified:           session.IsWebified,
 			StartTimeText:        session.CreatedAt.Format("Mon 2 Jan 2006 15:04"),
 			ActionLabel:          actionLabel,
-			ActionTitle:          actionTitle,
-			ActionEnabled:        actionEnabled,
 			ActionPath:           actionPath,
 			ActionMethodOverride: actionMethodOverride,
 		})

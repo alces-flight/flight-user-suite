@@ -1,10 +1,9 @@
 package desktop
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/concertim/flight-user-suite/flight/configenv"
 )
@@ -22,30 +21,38 @@ type cleanCommandDocument struct {
 }
 
 func CleanCommand(ctx context.Context, env configenv.Env, username, sessionName string) (cleanResponse, error) {
-	cmd, err := buildDesktopCommand(ctx, env, username, "clean", "--format", "json", "--", sessionName)
+	showResponse, err := ShowCommand(ctx, env, username, sessionName)
 	if err != nil {
 		return cleanResponse{}, err
 	}
-
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	runErr := cmd.Run()
-
-	var response cleanCommandDocument
-	if decodeErr := json.Unmarshal(stdout.Bytes(), &response); decodeErr == nil {
-		if len(response.Results) == 1 {
-			return response.Results[0], nil
-		}
-		return cleanResponse{}, fmt.Errorf("decoding desktop clean response: expected 1 result, got %d", len(response.Results))
+	if showResponse.Reason == "not_found" {
+		// It's already gone.
+		return cleanResponse{Success: true, SessionName: sessionName}, nil
 	}
-
-	if runErr != nil {
-		if stderr.Len() != 0 {
-			return cleanResponse{}, fmt.Errorf("cleaning desktop session: %s", stderr.String())
-		}
-		return cleanResponse{}, fmt.Errorf("cleaning desktop session: %w", runErr)
+	args := []string{"clean", "--format", "json", "--", sessionName}
+	if showResponse.Session.State == "remote" {
+		return remoteClean(env, username, showResponse.Session, args)
 	}
-	return cleanResponse{}, fmt.Errorf("decoding desktop clean response: %s", stdout.String())
+	return localClean(ctx, env, username, args)
+}
+
+func localClean(ctx context.Context, env configenv.Env, username string, args []string) (cleanResponse, error) {
+	cmd, err := buildLocalDesktopCommand(ctx, env, username, args...)
+	if err != nil {
+		return cleanResponse{}, err
+	}
+	response, err := RunLocal[cleanCommandDocument]("cleaning desktop session", cmd)
+	if err != nil {
+		return cleanResponse{}, err
+	}
+	if len(response.Results) == 1 {
+		return response.Results[0], nil
+	}
+	return cleanResponse{}, fmt.Errorf("decoding desktop clean response: expected 1 result, got %d", len(response.Results))
+}
+
+func remoteClean(env configenv.Env, username string, session Session, args []string) (cleanResponse, error) {
+	cmd := append([]string{desktopToolPath(env)}, args...)
+	cmdString := strings.Join(cmd, " ")
+	return runRemoteCommand[cleanResponse]("cleaning desktop session", username, cmdString, session.Host)
 }

@@ -34,26 +34,16 @@
                         id="desktop-session-actions--{{ .Name }}"
                         class="rounded-corners overflow-hidden hidden absolute right-0 top-6 bg-white border border-alces-blue-light shadow-md min-w-32 z-10"
                     >
-                        {{if .ActionEnabled}}
-                            <form action="{{ .ActionPath }}" method="post">
-                                {{if .ActionMethodOverride}}
-                                    <input type="hidden" name="_method" value="{{ .ActionMethodOverride }}">
-                                {{end}}
-                                <button
-                                    class="dropdown-option hover:bg-sky-50"
-                                    type="submit"
-                                    data-testid="desktop-session-action-button--{{ .Name }}"
-                                >{{ .ActionLabel }}</button>
-                            </form>
-                        {{else}}
+                        <form action="{{ .ActionPath }}" method="post">
+                            {{if .ActionMethodOverride}}
+                                <input type="hidden" name="_method" value="{{ .ActionMethodOverride }}">
+                            {{end}}
                             <button
-                                class="dropdown-option cursor-not-allowed text-slate-400"
-                                type="button"
-                                disabled
-                                title="{{ .ActionTitle }}"
+                                class="dropdown-option hover:bg-sky-50"
+                                type="submit"
                                 data-testid="desktop-session-action-button--{{ .Name }}"
                             >{{ .ActionLabel }}</button>
-                        {{end}}
+                        </form>
                     </div>
                 </div>
             </div>

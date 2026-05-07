@@ -24,7 +24,7 @@ type Session struct {
 }
 
 func ListCommand(ctx context.Context, env configenv.Env, username string) ([]*Session, error) {
-	cmd, err := buildDesktopCommand(ctx, env, username, "list", "--format", "json")
+	cmd, err := buildLocalDesktopCommand(ctx, env, username, "list", "--format", "json")
 	if err != nil {
 		return nil, err
 	}

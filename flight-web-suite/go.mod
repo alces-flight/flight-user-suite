@@ -11,6 +11,7 @@ require (
 	github.com/gorilla/sessions v1.4.0
 	github.com/labstack/echo/v5 v5.1.0
 	github.com/yuin/goldmark v1.7.13
+	golang.org/x/crypto v0.49.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -18,6 +19,7 @@ require (
 	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/hashicorp/go-envparse v0.1.0 // indirect
 	golang.org/x/net v0.52.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/text v0.36.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 )

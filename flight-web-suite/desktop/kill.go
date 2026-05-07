@@ -1,10 +1,8 @@
 package desktop
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
+	"strings"
 
 	"github.com/concertim/flight-user-suite/flight/configenv"
 )
@@ -17,27 +15,32 @@ type terminationResponse struct {
 }
 
 func KillCommand(ctx context.Context, env configenv.Env, username, sessionName string) (terminationResponse, error) {
-	cmd, err := buildDesktopCommand(ctx, env, username, "kill", "--format", "json", "--", sessionName)
+	showResponse, err := ShowCommand(ctx, env, username, sessionName)
 	if err != nil {
 		return terminationResponse{}, err
 	}
-
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	runErr := cmd.Run()
-
-	var response terminationResponse
-	if decodeErr := json.Unmarshal(stdout.Bytes(), &response); decodeErr == nil {
-		return response, nil
+	if showResponse.Reason == "not_found" {
+		// It's already gone.
+		return terminationResponse{Success: true, SessionName: sessionName}, nil
 	}
-
-	if runErr != nil {
-		if stderr.Len() != 0 {
-			return terminationResponse{}, fmt.Errorf("terminating desktop session: %s", stderr.String())
-		}
-		return terminationResponse{}, fmt.Errorf("terminating desktop session: %w", runErr)
+	args := []string{"kill", "--format", "json", "--", sessionName}
+	if showResponse.Session.State == "remote" {
+		return remoteKill(env, username, showResponse.Session, args)
 	}
-	return terminationResponse{}, fmt.Errorf("decoding desktop termination response: %s", stdout.String())
+	return localKill(ctx, env, username, args)
+
+}
+
+func localKill(ctx context.Context, env configenv.Env, username string, args []string) (terminationResponse, error) {
+	cmd, err := buildLocalDesktopCommand(ctx, env, username, args...)
+	if err != nil {
+		return terminationResponse{}, err
+	}
+	return RunLocal[terminationResponse]("terminating desktop session", cmd)
+}
+
+func remoteKill(env configenv.Env, username string, session Session, args []string) (terminationResponse, error) {
+	cmd := append([]string{desktopToolPath(env)}, args...)
+	cmdString := strings.Join(cmd, " ")
+	return runRemoteCommand[terminationResponse]("terminating desktop session", username, cmdString, session.Host)
 }

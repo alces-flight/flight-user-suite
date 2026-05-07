@@ -15,7 +15,7 @@ func howtoToolPath(env configenv.Env) string {
 }
 
 func buildHowtoCommand(ctx context.Context, env configenv.Env, username string, args ...string) (*exec.Cmd, error) {
-	cmd, err := desktop.BuildCommand(ctx, howtoToolPath(env), username, args...)
+	cmd, err := desktop.BuildLocalCommand(ctx, howtoToolPath(env), username, args...)
 	if err != nil {
 		return nil, fmt.Errorf("building howto command: %w", err)
 	}
