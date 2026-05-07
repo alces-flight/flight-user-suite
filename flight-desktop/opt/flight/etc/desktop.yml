@@ -42,7 +42,7 @@ dependencies:
       - "/usr/bin/websockify"
 
   - type: exe
-    description: "Screen shot support"
+    description: "ImageMagick - screenshot support"
     optional: true
     failure_message: "Display of screenshots in Flight Web Suite will not be available"
     paths:
