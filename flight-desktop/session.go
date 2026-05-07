@@ -145,7 +145,7 @@ func (s Session) IsWebified() bool {
 		return s.WebsocketPid != 0 && process.IsRunning(s.WebsocketPid)
 	case "remote":
 		// TODO: SSH to the machine its running on and check if its webified.
-		return true
+		return s.WebsocketPid != 0
 	default:
 		return false
 	}
