@@ -15,6 +15,15 @@ Flight Web Suite requires:
 * The [python-pam](https://pypi.org/project/python-pam/) library. Known as
   `python3-pampy` on Ubuntu. Known as `python3-pam` on Rocky 9 available from
   EPEL.
+
+You can verify these prerequisites with:
+
+```bash
+flight web doctor
+```
+
+If the Flight desktop tool is enabled:
+
 * `/usr/bin/websockify` to provide browser access to Flight Desktop sessions
 * Optionally, `/usr/bin/import` from ImageMagick to enable screenshot capture
   for Flight Desktop sessions
@@ -22,7 +31,7 @@ Flight Web Suite requires:
 You can verify these prerequisites with:
 
 ```bash
-flight web doctor
+flight desktop doctor
 ```
 
 ## Configuration
@@ -69,10 +78,6 @@ deployment configuration.
 The output of `flight web start` will include the URL at which Flight Web Suite
 can be accessed. Flight Web Suite uses the PAM `login` module to provide user
 authentication; users can log in with their cluster username and password.
-
-Flight Desktop access through Web Suite additionally depends on
-`/usr/bin/websockify`. If `/usr/bin/import` is also installed, Web Suite can
-capture and display desktop screenshots.
 
 In order to access Flight tools via Web Suite, the CLI counterparts to those
 tools will need to be enabled in the User Suite CLI tool (i.e. with
