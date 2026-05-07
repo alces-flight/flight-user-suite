@@ -139,6 +139,18 @@ func (s *Session) Start(ctx context.Context) error {
 	return nil
 }
 
+func (s Session) IsWebified() bool {
+	switch s.ComputedState() {
+	case "active":
+		return s.WebsocketPid != 0 && process.IsRunning(s.WebsocketPid)
+	case "remote":
+		// TODO: SSH to the machine its running on and check if its webified.
+		return true
+	default:
+		return false
+	}
+}
+
 func (s *Session) Webify(ctx context.Context) error {
 	err := s.startWebAccessSupport(ctx)
 	if saveErr := s.Save(); saveErr != nil {

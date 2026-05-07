@@ -44,6 +44,7 @@ type listedSession struct {
 	State       sessionState `json:"state"`
 	Host        string       `json:"host"`
 	CreatedAt   string       `json:"created_at"`
+	IsWebified  bool         `json:"is_webified"`
 }
 
 func writeSessionsJSON(sessions []*Session) error {
@@ -55,6 +56,7 @@ func writeSessionsJSON(sessions []*Session) error {
 			State:       session.ComputedState(),
 			Host:        session.Metadata.Host,
 			CreatedAt:   session.CreatedAt.Format(time.RFC3339),
+			IsWebified:  session.IsWebified(),
 		})
 	}
 	enc := json.NewEncoder(os.Stdout)

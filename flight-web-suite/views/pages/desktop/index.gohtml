@@ -59,7 +59,11 @@
             </div>
             <a
                 class="mb-4 flex justify-center h-46 overflow-clip"
+                {{ if .IsWebified }}
                 href="/desktop/{{ .Name }}"
+                {{ else }}
+                disabled="disabled"
+                {{ end }}
             >
                 <img
                     class="h-full max-w-fit"
@@ -83,7 +87,7 @@
                 <dt>Started</dt>
                 <dd data-testid="desktop-session-start-time--{{ .Name }}">{{ .StartTimeText }}</dd>
             </dl>
-            {{ if or (eq .State "active") (eq .State "remote") }}
+            {{ if and .IsWebified (or (eq .State "active") (eq .State "remote")) }}
                 <a class="btn btn-outline btn-sm block !mb-0 mt-3 w-full text-center" href="/desktop/{{ .Name }}">View</a>
             {{ end }}
         </div>

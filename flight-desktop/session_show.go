@@ -65,6 +65,7 @@ type shownSession struct {
 	Password       string       `json:"password"`
 	CreatedAt      string       `json:"created_at"`
 	ScreenshotPath string       `json:"screenshot_path"`
+	IsWebified     bool         `json:"is_webified"`
 }
 
 func writeSessionJSON(session *Session, loadErr error) error {
@@ -97,6 +98,7 @@ func writeSessionJSON(session *Session, loadErr error) error {
 		WebsocketPort:  session.GetWebsocketPort(),
 		CreatedAt:      session.CreatedAt.Format(time.RFC3339),
 		ScreenshotPath: session.ScreenshotPath(),
+		IsWebified:     session.IsWebified(),
 	}
 	response := showResponse{
 		Success: true,

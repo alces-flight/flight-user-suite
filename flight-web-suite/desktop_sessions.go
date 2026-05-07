@@ -15,6 +15,7 @@ type desktopSessionCard struct {
 	DesktopType          string
 	State                string
 	Host                 string
+	IsWebified           bool
 	StartTimeText        string
 	ActionLabel          string
 	ActionTitle          string
@@ -72,6 +73,12 @@ func showDesktopSessionHandler(c *echo.Context) error {
 		} else {
 			sess.AddFlash(fmt.Sprintf("Unexpected error finding desktop session: %s", response.Error), "alert")
 		}
+		SaveSession(c, sess)
+		return c.Redirect(http.StatusSeeOther, "/desktop")
+	}
+
+	if !response.Session.IsWebified {
+		sess.AddFlash("Desktop session cannot be accessed via Flight Web Suite", "alert")
 		SaveSession(c, sess)
 		return c.Redirect(http.StatusSeeOther, "/desktop")
 	}
@@ -165,6 +172,7 @@ func buildDesktopSessionCards(sessions []*desktop.Session) []desktopSessionCard 
 			DesktopType:          session.DesktopType,
 			State:                session.State,
 			Host:                 session.Host,
+			IsWebified:           session.IsWebified,
 			StartTimeText:        session.CreatedAt.Format("Mon 2 Jan 2006 15:04"),
 			ActionLabel:          actionLabel,
 			ActionTitle:          actionTitle,
