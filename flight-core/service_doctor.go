@@ -26,21 +26,6 @@ var webDoctorGeneralDependencies = []doctor.Dependency{
 	},
 }
 
-var webDoctorDesktopDependencies = []doctor.Dependency{
-	{
-		Type:        doctor.TypeExecutable,
-		Description: "Websockify",
-		Paths:       []string{"/usr/bin/websockify"},
-	},
-	{
-		Type:           doctor.TypeExecutable,
-		Description:    "ImageMagick import",
-		Optional:       true,
-		FailureMessage: "Screenshot capture for Flight Desktop access will not be available",
-		Paths:          []string{"/usr/bin/import"},
-	},
-}
-
 func doctorCommand() *cli.Command {
 	return &cli.Command{
 		Name:        "doctor",
@@ -61,25 +46,6 @@ func runWebDoctor(ctx context.Context, cmd *cli.Command) error {
 		"Required general Flight Web Suite dependencies",
 		"Required general Flight Web Suite dependencies not satisfied",
 		doctor.RequiredDependencies(webDoctorGeneralDependencies),
-	)
-
-	fmt.Println()
-	desktopAccessRequired := doctor.RequiredDependencies(webDoctorDesktopDependencies)
-	ok := doctor.CheckRequiredDeps(
-		ctx,
-		"Checking required Flight Desktop access dependencies...",
-		"Required Flight Desktop access dependencies",
-		"Required Flight Desktop access dependencies not satisfied",
-		desktopAccessRequired,
-	)
-	allOK = allOK && ok
-
-	doctor.CheckOptionalDeps(
-		ctx,
-		"Checking optional Flight Desktop access dependencies...",
-		"Optional Flight Desktop access dependencies",
-		"OPTIONAL Flight Desktop access dependencies not satisfied",
-		doctor.OptionalDependencies(webDoctorDesktopDependencies),
 	)
 
 	fmt.Println()

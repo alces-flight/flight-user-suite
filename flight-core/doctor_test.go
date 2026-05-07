@@ -51,15 +51,12 @@ func TestWebDoctorHelp(t *testing.T) {
 
 func TestWebDoctorSuccess(t *testing.T) {
 	deps := setupWebDoctorTestDeps(t, false)
-	restoreDeps := swapWebDoctorDependencies(t, deps.general, deps.desktop)
+	restoreDeps := swapWebDoctorDependencies(t, deps.general)
 	defer restoreDeps()
 
 	output, err := runWebDoctorForTest(t)
 	if err != nil {
 		t.Fatalf("expected success, got %v\noutput:\n%s", err, output)
-	}
-	if !strings.Contains(output, "Required Flight Desktop access dependencies") {
-		t.Fatalf("expected desktop dependency section, got:\n%s", output)
 	}
 }
 
@@ -67,7 +64,7 @@ func TestWebDoctorFailsWhenPythonMissing(t *testing.T) {
 	deps := setupWebDoctorTestDeps(t, false)
 	deps.general[0].Paths = []string{"missing-python3"}
 	deps.general[1].Paths = []string{"missing-python3"}
-	restoreDeps := swapWebDoctorDependencies(t, deps.general, deps.desktop)
+	restoreDeps := swapWebDoctorDependencies(t, deps.general)
 	defer restoreDeps()
 
 	output, err := runWebDoctorForTest(t)
@@ -79,41 +76,13 @@ func TestWebDoctorFailsWhenPythonMissing(t *testing.T) {
 
 func TestWebDoctorFailsWhenPythonPamMissing(t *testing.T) {
 	deps := setupWebDoctorTestDeps(t, true)
-	restoreDeps := swapWebDoctorDependencies(t, deps.general, deps.desktop)
+	restoreDeps := swapWebDoctorDependencies(t, deps.general)
 	defer restoreDeps()
 
 	output, err := runWebDoctorForTest(t)
 	assertExitCodeOne(t, err, output)
 	if !strings.Contains(output, "Required general Flight Web Suite dependencies not satisfied") {
 		t.Fatalf("expected python-pam failure section, got:\n%s", output)
-	}
-}
-
-func TestWebDoctorFailsWhenWebsockifyMissing(t *testing.T) {
-	deps := setupWebDoctorTestDeps(t, false)
-	deps.desktop[0].Paths = []string{filepath.Join(t.TempDir(), "missing-websockify")}
-	restoreDeps := swapWebDoctorDependencies(t, deps.general, deps.desktop)
-	defer restoreDeps()
-
-	output, err := runWebDoctorForTest(t)
-	assertExitCodeOne(t, err, output)
-	if !strings.Contains(output, "Required Flight Desktop access dependencies not satisfied") {
-		t.Fatalf("expected websockify failure section, got:\n%s", output)
-	}
-}
-
-func TestWebDoctorOptionalImportMissingDoesNotFail(t *testing.T) {
-	deps := setupWebDoctorTestDeps(t, false)
-	deps.desktop[1].Paths = []string{filepath.Join(t.TempDir(), "missing-import")}
-	restoreDeps := swapWebDoctorDependencies(t, deps.general, deps.desktop)
-	defer restoreDeps()
-
-	output, err := runWebDoctorForTest(t)
-	if err != nil {
-		t.Fatalf("expected success with optional dependency missing, got %v\noutput:\n%s", err, output)
-	}
-	if !strings.Contains(output, "OPTIONAL Flight Desktop access dependencies not satisfied") {
-		t.Fatalf("expected optional warning, got:\n%s", output)
 	}
 }
 
@@ -131,7 +100,6 @@ func testRootCommand() *cli.Command {
 
 type webDoctorTestDeps struct {
 	general []doctor.Dependency
-	desktop []doctor.Dependency
 }
 
 func setupWebDoctorTestDeps(t *testing.T, failPam bool) webDoctorTestDeps {
@@ -139,58 +107,41 @@ func setupWebDoctorTestDeps(t *testing.T, failPam bool) webDoctorTestDeps {
 
 	tmpDir := t.TempDir()
 	pythonPath := filepath.Join(tmpDir, "python3")
-	websockifyPath := filepath.Join(tmpDir, "websockify")
-	importPath := filepath.Join(tmpDir, "import")
 
 	pythonScript := "#!/bin/sh\ncase \"$2\" in\n  \"import pam\") exit 0 ;;\n  *) echo \"unexpected invocation: $*\" >&2; exit 2 ;;\nesac\n"
 	if failPam {
 		pythonScript = "#!/bin/sh\necho \"ModuleNotFoundError: No module named 'pam'\" >&2\nexit 1\n"
 	}
 	writeToolFixture(t, pythonPath, 0o755, pythonScript)
-	writeToolFixture(t, websockifyPath, 0o755, "#!/bin/sh\nexit 0\n")
-	writeToolFixture(t, importPath, 0o755, "#!/bin/sh\nexit 0\n")
 
 	return webDoctorTestDeps{
 		general: []doctor.Dependency{
 			{
 				Type:        doctor.TypeExecutable,
 				Description: "Python 3",
-				Paths:       []string{"python3"},
+				Paths:       []string{pythonPath},
 			},
 			{
 				Type:        doctor.TypePythonModule,
 				Description: "python-pam",
-				Paths:       []string{"python3"},
+				Paths:       []string{pythonPath},
 				Module:      "pam",
-			},
-		},
-		desktop: []doctor.Dependency{
-			{
-				Type:        doctor.TypeExecutable,
-				Description: "Websockify",
-				Paths:       []string{websockifyPath},
-			},
-			{
-				Type:           doctor.TypeExecutable,
-				Description:    "ImageMagick import",
-				Optional:       true,
-				FailureMessage: "Screenshot capture for Flight Desktop access will not be available",
-				Paths:          []string{importPath},
 			},
 		},
 	}
 }
 
-func swapWebDoctorDependencies(t *testing.T, general []doctor.Dependency, desktop []doctor.Dependency) func() {
+// Replace dependencies with those provided as an argument.  This allows
+// controlling exactly which tests will fail and why.
+func swapWebDoctorDependencies(t *testing.T, general []doctor.Dependency) func() {
 	t.Helper()
 	prevGeneral := webDoctorGeneralDependencies
-	prevDesktop := webDoctorDesktopDependencies
 	prevDelay := doctor.SpinnerDelay
 	prevPath := os.Getenv("PATH")
 
 	pathParts := []string{}
 	seen := map[string]bool{}
-	for _, dep := range append(append([]doctor.Dependency{}, general...), desktop...) {
+	for _, dep := range general {
 		for _, path := range dep.Paths {
 			if filepath.IsAbs(path) {
 				dir := filepath.Dir(path)
@@ -211,11 +162,9 @@ func swapWebDoctorDependencies(t *testing.T, general []doctor.Dependency, deskto
 	}
 	doctor.SpinnerDelay = 0
 	webDoctorGeneralDependencies = general
-	webDoctorDesktopDependencies = desktop
 
 	return func() {
 		webDoctorGeneralDependencies = prevGeneral
-		webDoctorDesktopDependencies = prevDesktop
 		doctor.SpinnerDelay = prevDelay
 		_ = os.Setenv("PATH", prevPath)
 	}
