@@ -6,12 +6,14 @@ import "./dropdown";
 // below.
 import DisableWithController from "./controllers/disable_with_controller.js"
 import FullscreenController from "./controllers/fullscreen_controller.js"
+import GeometryInputsController from "./controllers/geometry_inputs_controller.js"
 import MenuToggleController from "./controllers/menu_toggle_controller.js"
 import NovncController from "./controllers/novnc_controller"
 import RefreshController from "./controllers/refresh_controller.js"
 
 window.Stimulus = Application.start()
 Stimulus.register("disable-with", DisableWithController)
+Stimulus.register("geometry-inputs", GeometryInputsController)
 Stimulus.register("novnc", NovncController)
 Stimulus.register("fullscreen", FullscreenController)
 Stimulus.register("menu-toggle", MenuToggleController)

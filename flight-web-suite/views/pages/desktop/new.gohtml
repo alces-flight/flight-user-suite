@@ -121,7 +121,7 @@
                     <p class="mt-2 text-sm text-red-700" data-testid="desktop-launch-name-error">{{ .Form.Errors.Name }}</p>
                 {{end}}
             </div>
-            <div class="flex flex-col gap-y-2 items-center text-field">
+            <div class="flex flex-col gap-y-2 items-center text-field" data-controller="geometry-inputs">
                 <label for="desktop-launch-geometry">
                     Select your desktop resolution
                 </label>
@@ -130,6 +130,7 @@
                     name="geometry"
                     class="custom-select"
                     data-testid="desktop-launch-geometry"
+                    data-geometry-inputs-target="geometrySelect"
                 >
                     {{range .GeometryOptions}}
                         <option
@@ -139,6 +140,35 @@
                         >{{ .Label }}</option>
                     {{end}}
                 </select>
+                <div
+                    class="flex gap-2 items-center"
+                    id="custom-resolution-fields"
+                    data-geometry-inputs-target="customFields"
+                >
+                    <label for="custom_resolution_x">
+                        Custom resolution:
+                    </label>
+                    <input
+                        class="max-w-32"
+                        data-geometry-inputs-target="input"
+                        id="custom_resolution_x"
+                        min="0"
+                        name="custom_x"
+                        placeholder="Width"
+                        type="number"
+                        value="{{ .Form.CustomX }}"
+                    />
+                        x
+                    <input
+                        class="max-w-32"
+                        data-geometry-inputs-target="input"
+                        min="0"
+                        name="custom_y"
+                        placeholder="Height"
+                        type="number"
+                        value="{{ .Form.CustomY }}"
+                    />
+                </div>
                 {{if .Form.Errors.Geometry}}
                     <p class="mt-2 text-sm text-red-700" data-testid="desktop-launch-geometry-error">{{ .Form.Errors.Geometry }}</p>
                 {{end}}

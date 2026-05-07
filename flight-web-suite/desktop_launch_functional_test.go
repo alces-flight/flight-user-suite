@@ -254,6 +254,15 @@ JSON
 func TestCreateDesktopSessionFailureRedisplaysFormWithPreservedValues(t *testing.T) {
 	currentUser := currentUserForTest(t)
 	setFlightRootForDesktopTest(t, desktopToolFixture(t, 0o755, `#!/bin/sh
+if [ "$1" = "doctor" ]; then
+cat <<'JSON'
+{
+	"ok": true,
+	"checks": []
+}
+JSON
+exit 0
+fi
 if [ "$1" = "avail" ]; then
 cat <<'JSON'
 [
@@ -313,6 +322,15 @@ exit 1
 func TestCreateDesktopSessionFailureWithoutProvidedNameDoesNotExposeGeneratedName(t *testing.T) {
 	currentUser := currentUserForTest(t)
 	setFlightRootForDesktopTest(t, desktopToolFixture(t, 0o755, `#!/bin/sh
+if [ "$1" = "doctor" ]; then
+cat <<'JSON'
+{
+	"ok": true,
+	"checks": []
+}
+JSON
+exit 0
+fi
 if [ "$1" = "avail" ]; then
 cat <<'JSON'
 [
@@ -363,6 +381,15 @@ exit 1
 func TestCreateDesktopSessionInvalidNameShowsUserFriendlyMessage(t *testing.T) {
 	currentUser := currentUserForTest(t)
 	setFlightRootForDesktopTest(t, desktopToolFixture(t, 0o755, `#!/bin/sh
+if [ "$1" = "doctor" ]; then
+cat <<'JSON'
+{
+	"ok": true,
+	"checks": []
+}
+JSON
+exit 0
+fi
 if [ "$1" = "avail" ]; then
 cat <<'JSON'
 [
@@ -419,6 +446,15 @@ func TestCreateDesktopSessionWithInvalidGeometryShowsInlineErrorWithoutInvokingS
 	argsFile := filepath.Join(t.TempDir(), "desktop-args.txt")
 	setFlightRootForDesktopTest(t, desktopToolFixture(t, 0o755, `#!/bin/sh
 printf '%s\n' "$@" >> "`+argsFile+`"
+if [ "$1" = "doctor" ]; then
+cat <<'JSON'
+{
+	"ok": true,
+	"checks": []
+}
+JSON
+exit 0
+fi
 cat <<'JSON'
 [
   {
@@ -453,8 +489,8 @@ JSON
 	if err != nil {
 		t.Fatalf("failed to read command args fixture: %v", err)
 	}
-	if got := strings.TrimSpace(string(data)); got != "avail\n--format\njson" {
-		t.Fatalf("expected only avail command args, got %q", got)
+	if got := strings.TrimSpace(string(data)); got != "avail\n--format\njson\ndoctor\n--format\njson" {
+		t.Fatalf("expected only avail and doctor commands, got %q", got)
 	}
 }
 
@@ -463,6 +499,15 @@ func TestCreateDesktopSessionWithInvalidDesktopTypeShowsInlineErrorWithoutInvoki
 	argsFile := filepath.Join(t.TempDir(), "desktop-args.txt")
 	setFlightRootForDesktopTest(t, desktopToolFixture(t, 0o755, `#!/bin/sh
 printf '%s\n' "$@" >> "`+argsFile+`"
+if [ "$1" = "doctor" ]; then
+cat <<'JSON'
+{
+	"ok": true,
+	"checks": []
+}
+JSON
+exit 0
+fi
 cat <<'JSON'
 [
   {
@@ -498,7 +543,7 @@ JSON
 	if err != nil {
 		t.Fatalf("failed to read command args fixture: %v", err)
 	}
-	if got := strings.TrimSpace(string(data)); got != "avail\n--format\njson" {
-		t.Fatalf("expected only avail command args, got %q", got)
+	if got := strings.TrimSpace(string(data)); got != "avail\n--format\njson\ndoctor\n--format\njson" {
+		t.Fatalf("expected only avail and doctor commands, got %q", got)
 	}
 }
