@@ -16,12 +16,16 @@ import (
 // IsAdmin returns true if the user running the process is considered an admin
 // and false otherwise.
 //
-// Considered an admin is defined as: has password-less sudo access.
+// "Considered an admin" is defined as: has password-less `sudo` access to run
+// `/bin/bash`.  It would be better to check if they have password-less `sudo`
+// access to run `flight`, but the path to `flight` can change a lot depending
+// on which environment we're in - production, development etc..  In practice
+// checking `/bin/bash` is much easier and likely to provide the same result.
 func IsAdmin() bool {
 	if os.Geteuid() == 0 {
 		return true
 	}
-	exe := exec.Command("sudo", "-ln")
+	exe := exec.Command("sudo", "-ln", "/bin/bash")
 	if err := exe.Run(); err != nil {
 		return false
 	}
