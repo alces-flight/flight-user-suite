@@ -76,7 +76,14 @@
                 <dt>Desktop</dt>
                 <dd data-testid="desktop-session-desktop-type--{{ .Name }}">{{ .DesktopType }}</dd>
                 <dt>State</dt>
-                <dd data-testid="desktop-session-state--{{ .Name }}">{{ .State }}</dd>
+                <dd data-testid="desktop-session-state--{{ .Name }}">
+                    {{ .State }}
+                    {{ if not .IsWebified }}
+                        <span title="Run `flight desktop webify {{ .Name }}` on the server to make this session available">
+                            (not available in Flight Web Suite)
+                        </span>
+                    {{ end }}
+                </dd>
                 <dt>Host</dt>
                 <dd
                     data-testid="desktop-session-host--{{ .Name }}"
