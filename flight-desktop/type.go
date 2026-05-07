@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"charm.land/log/v2"
+	"github.com/concertim/flight-user-suite/flight/doctor"
 	"gopkg.in/yaml.v3"
 )
 
@@ -63,7 +64,7 @@ type Type struct {
 	Summary               string `json:"summary" yaml:"summary"`
 	URL                   string `json:"url" yaml:"url"`
 	IsAvailable           bool   `json:"available" yaml:"available"`
-	dependencies          []dependency
+	dependencies          []doctor.Dependency
 	dependenciesLoadError error
 }
 
@@ -76,7 +77,7 @@ func (t *Type) loadDependencies() error {
 	if err != nil {
 		return fmt.Errorf("loading dependencies for %s: %w", t.ID, err)
 	}
-	var deps []dependency
+	var deps []doctor.Dependency
 	err = yaml.Unmarshal(data, &deps)
 	if err != nil {
 		return fmt.Errorf("loading config from %s: %w", path, err)
@@ -89,7 +90,7 @@ func (t *Type) checkDependencies() {
 	t.IsAvailable = false
 	t.dependenciesLoadError = t.loadDependencies()
 	if t.dependenciesLoadError == nil {
-		if _, depsOK := runDoctor(requiredDependencies(t.dependencies)); depsOK {
+		if _, depsOK := doctor.Run(doctor.RequiredDependencies(t.dependencies)); depsOK {
 			t.IsAvailable = true
 		}
 	}
