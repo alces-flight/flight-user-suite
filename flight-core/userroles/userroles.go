@@ -17,19 +17,50 @@ import (
 // and false otherwise.
 //
 // "Considered an admin" is defined as: has password-less `sudo` access to run
-// `/bin/bash`.  It would be better to check if they have password-less `sudo`
-// access to run `flight`, but the path to `flight` can change a lot depending
-// on which environment we're in - production, development etc..  In practice
-// checking `/bin/bash` is much easier and likely to provide the same result.
+// the same `flight` executable that AsRoot will re-exec.
 func IsAdmin() bool {
 	if os.Geteuid() == 0 {
 		return true
 	}
-	exe := exec.Command("sudo", "-ln", "/bin/bash")
+	path, err := flightCommandPath()
+	if err != nil {
+		return false
+	}
+	exe := exec.Command("sudo", "-ln", "--", path)
 	if err := exe.Run(); err != nil {
 		return false
 	}
 	return true
+}
+
+func flightCommandPath() (string, error) {
+	path, err := os.Executable()
+	if err == nil {
+		path, evalErr := filepath.EvalSymlinks(path)
+		if evalErr == nil {
+			return path, nil
+		}
+		return path, nil
+	}
+
+	// Fall back to resolving argv[0] for environments where os.Executable
+	// cannot determine the path.
+	if filepath.IsAbs(os.Args[0]) {
+		return os.Args[0], nil
+	}
+
+	path, err = exec.LookPath(os.Args[0])
+	if errors.Is(err, exec.ErrDot) {
+		dir, err := os.Getwd()
+		if err != nil {
+			return "", fmt.Errorf("resolving flight command path: %w", err)
+		}
+		return filepath.Join(dir, path), nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("resolving flight command path: %w", err)
+	}
+	return path, nil
 }
 
 func AsRoot(wrapped cli.ActionFunc) cli.ActionFunc {
@@ -44,25 +75,10 @@ func AsRoot(wrapped cli.ActionFunc) cli.ActionFunc {
 			return fmt.Errorf("command '%s' not available to non-admin users", cmd.Name)
 		}
 
-		// Jump through hoops to re-exec with an absolute path. Handle the case
-		// where the binary is ran as `./opt/flight/bin/flight ...` as that is
-		// common in development.
-		var path string
-		if filepath.IsAbs(os.Args[0]) {
-			path = os.Args[0]
-		} else {
-			var err error
-			path, err = exec.LookPath(os.Args[0])
-			if errors.Is(err, exec.ErrDot) {
-				dir, err := os.Getwd()
-				if err != nil {
-					return fmt.Errorf("unexpected error trying to run as root: %w", err)
-				}
-				path = filepath.Join(dir, path)
-			} else if err != nil {
-				// This should not have happened.
-				return fmt.Errorf("unexpected error trying to run as root: %w", err)
-			}
+		path, err := flightCommandPath()
+		if err != nil {
+			// This should not have happened.
+			return fmt.Errorf("unexpected error trying to run as root: %w", err)
 		}
 
 		// Let's re-exec with sudo, preserving just enough of the environment
