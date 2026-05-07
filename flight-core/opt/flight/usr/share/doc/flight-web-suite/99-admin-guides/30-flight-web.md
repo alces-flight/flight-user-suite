@@ -89,3 +89,15 @@ server {
     ssl_certificate_key /etc/nginx/certs/localhost.key;
 }
 ```
+
+Desktop sessions may disconnect if left idle within 60s of inactivity due to 
+the default configuration of nginx. This will not harm the desktop session as 
+it can be immediately reconnected to. If you'd like to extend the timeout for
+desktop connections then lines similar to the following can be added to the 
+`location` block:
+
+```
+# Wait 24 hours without response before closing connection 
+proxy_read_timeout 86400s;
+proxy_send_timeout 86400s;
+```
