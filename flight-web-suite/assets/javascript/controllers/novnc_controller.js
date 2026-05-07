@@ -15,8 +15,11 @@ export default class extends Controller {
     status: { type: String, default: "connecting" },
   }
 
+  retryTimeouts = [100, 100, 200, 300, 500, 800, 1300, 2100, 3400, 5500, 8900, 14400]
+
   connect() {
     this.url = this.buildUrl()
+    this.retryIndex = 0
     console.log("Initialising NoVNC connection", this.url)
     this.createNoVncConnection()
   }
@@ -42,17 +45,26 @@ export default class extends Controller {
     if (newValue != null && newValue.type === "connect") {
       this.rfb.focus();
       this.statusValue = "connected"
-      this.autoreconnecting = false
     }
   }
 
   onRfbDisconnect(e) {
-    this.statusValue = "disconnected"
-    if (e.detail.clean != null && !e.detail.clean && !this.autoreconnecting) {
-      setTimeout(() => {
-        this.autoreconnecting = true
-        this.reconnect()
-      }, 500)
+    if (e.detail.clean != null && !e.detail.clean) {
+      const timeout = this.retryTimeouts[this.retryIndex]
+      if (timeout != null) {
+        this.statusValue = "connecting"
+        console.log("Unclean disconnection: reconnecting in", timeout)
+        this.retryIndex += 1
+        this.reconnectTimeoutId = setTimeout(() => this.reconnect(), timeout)
+      } else {
+        console.log("Unclean disconnection: not reconnecting")
+        this.retryIndex = 0
+        this.statusValue = "disconnected"
+      }
+    } else {
+      console.log("Clean disconnection")
+      this.retryIndex = 0
+      this.statusValue = "disconnected"
     }
   }
 
@@ -98,6 +110,7 @@ export default class extends Controller {
 
   statusValueChanged(neww, oldd) {
     if (this.statusValue === "connected") {
+      this.retryIndex = 0
       setTimeout(() => {
         this.statusTarget.innerText = this.statusText()
         this.reconnectBtnTarget.classList.add("hidden")
@@ -134,6 +147,9 @@ export default class extends Controller {
   // Call this to force a disconnection.
   disconnect() {
     this.rfb.disconnect()
+    if (this.reconnectTimeoutId) {
+      clearTimeout(this.reconnectTimeoutId)
+    }
   }
 
   createNoVncConnection() {
