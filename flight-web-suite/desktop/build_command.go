@@ -8,18 +8,11 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
-	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
 	"syscall"
-
-	"github.com/concertim/flight-user-suite/flight/configenv"
 )
-
-func desktopToolPath(env configenv.Env) string {
-	return filepath.Join(env.FlightRoot, "usr", "lib", "flight-core", "flight-desktop")
-}
 
 func BuildLocalCommand(ctx context.Context, toolPath, username string, args ...string) (*exec.Cmd, error) {
 	userInfo, err := user.Lookup(username)
@@ -66,8 +59,8 @@ func BuildLocalCommand(ctx context.Context, toolPath, username string, args ...s
 	return cmd, nil
 }
 
-func buildLocalDesktopCommand(ctx context.Context, env configenv.Env, username string, args ...string) (*exec.Cmd, error) {
-	return BuildLocalCommand(ctx, desktopToolPath(env), username, args...)
+func (cli *DesktopCli) buildLocalDesktopCommand(ctx context.Context, username string, args ...string) (*exec.Cmd, error) {
+	return BuildLocalCommand(ctx, cli.ToolPath(), username, args...)
 }
 
 func commandEnv(userInfo *user.User) []string {

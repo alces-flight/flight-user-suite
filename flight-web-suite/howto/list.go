@@ -2,10 +2,8 @@ package howto
 
 import (
 	"context"
-	"log/slog"
 
 	"github.com/concertim/flight-user-suite/flight-web-suite/desktop"
-	"github.com/concertim/flight-user-suite/flight/configenv"
 )
 
 type GuideSummary struct {
@@ -20,9 +18,9 @@ type ListResponse struct {
 	Reason  string         `json:"reason"`
 }
 
-func ListCommand(ctx context.Context, logger *slog.Logger, env configenv.Env, username string) (ListResponse, error) {
-	logger.Info("HOWTO", "action", "list", "username", username, "remote", false)
-	cmd, err := buildHowtoCommand(ctx, env, username, "list", "--format", "json")
+func (cli *HowtoCli) ListCommand(ctx context.Context, username string) (ListResponse, error) {
+	cli.Logger.Info("HOWTO", "action", "list", "username", username, "remote", false)
+	cmd, err := cli.buildHowtoCommand(ctx, username, "list", "--format", "json")
 	if err != nil {
 		return ListResponse{}, err
 	}
