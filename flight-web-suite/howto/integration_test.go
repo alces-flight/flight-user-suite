@@ -171,5 +171,5 @@ func envContains(env []string, key, want string) bool {
 }
 
 func newHowtoCliForTest(env configenv.Env) *HowtoCli {
-	return &HowtoCli{Logger: slog.New(slog.NewTextHandler(io.Discard, nil)), Env: env}
+	return NewCliTool(slog.New(slog.NewTextHandler(io.Discard, nil)), env)
 }

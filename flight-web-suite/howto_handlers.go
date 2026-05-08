@@ -20,11 +20,8 @@ type howtoPageGuide struct {
 	IsSelected bool
 }
 
-func howtoCli(logger *slog.Logger) howto.HowtoCli {
-	return howto.HowtoCli{
-		Env:    env,
-		Logger: logger,
-	}
+func howtoCli(logger *slog.Logger) *howto.HowtoCli {
+	return howto.NewCliTool(logger, env)
 }
 
 func indexHowtoHandler(c *echo.Context) error {

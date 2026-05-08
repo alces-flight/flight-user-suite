@@ -2,6 +2,8 @@ package desktop
 
 import (
 	"context"
+
+	"github.com/concertim/flight-user-suite/flight-web-suite/cli"
 )
 
 type showResponse struct {
@@ -11,13 +13,9 @@ type showResponse struct {
 	Reason  string  `json:"reason"`
 }
 
-func (cli *DesktopCli) ShowCommand(ctx context.Context, username, sessionName string) (showResponse, error) {
-	cli.Logger.Info("DESKTOP SESSION", "action", "show", "name", sessionName, "username", username, "remote", false)
-	cmd, err := cli.buildLocalDesktopCommand(ctx, username, "show", "--format", "json", sessionName)
-	if err != nil {
-		return showResponse{}, err
-	}
-	response, err := RunLocal[showResponse]("showing desktop session", cmd)
+func (dcli *DesktopCli) ShowCommand(ctx context.Context, username, sessionName string) (showResponse, error) {
+	dcli.logger.Info("DESKTOP SESSION", "action", "show", "name", sessionName, "username", username, "remote", false)
+	response, err := cli.RunLocal[showResponse](ctx, "showing desktop session", dcli, username, "show", "--format", "json", sessionName)
 	if err != nil {
 		return showResponse{}, err
 	}

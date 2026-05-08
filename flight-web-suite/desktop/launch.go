@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+
+	"github.com/concertim/flight-user-suite/flight-web-suite/cli"
 )
 
 type Type struct {
@@ -48,8 +50,8 @@ type startErrorDocument struct {
 	Errors []startError `json:"errors"`
 }
 
-func (cli *DesktopCli) AvailCommand(ctx context.Context, username string) ([]*Type, error) {
-	cmd, err := cli.buildLocalDesktopCommand(ctx, username, "avail", "--format", "json")
+func (dcli *DesktopCli) AvailCommand(ctx context.Context, username string) ([]*Type, error) {
+	cmd, err := cli.BuildLocalCommand(ctx, dcli, username, "avail", "--format", "json")
 	if err != nil {
 		return nil, err
 	}
@@ -87,8 +89,8 @@ type CheckResultJSON struct {
 	Error       string   `json:"error"`
 }
 
-func (cli *DesktopCli) DoctorCommand(ctx context.Context, username string) (*DoctorReport, error) {
-	cmd, err := cli.buildLocalDesktopCommand(ctx, username, "doctor", "--format", "json")
+func (dcli *DesktopCli) DoctorCommand(ctx context.Context, username string) (*DoctorReport, error) {
+	cmd, err := cli.BuildLocalCommand(ctx, dcli, username, "doctor", "--format", "json")
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +111,7 @@ func (cli *DesktopCli) DoctorCommand(ctx context.Context, username string) (*Doc
 	return &dependencyReport, nil
 }
 
-func (cli *DesktopCli) StartCommand(ctx context.Context, username string, input StartInput) (StartResponse, error) {
+func (dcli *DesktopCli) StartCommand(ctx context.Context, username string, input StartInput) (StartResponse, error) {
 	// TODO:
 	// * Add support for round robin over remote hosts.
 	// E.g., FWS is installed on infra node. Sessions it starts should be installed on `login1`, `login2`, etc..
@@ -120,8 +122,8 @@ func (cli *DesktopCli) StartCommand(ctx context.Context, username string, input 
 		args = append(args, "--name", input.Name)
 	}
 
-	cli.Logger.Info("DESKTOP SESSION", "action", "start", "name", input.Name, "username", username, "type", input.DesktopType, "remote", false)
-	cmd, err := cli.buildLocalDesktopCommand(ctx, username, args...)
+	dcli.logger.Info("DESKTOP SESSION", "action", "start", "name", input.Name, "username", username, "type", input.DesktopType, "remote", false)
+	cmd, err := cli.BuildLocalCommand(ctx, dcli, username, args...)
 	if err != nil {
 		return StartResponse{}, err
 	}

@@ -1,19 +1,25 @@
-package desktop
+package cli
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"os/user"
 	"path/filepath"
+	"strings"
 
 	"golang.org/x/crypto/ssh"
 )
 
-func RunLocal[T any](description string, cmd *exec.Cmd) (T, error) {
+func RunLocal[T any](ctx context.Context, description string, tool Tool, username string, args ...string) (T, error) {
 	var zero T
+
+	cmd, err := BuildLocalCommand(ctx, tool, username, args...)
+	if err != nil {
+		return zero, err
+	}
 
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -35,10 +41,10 @@ func RunLocal[T any](description string, cmd *exec.Cmd) (T, error) {
 	return zero, fmt.Errorf("decoding response (local): %s", stdout.String())
 }
 
-func runRemoteCommand[T any](description, username, cmd, remoteHost string, config RemoteConfig) (T, error) {
+func RunRemote[T any](description string, tool RemoteTool, username, remoteHost string, args []string) (T, error) {
 	var zero T
 
-	sess, cleanup, err := remoteSession(username, remoteHost, config)
+	sess, cleanup, err := remoteSession(username, remoteHost, tool.RemoteConfig())
 	defer cleanup()
 	if err != nil {
 		return zero, fmt.Errorf("establishing remote session: %w", err)
@@ -48,6 +54,7 @@ func runRemoteCommand[T any](description, username, cmd, remoteHost string, conf
 	var stderr bytes.Buffer
 	sess.Stdout = &stdout
 	sess.Stderr = &stderr
+	cmd := strings.Join(append([]string{tool.ToolPath()}, args...), " ")
 	runErr := sess.Run(cmd)
 
 	var response T

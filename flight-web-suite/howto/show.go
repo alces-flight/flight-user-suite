@@ -4,7 +4,7 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/concertim/flight-user-suite/flight-web-suite/desktop"
+	"github.com/concertim/flight-user-suite/flight-web-suite/cli"
 )
 
 type Guide struct {
@@ -19,11 +19,7 @@ type ShowResponse struct {
 	Reason  string `json:"reason"`
 }
 
-func (cli *HowtoCli) ShowCommand(ctx context.Context, username string, index int) (ShowResponse, error) {
-	cli.Logger.Info("HOWTO", "action", "show", "index", index, "username", username, "remote", false)
-	cmd, err := cli.buildHowtoCommand(ctx, username, "show", "--format", "json", strconv.Itoa(index))
-	if err != nil {
-		return ShowResponse{}, err
-	}
-	return desktop.RunLocal[ShowResponse]("showing howto", cmd)
+func (hcli *HowtoCli) ShowCommand(ctx context.Context, username string, index int) (ShowResponse, error) {
+	hcli.Logger().Info("HOWTO", "action", "show", "index", index, "username", username, "remote", false)
+	return cli.RunLocal[ShowResponse](ctx, "showing howto", hcli, username, "show", "--format", "json", strconv.Itoa(index))
 }

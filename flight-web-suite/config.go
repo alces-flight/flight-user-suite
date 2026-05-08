@@ -12,15 +12,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/concertim/flight-user-suite/flight-web-suite/desktop"
+	"github.com/concertim/flight-user-suite/flight-web-suite/cli"
 	"gopkg.in/yaml.v3"
 )
 
 type webSuiteConfig struct {
-	Port          int                  `yaml:"port"`
-	Session       sessionConfig        `yaml:"-"`
-	Authenticator authenticatorConfig  `yaml:"authenticator"`
-	Remote        desktop.RemoteConfig `yaml:"remote"`
+	Port          int                 `yaml:"port"`
+	Session       sessionConfig       `yaml:"-"`
+	Authenticator authenticatorConfig `yaml:"authenticator"`
+	Remote        cli.RemoteConfig    `yaml:"remote"`
 }
 
 type sessionConfig struct {

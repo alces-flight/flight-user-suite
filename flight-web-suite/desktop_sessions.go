@@ -23,12 +23,8 @@ type desktopSessionCard struct {
 	ActionMethodOverride string
 }
 
-func desktopCli(logger *slog.Logger) desktop.DesktopCli {
-	return desktop.DesktopCli{
-		Config: config.Remote,
-		Env:    env,
-		Logger: logger,
-	}
+func desktopCli(logger *slog.Logger) *desktop.DesktopCli {
+	return desktop.NewCliTool(logger, env, config.Remote)
 }
 
 func indexDesktopSessionsHandler(c *echo.Context) error {
