@@ -25,6 +25,7 @@ type desktopSessionCard struct {
 
 func desktopCli(logger *slog.Logger) desktop.DesktopCli {
 	return desktop.DesktopCli{
+		Config: config.Remote,
 		Env:    env,
 		Logger: logger,
 	}

@@ -55,5 +55,5 @@ func (cli *DesktopCli) localClean(ctx context.Context, username string, args []s
 func (cli *DesktopCli) remoteClean(username, host string, args []string) (cleanResponse, error) {
 	cmd := append([]string{cli.ToolPath()}, args...)
 	cmdString := strings.Join(cmd, " ")
-	return runRemoteCommand[cleanResponse]("cleaning desktop session", username, cmdString, host)
+	return runRemoteCommand[cleanResponse]("cleaning desktop session", username, cmdString, host, cli.Config)
 }

@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"time"
+	"os/user"
+	"path/filepath"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -34,10 +35,10 @@ func RunLocal[T any](description string, cmd *exec.Cmd) (T, error) {
 	return zero, fmt.Errorf("decoding response (local): %s", stdout.String())
 }
 
-func runRemoteCommand[T any](description, username, cmd, remoteHost string) (T, error) {
+func runRemoteCommand[T any](description, username, cmd, remoteHost string, config RemoteConfig) (T, error) {
 	var zero T
 
-	sess, cleanup, err := remoteSession(username, remoteHost)
+	sess, cleanup, err := remoteSession(username, remoteHost, config)
 	defer cleanup()
 	if err != nil {
 		return zero, fmt.Errorf("establishing remote session: %w", err)
@@ -63,7 +64,7 @@ func runRemoteCommand[T any](description, username, cmd, remoteHost string) (T, 
 	return zero, fmt.Errorf("decoding response (remote): %s", stdout.String())
 }
 
-func remoteSession(username, remoteHost string) (*ssh.Session, func(), error) {
+func remoteSession(username, remoteHost string, config RemoteConfig) (*ssh.Session, func(), error) {
 	var conn *ssh.Client
 	var sess *ssh.Session
 
@@ -76,24 +77,32 @@ func remoteSession(username, remoteHost string) (*ssh.Session, func(), error) {
 		}
 	}
 
-	config := &ssh.ClientConfig{
-		User: username,
-		Auth: []ssh.AuthMethod{
-			// TODO: Take this from configuration.
-			// Need to get user's home directory.  Attempt to use
-			// `os/user.Current`? Fallback to configurable `/home/<username>`?
-			// Add documentation that password-less SSH is required. Mention ssh-keypair-generation hook.
-			publicKey("/home/ben/.ssh/id_flightcluster"),
-		},
-		// TODO: Replace with known_hosts parsing.
-		// "golang.org/x/crypto/ssh/knownhosts"
-		// kh.New("/Users/user/.ssh/known_hosts")
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		// TODO: Take this from configuration.
-		Timeout: time.Duration(5 * time.Second),
+	homedir := filepath.Clean(fmt.Sprintf("%s/%s", config.HomeDirFallback, username))
+	user, err := user.Lookup(username)
+	if err == nil && user != nil {
+		homedir = user.HomeDir
 	}
-	var err error
-	conn, err = ssh.Dial("tcp", fmt.Sprintf("%s:22", remoteHost), config)
+	publicKey, err := publicKey(filepath.Join(homedir, ".ssh", config.SshKeyName))
+	if err != nil {
+		return nil, cleanup, err
+	}
+
+	clientConfig := &ssh.ClientConfig{
+		User: username,
+		Auth: []ssh.AuthMethod{publicKey},
+
+		// TODO: Do we need to change this? We create an SSH keypair via the
+		// ssh-keypair-generation hook and configure the ssh config with
+		// `StrictHostKeyChecking no`. Would changing this just be a pretence?
+		//
+		// hostKeyCallback, err := knownhosts.New(filepath.Join(homedir, ".ssh", "known_hosts"))
+		// if err != nil {
+		// 	return nil, cleanup, fmt.Errorf("creating hostKeyCallback: %w", err)
+		// }
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		Timeout:         config.ConnectionTimeout,
+	}
+	conn, err = ssh.Dial("tcp", fmt.Sprintf("%s:22", remoteHost), clientConfig)
 	if err != nil {
 		return nil, cleanup, err
 	}
@@ -106,14 +115,14 @@ func remoteSession(username, remoteHost string) (*ssh.Session, func(), error) {
 	return sess, cleanup, nil
 }
 
-func publicKey(path string) ssh.AuthMethod {
+func publicKey(path string) (ssh.AuthMethod, error) {
 	key, err := os.ReadFile(path)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("reading private key: %w", err)
 	}
 	signer, err := ssh.ParsePrivateKey(key)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("parsing private key: %w", err)
 	}
-	return ssh.PublicKeys(signer)
+	return ssh.PublicKeys(signer), nil
 }

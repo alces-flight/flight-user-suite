@@ -43,5 +43,5 @@ func (cli *DesktopCli) localKill(ctx context.Context, username string, args []st
 func (cli *DesktopCli) remoteKill(username, host string, args []string) (terminationResponse, error) {
 	cmd := append([]string{cli.ToolPath()}, args...)
 	cmdString := strings.Join(cmd, " ")
-	return runRemoteCommand[terminationResponse]("terminating desktop session", username, cmdString, host)
+	return runRemoteCommand[terminationResponse]("terminating desktop session", username, cmdString, host, cli.Config)
 }
