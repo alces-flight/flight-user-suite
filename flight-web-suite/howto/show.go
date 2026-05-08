@@ -1,12 +1,10 @@
 package howto
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
 	"strconv"
 
+	"github.com/concertim/flight-user-suite/flight-web-suite/desktop"
 	"github.com/concertim/flight-user-suite/flight/configenv"
 )
 
@@ -27,24 +25,5 @@ func ShowCommand(ctx context.Context, env configenv.Env, username string, index 
 	if err != nil {
 		return ShowResponse{}, err
 	}
-
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	runErr := cmd.Run()
-
-	var response ShowResponse
-	decodeErr := json.Unmarshal(stdout.Bytes(), &response)
-	if decodeErr == nil {
-		return response, nil
-	}
-
-	if runErr != nil {
-		if stderr.Len() != 0 {
-			return ShowResponse{}, fmt.Errorf("running howto show command: %s", stderr.String())
-		}
-		return ShowResponse{}, fmt.Errorf("running howto show command: %w", runErr)
-	}
-	return ShowResponse{}, fmt.Errorf("decoding howto show response: %w", decodeErr)
+	return desktop.RunLocal[ShowResponse]("showing howto", cmd)
 }

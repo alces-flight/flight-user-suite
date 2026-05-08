@@ -1,11 +1,9 @@
 package howto
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
 
+	"github.com/concertim/flight-user-suite/flight-web-suite/desktop"
 	"github.com/concertim/flight-user-suite/flight/configenv"
 )
 
@@ -26,27 +24,12 @@ func ListCommand(ctx context.Context, env configenv.Env, username string) (ListR
 	if err != nil {
 		return ListResponse{}, err
 	}
-
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	runErr := cmd.Run()
-
-	var response ListResponse
-	decodeErr := json.Unmarshal(stdout.Bytes(), &response)
-	if decodeErr == nil {
-		if response.Guides == nil {
-			response.Guides = []GuideSummary{}
-		}
-		return response, nil
+	response, err := desktop.RunLocal[ListResponse]("listing howtos", cmd)
+	if err != nil {
+		return ListResponse{}, err
 	}
-
-	if runErr != nil {
-		if stderr.Len() != 0 {
-			return ListResponse{}, fmt.Errorf("running howto list command: %s", stderr.String())
-		}
-		return ListResponse{}, fmt.Errorf("running howto list command: %w", runErr)
+	if response.Guides == nil {
+		response.Guides = []GuideSummary{}
 	}
-	return ListResponse{}, fmt.Errorf("decoding howto list response: %w", decodeErr)
+	return response, nil
 }
