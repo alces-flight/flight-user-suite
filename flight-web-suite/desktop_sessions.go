@@ -30,7 +30,7 @@ func indexDesktopSessionsHandler(c *echo.Context) error {
 		return err
 	}
 
-	sessions, err := desktop.ListCommand(c.Request().Context(), env, CurrentUserName(c))
+	sessions, err := desktop.ListCommand(c.Request().Context(), c.Logger(), env, CurrentUserName(c))
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func showDesktopSessionHandler(c *echo.Context) error {
 		return err
 	}
 
-	response, err := desktop.ShowCommand(c.Request().Context(), env, CurrentUserName(c), c.Param("sessionName"))
+	response, err := desktop.ShowCommand(c.Request().Context(), c.Logger(), env, CurrentUserName(c), c.Param("sessionName"))
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func destroyDesktopSessionHandler(c *echo.Context) error {
 		return err
 	}
 
-	response, err := desktop.KillCommand(c.Request().Context(), env, CurrentUserName(c), c.Param("sessionName"))
+	response, err := desktop.KillCommand(c.Request().Context(), c.Logger(), env, CurrentUserName(c), c.Param("sessionName"))
 	if err != nil {
 		return err
 	}
@@ -122,7 +122,7 @@ func cleanDesktopSessionHandler(c *echo.Context) error {
 		return err
 	}
 
-	response, err := desktop.CleanCommand(c.Request().Context(), env, CurrentUserName(c), c.Param("sessionName"))
+	response, err := desktop.CleanCommand(c.Request().Context(), c.Logger(), env, CurrentUserName(c), c.Param("sessionName"))
 	if err != nil {
 		return err
 	}

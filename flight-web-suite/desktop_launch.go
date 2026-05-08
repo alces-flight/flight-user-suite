@@ -99,7 +99,7 @@ func createDesktopSessionHandler(c *echo.Context) error {
 
 	validateDesktopLaunchForm(desktopTypes, &form)
 	if form.Errors == (desktopLaunchFieldErrors{}) {
-		response, err := desktop.StartCommand(c.Request().Context(), env, CurrentUserName(c), desktop.StartInput{
+		response, err := desktop.StartCommand(c.Request().Context(), c.Logger(), env, CurrentUserName(c), desktop.StartInput{
 			DesktopType: form.DesktopType,
 			Name:        form.Name,
 			Geometry:    form.getComputedGeometry(),

@@ -3,6 +3,7 @@ package desktop
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/concertim/flight-user-suite/flight/configenv"
@@ -20,19 +21,22 @@ type cleanCommandDocument struct {
 	Results []cleanResponse `json:"results"`
 }
 
-func CleanCommand(ctx context.Context, env configenv.Env, username, sessionName string) (cleanResponse, error) {
-	showResponse, err := ShowCommand(ctx, env, username, sessionName)
+func CleanCommand(ctx context.Context, logger *slog.Logger, env configenv.Env, username, sessionName string) (cleanResponse, error) {
+	showResponse, err := ShowCommand(ctx, logger, env, username, sessionName)
 	if err != nil {
 		return cleanResponse{}, err
 	}
 	if showResponse.Reason == "not_found" {
 		// It's already gone.
+		logger.Info("DESKTOP SESSION", "action", "clean", "name", sessionName, "username", username, "err", "not found")
 		return cleanResponse{Success: true, SessionName: sessionName}, nil
 	}
 	args := []string{"clean", "--format", "json", "--", sessionName}
 	if showResponse.Session.State == "remote" {
-		return remoteClean(env, username, showResponse.Session, args)
+		logger.Info("DESKTOP SESSION", "action", "clean", "name", sessionName, "username", username, "remote", true, "host", showResponse.Session.Host)
+		return remoteClean(env, username, showResponse.Session.Host, args)
 	}
+	logger.Info("DESKTOP SESSION", "action", "clean", "name", sessionName, "username", username, "remote", false)
 	return localClean(ctx, env, username, args)
 }
 
@@ -51,8 +55,8 @@ func localClean(ctx context.Context, env configenv.Env, username string, args []
 	return cleanResponse{}, fmt.Errorf("decoding desktop clean response: expected 1 result, got %d", len(response.Results))
 }
 
-func remoteClean(env configenv.Env, username string, session Session, args []string) (cleanResponse, error) {
+func remoteClean(env configenv.Env, username, host string, args []string) (cleanResponse, error) {
 	cmd := append([]string{desktopToolPath(env)}, args...)
 	cmdString := strings.Join(cmd, " ")
-	return runRemoteCommand[cleanResponse]("cleaning desktop session", username, cmdString, session.Host)
+	return runRemoteCommand[cleanResponse]("cleaning desktop session", username, cmdString, host)
 }

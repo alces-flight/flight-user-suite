@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"slices"
 	"strings"
 
@@ -111,7 +112,7 @@ func DoctorCommand(ctx context.Context, env configenv.Env, username string) (*Do
 	return &dependencyReport, nil
 }
 
-func StartCommand(ctx context.Context, env configenv.Env, username string, input StartInput) (StartResponse, error) {
+func StartCommand(ctx context.Context, logger *slog.Logger, env configenv.Env, username string, input StartInput) (StartResponse, error) {
 	// TODO:
 	// * Add support for round robin over remote hosts.
 	// E.g., FWS is installed on infra node. Sessions it starts should be installed on `login1`, `login2`, etc..
@@ -122,6 +123,7 @@ func StartCommand(ctx context.Context, env configenv.Env, username string, input
 		args = append(args, "--name", input.Name)
 	}
 
+	logger.Info("DESKTOP SESSION", "action", "start", "name", input.Name, "username", username, "type", input.DesktopType, "remote", false)
 	cmd, err := buildLocalDesktopCommand(ctx, env, username, args...)
 	if err != nil {
 		return StartResponse{}, err

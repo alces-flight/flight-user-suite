@@ -2,6 +2,7 @@ package desktop
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/concertim/flight-user-suite/flight/configenv"
 )
@@ -13,7 +14,8 @@ type showResponse struct {
 	Reason  string  `json:"reason"`
 }
 
-func ShowCommand(ctx context.Context, env configenv.Env, username, sessionName string) (showResponse, error) {
+func ShowCommand(ctx context.Context, logger *slog.Logger, env configenv.Env, username, sessionName string) (showResponse, error) {
+	logger.Info("DESKTOP SESSION", "action", "show", "name", sessionName, "username", username, "remote", false)
 	cmd, err := buildLocalDesktopCommand(ctx, env, username, "show", "--format", "json", sessionName)
 	if err != nil {
 		return showResponse{}, err

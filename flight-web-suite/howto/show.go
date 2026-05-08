@@ -2,6 +2,7 @@ package howto
 
 import (
 	"context"
+	"log/slog"
 	"strconv"
 
 	"github.com/concertim/flight-user-suite/flight-web-suite/desktop"
@@ -20,7 +21,8 @@ type ShowResponse struct {
 	Reason  string `json:"reason"`
 }
 
-func ShowCommand(ctx context.Context, env configenv.Env, username string, index int) (ShowResponse, error) {
+func ShowCommand(ctx context.Context, logger *slog.Logger, env configenv.Env, username string, index int) (ShowResponse, error) {
+	logger.Info("HOWTO", "action", "show", "index", index, "username", username, "remote", false)
 	cmd, err := buildHowtoCommand(ctx, env, username, "show", "--format", "json", strconv.Itoa(index))
 	if err != nil {
 		return ShowResponse{}, err

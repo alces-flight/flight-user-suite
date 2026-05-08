@@ -27,7 +27,7 @@ func indexHowtoHandler(c *echo.Context) error {
 		return err
 	}
 
-	response, err := howto.ListCommand(c.Request().Context(), env, CurrentUserName(c))
+	response, err := howto.ListCommand(c.Request().Context(), c.Logger(), env, CurrentUserName(c))
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func showHowtoHandler(c *echo.Context) error {
 		return err
 	}
 
-	response, err := howto.ListCommand(c.Request().Context(), env, CurrentUserName(c))
+	response, err := howto.ListCommand(c.Request().Context(), c.Logger(), env, CurrentUserName(c))
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func showHowtoHandler(c *echo.Context) error {
 		return redirectHowtoIndexAlert(c, "Howto guide not found.")
 	}
 
-	showResponse, err := howto.ShowCommand(c.Request().Context(), env, CurrentUserName(c), index)
+	showResponse, err := howto.ShowCommand(c.Request().Context(), c.Logger(), env, CurrentUserName(c), index)
 	if err != nil {
 		return err
 	}

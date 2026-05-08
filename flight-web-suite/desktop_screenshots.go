@@ -19,7 +19,7 @@ func showScreenshotHandler(c *echo.Context) error {
 	if err := requireDesktopToolEnabled(); err != nil {
 		return c.File(placeholderImagePath)
 	}
-	response, err := desktop.ShowCommand(c.Request().Context(), env, CurrentUserName(c), c.Param("sessionName"))
+	response, err := desktop.ShowCommand(c.Request().Context(), c.Logger(), env, CurrentUserName(c), c.Param("sessionName"))
 	if err != nil {
 		return c.File(placeholderImagePath)
 	}
