@@ -84,7 +84,7 @@ func killSessionJSON(ctx context.Context, session *Session, loadErr error) error
 		return writeTerminationFailure(session.Name, fmt.Sprintf("Desktop session '%s' is not local.", session.Name), "not_local")
 	case Active:
 		if err := session.Kill(ctx); err != nil {
-			return writeTerminationFailure(session.Name, fmt.Sprintf("Terminating session '%s' failed.", session.Name), "terminate_failed")
+			return writeTerminationFailure(session.Name, fmt.Sprintf("Terminating session '%s' failed: %s", session.Name, err.Error()), "terminate_failed")
 		}
 		return writeTerminationSuccess(session.Name)
 	default:

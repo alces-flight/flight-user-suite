@@ -227,7 +227,13 @@ func (s *Session) Kill(ctx context.Context) error {
 		log.Debug("vncserver", "stdout/stderr", string(output))
 		return fmt.Errorf("killing VNC server: %w", err)
 	}
-	return s.RemoveSessionDir()
+	if err = s.RemoveSessionDir(); err != nil {
+		// Regardless of whether the session directory is removed, we've killed
+		// the session.  If we do fail to remove the session directory, we
+		// expect that the cleaner script will do so shortly.
+		log.Debug("error removing session directory for killed session", "session", s.Name, "dir", s.sessionDir(), "error", err)
+	}
+	return nil
 }
 
 func (s *Session) RemoveSessionDir() error {
