@@ -141,7 +141,9 @@ func (s *Session) Start(ctx context.Context) error {
 
 func (s Session) IsWebified() bool {
 	switch s.ComputedState() {
-	case "active", "remote":
+	case "active":
+		return s.WebsocketPid != 0 && process.IsRunning(s.WebsocketPid)
+	case "remote":
 		return s.WebsocketPid != 0
 	default:
 		return false

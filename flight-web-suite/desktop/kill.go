@@ -26,7 +26,7 @@ func (dcli *DesktopCli) KillCommand(ctx context.Context, username, sessionName s
 	args := []string{"kill", "--format", "json", "--", sessionName}
 	if showResponse.Session.State == "remote" {
 		dcli.logger.Info("DESKTOP SESSION", "action", "kill", "name", sessionName, "username", username, "remote", true, "host", showResponse.Session.Host)
-		return cli.RunRemote[terminationResponse]("terminating desktop session", dcli, username, showResponse.Session.Host, args)
+		return cli.RunRemote[terminationResponse]("terminating desktop session", dcli, username, showResponse.Session.Host, args...)
 	}
 	dcli.logger.Info("DESKTOP SESSION", "action", "kill", "name", sessionName, "username", username, "remote", false)
 	return cli.RunLocal[terminationResponse](ctx, "terminating desktop session", dcli, username, args...)

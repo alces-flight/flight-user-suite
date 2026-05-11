@@ -43,7 +43,7 @@ func RunLocal[T any](ctx context.Context, description string, tool Tool, usernam
 	return zero, fmt.Errorf("decoding response (local): %s", stdout.String())
 }
 
-func RunRemote[T any](description string, tool RemoteTool, username, remoteHost string, args []string) (T, error) {
+func RunRemote[T any](description string, tool RemoteTool, username, remoteHost string, args ...string) (T, error) {
 	var zero T
 
 	sess, cleanup, err := remoteSession(username, remoteHost, tool.RemoteConfig())

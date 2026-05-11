@@ -50,7 +50,7 @@ func (dcli *DesktopCli) localClean(ctx context.Context, username string, args []
 }
 
 func (dcli *DesktopCli) remoteClean(username, host string, args []string) (cleanResponse, error) {
-	response, err := cli.RunRemote[cleanCommandDocument]("cleaning desktop session", dcli, username, host, args)
+	response, err := cli.RunRemote[cleanCommandDocument]("cleaning desktop session", dcli, username, host, args...)
 	if err != nil {
 		return cleanResponse{}, err
 	}
