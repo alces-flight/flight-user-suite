@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/sergeymakinen/go-quote/unix"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -20,6 +21,7 @@ func RunLocal[T any](ctx context.Context, description string, tool Tool, usernam
 	if err != nil {
 		return zero, err
 	}
+	tool.Logger().Debug("RUN LOCAL", "username", username, "cmd", cmd.Args)
 
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -50,11 +52,17 @@ func RunRemote[T any](description string, tool RemoteTool, username, remoteHost 
 		return zero, fmt.Errorf("establishing remote session: %w", err)
 	}
 
+	cmdParts := []string{tool.ToolPath()}
+	for _, arg := range args {
+		cmdParts = append(cmdParts, unix.SingleQuote.Quote(arg))
+	}
+	cmd := strings.Join(cmdParts, " ")
+	tool.Logger().Debug("RUN REMOTE", "username", username, "host", remoteHost, "cmd", cmd)
+
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	sess.Stdout = &stdout
 	sess.Stderr = &stderr
-	cmd := strings.Join(append([]string{tool.ToolPath()}, args...), " ")
 	runErr := sess.Run(cmd)
 
 	var response T
