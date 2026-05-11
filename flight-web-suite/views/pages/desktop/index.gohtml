@@ -68,11 +68,6 @@
                 <dt>State</dt>
                 <dd data-testid="desktop-session-state--{{ .Name }}">
                     {{ .State }}
-                    {{ if and (not .IsWebified) (or (eq .State "active") (eq .State "remote")) }}
-                        <span title="Run `flight desktop webify {{ .Name }}` on the server to make this session available">
-                            (not available in Flight Web Suite)
-                        </span>
-                    {{ end }}
                 </dd>
                 <dt>Host</dt>
                 <dd
@@ -84,7 +79,7 @@
                 <dt>Started</dt>
                 <dd data-testid="desktop-session-start-time--{{ .Name }}">{{ .StartTimeText }}</dd>
             </dl>
-            {{ if and .IsWebified (or (eq .State "active") (eq .State "remote")) }}
+            {{ if or (eq .State "active") (eq .State "remote") }}
                 <a class="btn btn-outline btn-sm block !mb-0 mt-3 w-full text-center" href="/desktop/{{ .Name }}">View</a>
             {{ end }}
         </div>

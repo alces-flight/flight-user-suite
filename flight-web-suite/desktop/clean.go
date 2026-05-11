@@ -20,7 +20,7 @@ type cleanCommandDocument struct {
 }
 
 func (dcli *DesktopCli) CleanCommand(ctx context.Context, username, sessionName string) (cleanResponse, error) {
-	showResponse, err := dcli.ShowCommand(ctx, username, sessionName)
+	showResponse, err := dcli.ShowCommand(ctx, username, sessionName, false)
 	if err != nil {
 		return cleanResponse{}, err
 	}

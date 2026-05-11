@@ -19,7 +19,7 @@ func showScreenshotHandler(c *echo.Context) error {
 		return c.File(placeholderImagePath)
 	}
 	cli := desktopCli(c.Logger())
-	response, err := cli.ShowCommand(c.Request().Context(), CurrentUserName(c), c.Param("sessionName"))
+	response, err := cli.ShowCommand(c.Request().Context(), CurrentUserName(c), c.Param("sessionName"), false)
 	if err != nil {
 		return c.File(placeholderImagePath)
 	}

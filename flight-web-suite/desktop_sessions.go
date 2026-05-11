@@ -64,7 +64,7 @@ func showDesktopSessionHandler(c *echo.Context) error {
 	}
 
 	cli := desktopCli(c.Logger())
-	response, err := cli.ShowCommand(c.Request().Context(), CurrentUserName(c), c.Param("sessionName"))
+	response, err := cli.ShowCommand(c.Request().Context(), CurrentUserName(c), c.Param("sessionName"), true)
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,11 @@ func showDesktopSessionHandler(c *echo.Context) error {
 	}
 
 	if !response.Session.IsWebified {
-		sess.AddFlash("Desktop session cannot be accessed via Flight Web Suite", "alert")
+		msg := fmt.Sprintf(
+			"Desktop session cannot be accessed via Flight Web Suite. Run 'flight desktop webify %s' to make this session available.",
+			response.Session.Name,
+		)
+		sess.AddFlash(msg, "alert")
 		SaveSession(c, sess)
 		return c.Redirect(http.StatusSeeOther, "/desktop")
 	}

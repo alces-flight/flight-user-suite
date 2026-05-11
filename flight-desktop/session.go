@@ -140,12 +140,8 @@ func (s *Session) Start(ctx context.Context) error {
 }
 
 func (s Session) IsWebified() bool {
-	// TODO: Remove check on whether process is running.
 	switch s.ComputedState() {
-	case "active":
-		return s.WebsocketPid != 0 && process.IsRunning(s.WebsocketPid)
-	case "remote":
-		// TODO: SSH to the machine its running on and check if its webified.
+	case "active", "remote":
 		return s.WebsocketPid != 0
 	default:
 		return false

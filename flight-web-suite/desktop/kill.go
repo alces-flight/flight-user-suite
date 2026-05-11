@@ -14,7 +14,7 @@ type terminationResponse struct {
 }
 
 func (dcli *DesktopCli) KillCommand(ctx context.Context, username, sessionName string) (terminationResponse, error) {
-	showResponse, err := dcli.ShowCommand(ctx, username, sessionName)
+	showResponse, err := dcli.ShowCommand(ctx, username, sessionName, false)
 	if err != nil {
 		return terminationResponse{}, err
 	}
