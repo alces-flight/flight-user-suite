@@ -385,6 +385,7 @@ The Flight Web Suite provides in-browser access to the Flight User Suite tools.`
 				startCommand(),
 				stopCommand(),
 				statusCommand(),
+				doctorCommand(),
 			},
 		},
 	}

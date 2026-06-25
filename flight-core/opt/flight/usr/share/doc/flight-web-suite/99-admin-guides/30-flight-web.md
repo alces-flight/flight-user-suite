@@ -16,6 +16,24 @@ Flight Web Suite requires:
   `python3-pampy` on Ubuntu. Known as `python3-pam` on Rocky 9 available from
   EPEL.
 
+You can verify these prerequisites with:
+
+```bash
+flight web doctor
+```
+
+If the Flight desktop tool is enabled:
+
+* `/usr/bin/websockify` to provide browser access to Flight Desktop sessions
+* Optionally, `/usr/bin/import` from ImageMagick to enable screenshot capture
+  for Flight Desktop sessions
+
+You can verify these prerequisites with:
+
+```bash
+flight desktop doctor
+```
+
 ## Configuration
 
 Configuration is via a file located at `/opt/flight/etc/web-suite.yml`. The
@@ -47,6 +65,12 @@ deployment configuration.
 
   ```bash
   flight web status
+  ```
+
+* **Check dependencies:** run the following as a cluster admin user
+
+  ```bash
+  flight web doctor
   ```
 
 ## Accessing Flight Web

@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/concertim/flight-user-suite/flight/doctor"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/urfave/cli/v3"
 	"github.com/yarlson/pin"
@@ -280,11 +281,11 @@ func checkDependencies(ctx context.Context, sessionType string) (bool, error) {
 	// Add a small delay to stop the spinner from flickering
 	<-time.After(1 * time.Second)
 
-	globalResults, globalDepsOK := runDoctor(requiredDependencies(config.Dependencies))
+	globalResults, globalDepsOK := doctor.Run(doctor.RequiredDependencies(config.Dependencies))
 
 	if !globalDepsOK {
 		p.Fail("Missing critical dependencies")
-		printCheckResults(globalResults)
+		doctor.PrintCheckResults(globalResults)
 		return false, nil
 	}
 
@@ -299,11 +300,11 @@ func checkDependencies(ctx context.Context, sessionType string) (bool, error) {
 		return false, err
 	}
 
-	typeResults, typeDepsOK := runDoctor(requiredDependencies(sessionTypeDef.dependencies))
+	typeResults, typeDepsOK := doctor.Run(doctor.RequiredDependencies(sessionTypeDef.dependencies))
 
 	if !typeDepsOK {
 		p.Fail(fmt.Sprintf("Missing required dependencies for %s desktop type", sessionType))
-		printCheckResults(typeResults)
+		doctor.PrintCheckResults(typeResults)
 		return false, err
 	}
 
@@ -313,7 +314,7 @@ func checkDependencies(ctx context.Context, sessionType string) (bool, error) {
 }
 
 func checkDependenciesQuiet(sessionType string) (bool, error) {
-	_, globalDepsOK := runDoctor(requiredDependencies(config.Dependencies))
+	_, globalDepsOK := doctor.Run(doctor.RequiredDependencies(config.Dependencies))
 	if !globalDepsOK {
 		return false, nil
 	}
@@ -326,7 +327,7 @@ func checkDependenciesQuiet(sessionType string) (bool, error) {
 		return false, err
 	}
 
-	_, typeDepsOK := runDoctor(requiredDependencies(sessionTypeDef.dependencies))
+	_, typeDepsOK := doctor.Run(doctor.RequiredDependencies(sessionTypeDef.dependencies))
 	if !typeDepsOK {
 		return false, nil
 	}

@@ -9,12 +9,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/concertim/flight-user-suite/flight/doctor"
 	"gopkg.in/yaml.v3"
 )
 
 type desktopConfig struct {
 	NameGenerator nameGeneratorConfig `yaml:"name_generator"`
-	Dependencies  []dependency        `yaml:"dependencies"`
+	Dependencies  []doctor.Dependency `yaml:"dependencies"`
 	EnvWhitelist  []string            `yaml:"environment_whitelist"`
 	VncPasswd     string              `yaml:"vncpasswd"`
 	WebSockify    string              `yaml:"websockify"`
@@ -23,35 +24,6 @@ type desktopConfig struct {
 
 type nameGeneratorConfig struct {
 	Strategy string `yaml:"strategy"`
-}
-
-type dependency struct {
-	Type           string   `yaml:"type"`
-	Description    string   `yaml:"description"`
-	Optional       bool     `yaml:"optional"`
-	Paths          []string `yaml:"paths"`
-	FailureMessage string   `yaml:"failure_message"`
-	SuccessMessage string   `yaml:"success_message"`
-}
-
-func requiredDependencies(deps []dependency) []dependency {
-	opt := make([]dependency, 0)
-	for _, dep := range deps {
-		if !dep.Optional {
-			opt = append(opt, dep)
-		}
-	}
-	return opt
-}
-
-func optionalDependencies(deps []dependency) []dependency {
-	opt := make([]dependency, 0)
-	for _, dep := range deps {
-		if dep.Optional {
-			opt = append(opt, dep)
-		}
-	}
-	return opt
 }
 
 //go:embed opt/flight/etc/desktop.yml
