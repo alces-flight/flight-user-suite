@@ -112,8 +112,6 @@ JSON
 
 	testutil.AssertSelection(t, body, `[data-testid="desktop-session-action-button--remote-a"]`,
 		testutil.HasText("Terminate"),
-		testutil.HasAttr("disabled", ""),
-		testutil.HasAttr("title", "Termination of remote sessions is not yet implemented."),
 	)
 }
 

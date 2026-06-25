@@ -39,8 +39,6 @@ var (
 const defaultClusterName = "your cluster"
 
 func init() {
-	// TODO: Setup log/slog. Save logs to file/stdout?
-
 	var err error
 	env, err = configenv.InitFlightEnv()
 	if err != nil {
@@ -122,6 +120,12 @@ func main() {
 func newApp() *echo.Echo {
 	e := echo.New()
 	e.Pre(MethodOverrideMiddleware())
+	e.Use(middleware.RequestIDWithConfig(middleware.RequestIDConfig{
+		RequestIDHandler: func(c *echo.Context, requestID string) {
+			logger := c.Logger().With("request_id", requestID)
+			c.SetLogger(logger)
+		},
+	}))
 	e.Use(middleware.RequestLogger())
 	e.Use(NewSessionMiddleware())
 

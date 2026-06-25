@@ -1,23 +1,32 @@
 package howto
 
 import (
-	"context"
-	"fmt"
-	"os/exec"
+	"log/slog"
 	"path/filepath"
 
-	"github.com/concertim/flight-user-suite/flight-web-suite/desktop"
 	"github.com/concertim/flight-user-suite/flight/configenv"
 )
 
-func howtoToolPath(env configenv.Env) string {
-	return filepath.Join(env.FlightRoot, "usr", "lib", "flight-core", "flight-howto")
+type HowtoCli struct {
+	env    configenv.Env
+	logger *slog.Logger
 }
 
-func buildHowtoCommand(ctx context.Context, env configenv.Env, username string, args ...string) (*exec.Cmd, error) {
-	cmd, err := desktop.BuildCommand(ctx, howtoToolPath(env), username, args...)
-	if err != nil {
-		return nil, fmt.Errorf("building howto command: %w", err)
+func NewCliTool(logger *slog.Logger, env configenv.Env) *HowtoCli {
+	return &HowtoCli{
+		env:    env,
+		logger: logger,
 	}
-	return cmd, nil
+}
+
+func (hcli *HowtoCli) ToolPath() string {
+	return filepath.Join(hcli.env.FlightRoot, "usr", "lib", "flight-core", "flight-howto")
+}
+
+func (hcli *HowtoCli) GetEnv() configenv.Env {
+	return hcli.env
+}
+
+func (hcli *HowtoCli) Logger() *slog.Logger {
+	return hcli.logger
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"slices"
 	"strings"
@@ -18,10 +19,12 @@ type desktopSessionCard struct {
 	IsWebified           bool
 	StartTimeText        string
 	ActionLabel          string
-	ActionTitle          string
-	ActionEnabled        bool
 	ActionPath           string
 	ActionMethodOverride string
+}
+
+func desktopCli(logger *slog.Logger) *desktop.DesktopCli {
+	return desktop.NewCliTool(logger, env, config.Remote)
 }
 
 func indexDesktopSessionsHandler(c *echo.Context) error {
@@ -32,7 +35,8 @@ func indexDesktopSessionsHandler(c *echo.Context) error {
 		return err
 	}
 
-	sessions, err := desktop.ListCommand(c.Request().Context(), env, CurrentUserName(c))
+	cli := desktopCli(c.Logger())
+	sessions, err := cli.ListCommand(c.Request().Context(), CurrentUserName(c))
 	if err != nil {
 		return err
 	}
@@ -59,7 +63,8 @@ func showDesktopSessionHandler(c *echo.Context) error {
 		return err
 	}
 
-	response, err := desktop.ShowCommand(c.Request().Context(), env, CurrentUserName(c), c.Param("sessionName"))
+	cli := desktopCli(c.Logger())
+	response, err := cli.ShowCommand(c.Request().Context(), CurrentUserName(c), c.Param("sessionName"), true)
 	if err != nil {
 		return err
 	}
@@ -78,7 +83,11 @@ func showDesktopSessionHandler(c *echo.Context) error {
 	}
 
 	if !response.Session.IsWebified {
-		sess.AddFlash("Desktop session cannot be accessed via Flight Web Suite", "alert")
+		msg := fmt.Sprintf(
+			"Desktop session cannot be accessed via Flight Web Suite. Run 'flight desktop webify %s' to make this session available.",
+			response.Session.Name,
+		)
+		sess.AddFlash(msg, "alert")
 		SaveSession(c, sess)
 		return c.Redirect(http.StatusSeeOther, "/desktop")
 	}
@@ -98,7 +107,8 @@ func destroyDesktopSessionHandler(c *echo.Context) error {
 		return err
 	}
 
-	response, err := desktop.KillCommand(c.Request().Context(), env, CurrentUserName(c), c.Param("sessionName"))
+	cli := desktopCli(c.Logger())
+	response, err := cli.KillCommand(c.Request().Context(), CurrentUserName(c), c.Param("sessionName"))
 	if err != nil {
 		return err
 	}
@@ -124,7 +134,8 @@ func cleanDesktopSessionHandler(c *echo.Context) error {
 		return err
 	}
 
-	response, err := desktop.CleanCommand(c.Request().Context(), env, CurrentUserName(c), c.Param("sessionName"))
+	cli := desktopCli(c.Logger())
+	response, err := cli.CleanCommand(c.Request().Context(), CurrentUserName(c), c.Param("sessionName"))
 	if err != nil {
 		return err
 	}
@@ -146,25 +157,16 @@ func buildDesktopSessionCards(sessions []*desktop.Session) []desktopSessionCard 
 	cards := make([]desktopSessionCard, 0, len(sessions))
 	for _, session := range sessions {
 		actionLabel := ""
-		actionTitle := ""
-		actionEnabled := false
 		actionPath := ""
 		actionMethodOverride := ""
 		switch session.State {
-		case "active":
+		case "active", "remote":
 			actionLabel = "Terminate"
-			actionTitle = ""
-			actionEnabled = true
 			actionPath = fmt.Sprintf("/desktop/%s", session.Name)
 			actionMethodOverride = "DELETE"
 		case "broken", "exited":
 			actionLabel = "Remove"
-			actionTitle = ""
-			actionEnabled = true
 			actionPath = fmt.Sprintf("/desktop/%s/clean", session.Name)
-		case "remote":
-			actionLabel = "Terminate"
-			actionTitle = "Termination of remote sessions is not yet implemented."
 		}
 
 		cards = append(cards, desktopSessionCard{
@@ -175,8 +177,6 @@ func buildDesktopSessionCards(sessions []*desktop.Session) []desktopSessionCard 
 			IsWebified:           session.IsWebified,
 			StartTimeText:        session.CreatedAt.Format("Mon 2 Jan 2006 15:04"),
 			ActionLabel:          actionLabel,
-			ActionTitle:          actionTitle,
-			ActionEnabled:        actionEnabled,
 			ActionPath:           actionPath,
 			ActionMethodOverride: actionMethodOverride,
 		})

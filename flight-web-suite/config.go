@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/concertim/flight-user-suite/flight-web-suite/cli"
 	"gopkg.in/yaml.v3"
 )
 
@@ -19,6 +20,7 @@ type webSuiteConfig struct {
 	Port          int                 `yaml:"port"`
 	Session       sessionConfig       `yaml:"-"`
 	Authenticator authenticatorConfig `yaml:"authenticator"`
+	Remote        cli.RemoteConfig    `yaml:"remote"`
 }
 
 type sessionConfig struct {
@@ -70,6 +72,15 @@ func loadConfig() (webSuiteConfig, error) {
 
 	if config.Authenticator.Timeout == 0 {
 		config.Authenticator.Timeout = defaultConfig.Authenticator.Timeout
+	}
+	if config.Remote.SshKeyName == "" {
+		config.Remote.SshKeyName = defaultConfig.Remote.SshKeyName
+	}
+	if config.Remote.HomeDirFallback == "" {
+		config.Remote.HomeDirFallback = defaultConfig.Remote.HomeDirFallback
+	}
+	if config.Remote.ConnectionTimeout == 0 {
+		config.Remote.ConnectionTimeout = defaultConfig.Remote.ConnectionTimeout
 	}
 	config.Session.Secret, err = loadSessionSecret()
 	if err != nil {

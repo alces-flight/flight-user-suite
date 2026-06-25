@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"html/template"
+	"log/slog"
 	"net/http"
 	"slices"
 	"strconv"
@@ -19,6 +20,10 @@ type howtoPageGuide struct {
 	IsSelected bool
 }
 
+func howtoCli(logger *slog.Logger) *howto.HowtoCli {
+	return howto.NewCliTool(logger, env)
+}
+
 func indexHowtoHandler(c *echo.Context) error {
 	if !IsLoggedIn(c) {
 		return c.Redirect(http.StatusSeeOther, "/sessions")
@@ -27,7 +32,8 @@ func indexHowtoHandler(c *echo.Context) error {
 		return err
 	}
 
-	response, err := howto.ListCommand(c.Request().Context(), env, CurrentUserName(c))
+	cli := howtoCli(c.Logger())
+	response, err := cli.ListCommand(c.Request().Context(), CurrentUserName(c))
 	if err != nil {
 		return err
 	}
@@ -46,7 +52,8 @@ func showHowtoHandler(c *echo.Context) error {
 		return err
 	}
 
-	response, err := howto.ListCommand(c.Request().Context(), env, CurrentUserName(c))
+	cli := howtoCli(c.Logger())
+	response, err := cli.ListCommand(c.Request().Context(), CurrentUserName(c))
 	if err != nil {
 		return err
 	}
@@ -62,7 +69,7 @@ func showHowtoHandler(c *echo.Context) error {
 		return redirectHowtoIndexAlert(c, "Howto guide not found.")
 	}
 
-	showResponse, err := howto.ShowCommand(c.Request().Context(), env, CurrentUserName(c), index)
+	showResponse, err := cli.ShowCommand(c.Request().Context(), CurrentUserName(c), index)
 	if err != nil {
 		return err
 	}

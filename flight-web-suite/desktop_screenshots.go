@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/concertim/flight-user-suite/flight-web-suite/desktop"
 	"github.com/labstack/echo/v5"
 )
 
@@ -19,7 +18,8 @@ func showScreenshotHandler(c *echo.Context) error {
 	if err := requireDesktopToolEnabled(); err != nil {
 		return c.File(placeholderImagePath)
 	}
-	response, err := desktop.ShowCommand(c.Request().Context(), env, CurrentUserName(c), c.Param("sessionName"))
+	cli := desktopCli(c.Logger())
+	response, err := cli.ShowCommand(c.Request().Context(), CurrentUserName(c), c.Param("sessionName"), false)
 	if err != nil {
 		return c.File(placeholderImagePath)
 	}

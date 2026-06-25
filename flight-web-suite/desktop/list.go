@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/concertim/flight-user-suite/flight/configenv"
+	"github.com/concertim/flight-user-suite/flight-web-suite/cli"
 )
 
 type Session struct {
@@ -23,8 +23,9 @@ type Session struct {
 	IsWebified     bool      `json:"is_webified"`
 }
 
-func ListCommand(ctx context.Context, env configenv.Env, username string) ([]*Session, error) {
-	cmd, err := buildDesktopCommand(ctx, env, username, "list", "--format", "json")
+func (dcli *DesktopCli) ListCommand(ctx context.Context, username string) ([]*Session, error) {
+	dcli.logger.Info("DESKTOP SESSION", "action", "list", "username", username, "remote", false)
+	cmd, err := cli.BuildLocalCommand(ctx, dcli, username, "list", "--format", "json")
 	if err != nil {
 		return nil, err
 	}

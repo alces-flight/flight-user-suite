@@ -56,12 +56,13 @@ func newDesktopSessionHandler(c *echo.Context) error {
 		return err
 	}
 
-	dependencyReport, err := desktop.DoctorCommand(c.Request().Context(), env, CurrentUserName(c))
+	cli := desktopCli(c.Logger())
+	dependencyReport, err := cli.DoctorCommand(c.Request().Context(), CurrentUserName(c))
 	if err != nil {
 		return err
 	}
 
-	desktopTypes, err := desktop.AvailCommand(c.Request().Context(), env, CurrentUserName(c))
+	desktopTypes, err := cli.AvailCommand(c.Request().Context(), CurrentUserName(c))
 	if err != nil {
 		return err
 	}
@@ -92,14 +93,15 @@ func createDesktopSessionHandler(c *echo.Context) error {
 		CustomY:     customY,
 	}
 
-	desktopTypes, err := desktop.AvailCommand(c.Request().Context(), env, CurrentUserName(c))
+	cli := desktopCli(c.Logger())
+	desktopTypes, err := cli.AvailCommand(c.Request().Context(), CurrentUserName(c))
 	if err != nil {
 		return err
 	}
 
 	validateDesktopLaunchForm(desktopTypes, &form)
 	if form.Errors == (desktopLaunchFieldErrors{}) {
-		response, err := desktop.StartCommand(c.Request().Context(), env, CurrentUserName(c), desktop.StartInput{
+		response, err := cli.StartCommand(c.Request().Context(), CurrentUserName(c), desktop.StartInput{
 			DesktopType: form.DesktopType,
 			Name:        form.Name,
 			Geometry:    form.getComputedGeometry(),
@@ -129,7 +131,7 @@ func createDesktopSessionHandler(c *echo.Context) error {
 	}
 	sess.AddFlash(alert, "alert")
 	SaveSession(c, sess)
-	dependencyReport, err := desktop.DoctorCommand(c.Request().Context(), env, CurrentUserName(c))
+	dependencyReport, err := cli.DoctorCommand(c.Request().Context(), CurrentUserName(c))
 	if err != nil {
 		return err
 	}

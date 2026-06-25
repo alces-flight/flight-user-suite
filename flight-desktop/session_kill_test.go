@@ -112,7 +112,7 @@ func TestKillSessionJSON(t *testing.T) {
 			expectedResponse: map[string]any{
 				"success":      false,
 				"session_name": "epsilon",
-				"error":        "Terminating session 'epsilon' failed.",
+				"error":        "Terminating session 'epsilon' failed: exit status 1",
 				"reason":       "terminate_failed",
 			},
 			expectedExitCode: 1,

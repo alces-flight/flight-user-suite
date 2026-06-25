@@ -1,12 +1,10 @@
 package desktop
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 
-	"github.com/concertim/flight-user-suite/flight/configenv"
+	"github.com/concertim/flight-user-suite/flight-web-suite/cli"
 )
 
 type cleanResponse struct {
@@ -21,31 +19,43 @@ type cleanCommandDocument struct {
 	Results []cleanResponse `json:"results"`
 }
 
-func CleanCommand(ctx context.Context, env configenv.Env, username, sessionName string) (cleanResponse, error) {
-	cmd, err := buildDesktopCommand(ctx, env, username, "clean", "--format", "json", "--", sessionName)
+func (dcli *DesktopCli) CleanCommand(ctx context.Context, username, sessionName string) (cleanResponse, error) {
+	showResponse, err := dcli.ShowCommand(ctx, username, sessionName, false)
 	if err != nil {
 		return cleanResponse{}, err
 	}
-
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	runErr := cmd.Run()
-
-	var response cleanCommandDocument
-	if decodeErr := json.Unmarshal(stdout.Bytes(), &response); decodeErr == nil {
-		if len(response.Results) == 1 {
-			return response.Results[0], nil
-		}
-		return cleanResponse{}, fmt.Errorf("decoding desktop clean response: expected 1 result, got %d", len(response.Results))
+	if showResponse.Reason == "not_found" {
+		// It's already gone.
+		dcli.logger.Info("DESKTOP SESSION", "action", "clean", "name", sessionName, "username", username, "err", "not found")
+		return cleanResponse{Success: true, SessionName: sessionName}, nil
 	}
-
-	if runErr != nil {
-		if stderr.Len() != 0 {
-			return cleanResponse{}, fmt.Errorf("cleaning desktop session: %s", stderr.String())
-		}
-		return cleanResponse{}, fmt.Errorf("cleaning desktop session: %w", runErr)
+	args := []string{"clean", "--format", "json", "--", sessionName}
+	if showResponse.Session.State == "remote" {
+		dcli.logger.Info("DESKTOP SESSION", "action", "clean", "name", sessionName, "username", username, "remote", true, "host", showResponse.Session.Host)
+		return dcli.remoteClean(username, showResponse.Session.Host, args)
 	}
-	return cleanResponse{}, fmt.Errorf("decoding desktop clean response: %s", stdout.String())
+	dcli.logger.Info("DESKTOP SESSION", "action", "clean", "name", sessionName, "username", username, "remote", false)
+	return dcli.localClean(ctx, username, args)
+}
+
+func (dcli *DesktopCli) localClean(ctx context.Context, username string, args []string) (cleanResponse, error) {
+	response, err := cli.RunLocal[cleanCommandDocument](ctx, "cleaning desktop session", dcli, username, args...)
+	if err != nil {
+		return cleanResponse{}, err
+	}
+	if len(response.Results) == 1 {
+		return response.Results[0], nil
+	}
+	return cleanResponse{}, fmt.Errorf("decoding desktop clean response: expected 1 result, got %d", len(response.Results))
+}
+
+func (dcli *DesktopCli) remoteClean(username, host string, args []string) (cleanResponse, error) {
+	response, err := cli.RunRemote[cleanCommandDocument]("cleaning desktop session", dcli, username, host, args...)
+	if err != nil {
+		return cleanResponse{}, err
+	}
+	if len(response.Results) == 1 {
+		return response.Results[0], nil
+	}
+	return cleanResponse{}, fmt.Errorf("decoding desktop clean response: expected 1 result, got %d", len(response.Results))
 }

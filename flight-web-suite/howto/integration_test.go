@@ -2,6 +2,8 @@ package howto
 
 import (
 	"context"
+	"io"
+	"log/slog"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -31,7 +33,7 @@ JSON
 		t.Fatalf("failed to determine current user: %v", err)
 	}
 
-	response, err := ListCommand(context.Background(), env, currentUser.Username)
+	response, err := newHowtoCliForTest(env).ListCommand(context.Background(), currentUser.Username)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -61,7 +63,7 @@ exit 1
 		t.Fatalf("failed to determine current user: %v", err)
 	}
 
-	response, err := ListCommand(context.Background(), env, currentUser.Username)
+	response, err := newHowtoCliForTest(env).ListCommand(context.Background(), currentUser.Username)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -91,7 +93,7 @@ JSON
 		t.Fatalf("failed to determine current user: %v", err)
 	}
 
-	response, err := ShowCommand(context.Background(), env, currentUser.Username, 1)
+	response, err := newHowtoCliForTest(env).ShowCommand(context.Background(), currentUser.Username, 1)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -121,7 +123,7 @@ exit 1
 		t.Fatalf("failed to determine current user: %v", err)
 	}
 
-	response, err := ShowCommand(context.Background(), env, currentUser.Username, 1)
+	response, err := newHowtoCliForTest(env).ShowCommand(context.Background(), currentUser.Username, 1)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -166,4 +168,8 @@ func envContains(env []string, key, want string) bool {
 		}
 	}
 	return false
+}
+
+func newHowtoCliForTest(env configenv.Env) *HowtoCli {
+	return NewCliTool(slog.New(slog.NewTextHandler(io.Discard, nil)), env)
 }

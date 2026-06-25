@@ -1,13 +1,10 @@
 package howto
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
 	"strconv"
 
-	"github.com/concertim/flight-user-suite/flight/configenv"
+	"github.com/concertim/flight-user-suite/flight-web-suite/cli"
 )
 
 type Guide struct {
@@ -22,29 +19,7 @@ type ShowResponse struct {
 	Reason  string `json:"reason"`
 }
 
-func ShowCommand(ctx context.Context, env configenv.Env, username string, index int) (ShowResponse, error) {
-	cmd, err := buildHowtoCommand(ctx, env, username, "show", "--format", "json", strconv.Itoa(index))
-	if err != nil {
-		return ShowResponse{}, err
-	}
-
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	runErr := cmd.Run()
-
-	var response ShowResponse
-	decodeErr := json.Unmarshal(stdout.Bytes(), &response)
-	if decodeErr == nil {
-		return response, nil
-	}
-
-	if runErr != nil {
-		if stderr.Len() != 0 {
-			return ShowResponse{}, fmt.Errorf("running howto show command: %s", stderr.String())
-		}
-		return ShowResponse{}, fmt.Errorf("running howto show command: %w", runErr)
-	}
-	return ShowResponse{}, fmt.Errorf("decoding howto show response: %w", decodeErr)
+func (hcli *HowtoCli) ShowCommand(ctx context.Context, username string, index int) (ShowResponse, error) {
+	hcli.Logger().Info("HOWTO", "action", "show", "index", index, "username", username, "remote", false)
+	return cli.RunLocal[ShowResponse](ctx, "showing howto", hcli, username, "show", "--format", "json", strconv.Itoa(index))
 }

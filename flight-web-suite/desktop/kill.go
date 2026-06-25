@@ -1,12 +1,9 @@
 package desktop
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
 
-	"github.com/concertim/flight-user-suite/flight/configenv"
+	"github.com/concertim/flight-user-suite/flight-web-suite/cli"
 )
 
 type terminationResponse struct {
@@ -16,28 +13,22 @@ type terminationResponse struct {
 	Reason      string `json:"reason"`
 }
 
-func KillCommand(ctx context.Context, env configenv.Env, username, sessionName string) (terminationResponse, error) {
-	cmd, err := buildDesktopCommand(ctx, env, username, "kill", "--format", "json", "--", sessionName)
+func (dcli *DesktopCli) KillCommand(ctx context.Context, username, sessionName string) (terminationResponse, error) {
+	showResponse, err := dcli.ShowCommand(ctx, username, sessionName, false)
 	if err != nil {
 		return terminationResponse{}, err
 	}
-
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	runErr := cmd.Run()
-
-	var response terminationResponse
-	if decodeErr := json.Unmarshal(stdout.Bytes(), &response); decodeErr == nil {
-		return response, nil
+	if showResponse.Reason == "not_found" {
+		// It's already gone.
+		dcli.logger.Info("DESKTOP SESSION", "action", "kill", "name", sessionName, "username", username, "err", "not found")
+		return terminationResponse{Success: true, SessionName: sessionName}, nil
 	}
-
-	if runErr != nil {
-		if stderr.Len() != 0 {
-			return terminationResponse{}, fmt.Errorf("terminating desktop session: %s", stderr.String())
-		}
-		return terminationResponse{}, fmt.Errorf("terminating desktop session: %w", runErr)
+	args := []string{"kill", "--format", "json", "--", sessionName}
+	if showResponse.Session.State == "remote" {
+		dcli.logger.Info("DESKTOP SESSION", "action", "kill", "name", sessionName, "username", username, "remote", true, "host", showResponse.Session.Host)
+		return cli.RunRemote[terminationResponse]("terminating desktop session", dcli, username, showResponse.Session.Host, args...)
 	}
-	return terminationResponse{}, fmt.Errorf("decoding desktop termination response: %s", stdout.String())
+	dcli.logger.Info("DESKTOP SESSION", "action", "kill", "name", sessionName, "username", username, "remote", false)
+	return cli.RunLocal[terminationResponse](ctx, "terminating desktop session", dcli, username, args...)
+
 }

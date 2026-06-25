@@ -9,3 +9,13 @@ authenticator:
 
   # PAM service name for the authenticator helper.
   pam_service: "login"
+
+# Configuration for accessing remote machines.
+remote:
+  # The SSH public key used to authenticate with the remote host.
+  ssh_key_name: "id_flightcluster"
+  # Fallback to use if the user's home directory cannot be determined. The
+  # user's username is appended to this.
+  home_dir_fallback: "/home/"
+  # Timeout for establishing the TCP connection.
+  connection_timeout: "5s"
