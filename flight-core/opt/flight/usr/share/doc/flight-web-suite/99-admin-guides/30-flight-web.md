@@ -67,7 +67,7 @@ deployment configuration.
   flight web status
   ```
 
-* **Check dependencies:** as `root` run
+* **Check dependencies:** run the following as a cluster admin user
 
   ```bash
   flight web doctor
