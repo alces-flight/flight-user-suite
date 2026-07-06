@@ -3,7 +3,7 @@ module github.com/concertim/flight-user-suite/flight
 go 1.26.1
 
 require (
-	charm.land/lipgloss/v2 v2.0.3
+	charm.land/lipgloss/v2 v2.0.5
 	charm.land/log/v2 v2.0.0
 	github.com/adrg/xdg v0.5.3
 	github.com/cyucelen/marker v0.0.0-20220628090808-ec8d542c2d28
@@ -35,6 +35,6 @@ require (
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
 	golang.org/x/sync v0.18.0 // indirect
-	golang.org/x/sys v0.43.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 )
